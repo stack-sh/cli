@@ -1,0 +1,23 @@
+name: CLI repository checks
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    name: CLI repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Check whitespace
+        run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
+      - name: Verify foundation files
+        run: |
+          test -s README.md
+          test -s AGENTS.md
+          test -s LICENSING.md
