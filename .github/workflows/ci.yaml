@@ -1,18 +1,16 @@
-name: CLI repository checks
+name: CI
 
 on:
   pull_request:
   push:
     branches:
-      - bootstrap
       - main
 
 permissions:
   contents: read
 
 jobs:
-  repository:
-    name: CLI repository
+  baseline:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
