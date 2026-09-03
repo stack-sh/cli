@@ -2,28 +2,31 @@
 
 `stack-sh/cli` is the private source repository for the native Rust `stack` command.
 
-The repository now contains the first native command: `stack check`. The CLI is not yet distributed as a supported external binary and its interface remains pre-release.
+The repository contains native validation and formatting commands. The CLI is not yet distributed as a supported external binary and its interface remains pre-release.
 
 ## Commands
 
 ```text
 stack check arch.stack
+stack fmt arch.stack
+stack fmt --check arch.stack
+stack fmt -
 ```
 
 `stack check` reads the file as bytes and runs the full compiler, theme, layout, and routing validation pipeline without changing the source. Diagnostics are written to standard error in source order. Standard output remains empty.
 
+`stack fmt` uses the engine formatter and preserves comments. File mode replaces changed source atomically through a temporary file in the same directory; unchanged files are not replaced. Syntax, encoding, and host I/O failures leave the original file untouched. `stack fmt -` reads bytes from standard input and writes only canonical source to standard output. `--check` never writes source and exits with status `1` when formatting is required.
+
 | Result | Exit status |
 | --- | ---: |
 | No error diagnostics, including warning-only input | `0` |
-| One or more Stack error diagnostics | `1` |
+| One or more Stack error diagnostics, or `fmt --check` finds a difference | `1` |
 | Invalid arguments, host I/O failure, or engine operational failure | `2` |
 
-The remaining planned commands are:
+The remaining planned command is:
 
 ```text
 stack render arch.stack -o arch.svg
-stack fmt arch.stack
-stack fmt --check arch.stack
 ```
 
 The CLI will link `stack-engine` as a native Rust dependency. It owns filesystem and standard-stream behavior, process exit codes, configuration discovery, and command presentation. It must not duplicate compiler, formatter, layout, or SVG-rendering logic.
@@ -37,10 +40,12 @@ The CLI requires Rust 1.85 or newer.
 ```sh
 cargo run -- check arch.stack
 cargo test --locked
-cargo clippy --all-targets --locked -- -D warnings
+cargo clippy --all-targets --all-features --locked -- -D warnings
 ```
 
 CI validates formatting, unit and process-level integration tests, at least 90% line/region coverage and 95% function coverage, Clippy, documentation, a release build, `--help`, and `--version` on stable Rust. Tests and Clippy also run on Rust 1.85.
+
+Canonical formatter behavior is checked against the pinned `stack-sh/specification` fixture revision recorded in `tests/specification-revision`.
 
 ## Licensing
 

@@ -15,6 +15,19 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+      - name: Read supported specification revision
+        id: specification
+        shell: bash
+        run: |
+          grep -Eq '^[0-9a-f]{40}$' tests/specification-revision
+          revision=$(tr -d '\n' < tests/specification-revision)
+          printf 'revision=%s\n' "$revision" >> "$GITHUB_OUTPUT"
+      - name: Check out canonical specification
+        uses: actions/checkout@v7
+        with:
+          repository: stack-sh/specification
+          ref: ${{ steps.specification.outputs.revision }}
+          path: .stack-specification
       - name: Check whitespace
         run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
       - name: Install latest stable Rust toolchain
@@ -23,8 +36,12 @@ jobs:
         run: cargo +stable fmt --check
       - name: Run tests
         run: cargo +stable test --locked
+      - name: Run canonical formatter suite
+        env:
+          STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
+        run: cargo +stable test --features conformance --test formatter-conformance --locked
       - name: Run Clippy
-        run: cargo +stable clippy --all-targets --locked -- -D warnings
+        run: cargo +stable clippy --all-targets --all-features --locked -- -D warnings
       - name: Build documentation
         env:
           RUSTDOCFLAGS: -D warnings
@@ -35,6 +52,8 @@ jobs:
           tool: cargo-llvm-cov@0.9.0
           fallback: none
       - name: Enforce test coverage
+        env:
+          STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
         run: cargo +stable llvm-cov --all-features --locked --fail-under-lines 90 --fail-under-functions 95 --fail-under-regions 90
       - name: Build release binary
         run: cargo +stable build --release --locked
@@ -50,6 +69,7 @@ jobs:
           test -s Cargo.toml
           test -s Cargo.lock
           test -s src/main.rs
+          test -s tests/specification-revision
 
   msrv:
     name: Minimum supported Rust
@@ -62,4 +82,4 @@ jobs:
       - name: Run tests
         run: cargo +1.85.0 test --locked
       - name: Run Clippy
-        run: cargo +1.85.0 clippy --all-targets --locked -- -D warnings
+        run: cargo +1.85.0 clippy --all-targets --all-features --locked -- -D warnings
