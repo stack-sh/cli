@@ -2,13 +2,26 @@
 
 `stack-sh/cli` is the private source repository for the native Rust `stack` command.
 
-This repository currently contains only its repository foundation. It does not yet provide a distributable binary or a stable command-line interface.
+The repository now contains the first native command: `stack check`. The CLI is not yet distributed as a supported external binary and its interface remains pre-release.
 
-## Planned commands
+## Commands
+
+```text
+stack check arch.stack
+```
+
+`stack check` reads the file as bytes and runs the full compiler, theme, layout, and routing validation pipeline without changing the source. Diagnostics are written to standard error in source order. Standard output remains empty.
+
+| Result | Exit status |
+| --- | ---: |
+| No error diagnostics, including warning-only input | `0` |
+| One or more Stack error diagnostics | `1` |
+| Invalid arguments, host I/O failure, or engine operational failure | `2` |
+
+The remaining planned commands are:
 
 ```text
 stack render arch.stack -o arch.svg
-stack check arch.stack
 stack fmt arch.stack
 stack fmt --check arch.stack
 ```
@@ -19,7 +32,15 @@ Future authenticated theme delivery may add a client for short-lived, scope-limi
 
 ## Development
 
-Repository checks currently validate the foundation files on every push and pull request. Rust formatting, linting, tests, and release builds will be added with the first CLI implementation.
+The CLI requires Rust 1.85 or newer.
+
+```sh
+cargo run -- check arch.stack
+cargo test --locked
+cargo clippy --all-targets --locked -- -D warnings
+```
+
+CI validates formatting, unit and process-level integration tests, at least 90% line/region coverage and 95% function coverage, Clippy, documentation, a release build, `--help`, and `--version` on stable Rust. Tests and Clippy also run on Rust 1.85.
 
 ## Licensing
 

@@ -14,11 +14,52 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Check whitespace
         run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
-      - name: Verify foundation files
+      - name: Install latest stable Rust toolchain
+        run: rustup toolchain install stable --profile minimal --component clippy,rustfmt,llvm-tools-preview
+      - name: Check formatting
+        run: cargo +stable fmt --check
+      - name: Run tests
+        run: cargo +stable test --locked
+      - name: Run Clippy
+        run: cargo +stable clippy --all-targets --locked -- -D warnings
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo +stable doc --no-deps --locked
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
+        with:
+          tool: cargo-llvm-cov@0.9.0
+          fallback: none
+      - name: Enforce test coverage
+        run: cargo +stable llvm-cov --all-features --locked --fail-under-lines 90 --fail-under-functions 95 --fail-under-regions 90
+      - name: Build release binary
+        run: cargo +stable build --release --locked
+      - name: Smoke test command metadata
+        run: |
+          ./target/release/stack --help
+          ./target/release/stack --version
+      - name: Verify repository files
         run: |
           test -s README.md
           test -s AGENTS.md
           test -s LICENSING.md
+          test -s Cargo.toml
+          test -s Cargo.lock
+          test -s src/main.rs
+
+  msrv:
+    name: Minimum supported Rust
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Install Rust 1.85
+        run: rustup toolchain install 1.85.0 --profile minimal --component clippy
+      - name: Run tests
+        run: cargo +1.85.0 test --locked
+      - name: Run Clippy
+        run: cargo +1.85.0 clippy --all-targets --locked -- -D warnings
