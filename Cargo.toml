@@ -1,0 +1,23 @@
+[package]
+name = "stack-cli"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+publish = false
+description = "Native command-line interface for Stack diagrams"
+repository = "https://github.com/stack-sh/cli"
+
+[[bin]]
+name = "stack"
+path = "src/main.rs"
+
+[dependencies]
+stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "07b71c783a3c1f9037d865b19672a9522eb0b24d" }
+
+[lints.clippy]
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unreachable = "deny"
+unwrap_used = "deny"
