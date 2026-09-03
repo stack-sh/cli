@@ -14,6 +14,14 @@ path = "src/main.rs"
 [dependencies]
 stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "07b71c783a3c1f9037d865b19672a9522eb0b24d" }
 
+[features]
+conformance = []
+
+[[test]]
+name = "formatter-conformance"
+path = "tests/formatter_conformance.rs"
+required-features = ["conformance"]
+
 [lints.clippy]
 expect_used = "deny"
 panic = "deny"

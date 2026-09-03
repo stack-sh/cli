@@ -4,11 +4,11 @@
 
 use std::ffi::{OsStr, OsString};
 use std::fmt::Write as _;
-use std::fs;
-use std::io::{self, Write};
-use std::path::Path;
+use std::fs::{self, File, OpenOptions};
+use std::io::{self, Read, Write};
+use std::path::{Path, PathBuf};
 
-use stack_engine::{CheckOutput, Diagnostic, Engine, OperationalError, Severity};
+use stack_engine::{CheckOutput, Diagnostic, Engine, FormatOutput, OperationalError, Severity};
 
 /// Exit status used when a command completes without Stack error diagnostics.
 pub const EXIT_SUCCESS: u8 = 0;
@@ -17,13 +17,21 @@ pub const EXIT_STACK_ERROR: u8 = 1;
 /// Exit status used for argument, host I/O, or engine operational failures.
 pub const EXIT_USAGE_OR_IO: u8 = 2;
 
-const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack --help\n  stack --version\n\nCommands:\n  check    Validate a Stack source file without modifying it\n";
+const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack --help\n  stack --version\n\nCommands:\n  check    Validate a Stack source file without modifying it\n  fmt      Format a file in place or read from standard input\n";
 const CHECK_HELP: &str =
     "Validate a Stack source file without modifying it\n\nUsage:\n  stack check <FILE>\n";
+const FORMAT_HELP: &str = "Format Stack source canonically\n\nUsage:\n  stack fmt <FILE>\n  stack fmt --check <FILE>\n  stack fmt -\n\nArguments:\n  <FILE>    Format the file atomically in place\n  -         Read from standard input and write to standard output\n\nOptions:\n  --check   Report whether formatting is required without writing output\n";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum FormatMode {
+    Write,
+    Check,
+}
 
 /// Runs the CLI with explicit streams and returns its process exit status.
 pub fn run(
     arguments: impl IntoIterator<Item = OsString>,
+    stdin: &mut dyn Read,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
@@ -57,11 +65,61 @@ pub fn run(
     if command == OsStr::new("check") {
         return run_check(arguments, stdout, stderr);
     }
+    if command == OsStr::new("fmt") {
+        return run_format(arguments, stdin, stdout, stderr);
+    }
 
     argument_error(
         &format!("unknown command '{}'", command.to_string_lossy()),
         stderr,
     )
+}
+
+fn run_format(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdin: &mut dyn Read,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(first) = arguments.next() else {
+        return argument_error("missing file for 'stack fmt'", stderr);
+    };
+    if first == OsStr::new("--help") || first == OsStr::new("-h") {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(FORMAT_HELP, stdout, stderr);
+    }
+
+    let (mode, input) = if first == OsStr::new("--check") {
+        let Some(input) = arguments.next() else {
+            return argument_error("missing file for 'stack fmt --check'", stderr);
+        };
+        (FormatMode::Check, input)
+    } else {
+        (FormatMode::Write, first)
+    };
+    if input != OsStr::new("-") && input.to_string_lossy().starts_with('-') {
+        return argument_error(
+            &format!("unknown option '{}'", input.to_string_lossy()),
+            stderr,
+        );
+    }
+    if let Some(extra) = arguments.next() {
+        return argument_error(
+            &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stderr,
+        );
+    }
+
+    if input == OsStr::new("-") {
+        format_stdin(mode, stdin, stdout, stderr)
+    } else {
+        format_file(mode, Path::new(&input), stderr)
+    }
 }
 
 fn run_check(
@@ -125,13 +183,88 @@ fn check_file_with(
             );
         }
     };
-    let has_errors = output
-        .diagnostics
-        .iter()
-        .any(|diagnostic| diagnostic.severity == Severity::Error);
-    let rendered = render_diagnostics(path, &output.diagnostics);
-    if !rendered.is_empty() && stderr.write_all(rendered.as_bytes()).is_err() {
-        return EXIT_USAGE_OR_IO;
+    let has_errors = match write_diagnostics(path, &output.diagnostics, stderr) {
+        Ok(has_errors) => has_errors,
+        Err(()) => return EXIT_USAGE_OR_IO,
+    };
+
+    if has_errors {
+        EXIT_STACK_ERROR
+    } else {
+        EXIT_SUCCESS
+    }
+}
+
+fn format_file(mode: FormatMode, path: &Path, stderr: &mut dyn Write) -> u8 {
+    format_file_with(
+        mode,
+        path,
+        stderr,
+        |source| Engine::bundled().format(source),
+        atomic_replace,
+    )
+}
+
+fn format_file_with(
+    mode: FormatMode,
+    path: &Path,
+    stderr: &mut dyn Write,
+    format: impl FnOnce(&[u8]) -> Result<FormatOutput, OperationalError>,
+    replace: impl FnOnce(&Path, &[u8]) -> io::Result<()>,
+) -> u8 {
+    let source = match fs::read(path) {
+        Ok(source) => source,
+        Err(error) => {
+            return write_stderr_error(
+                &format!(
+                    "cannot read '{}': {}",
+                    path.display(),
+                    stable_io_error(error.kind())
+                ),
+                stderr,
+            );
+        }
+    };
+    let output = match format(&source) {
+        Ok(output) => output,
+        Err(error) => {
+            return write_stderr_error(
+                &format!("cannot format '{}': {error}", path.display()),
+                stderr,
+            );
+        }
+    };
+    let has_errors = match write_diagnostics(path, &output.diagnostics, stderr) {
+        Ok(has_errors) => has_errors,
+        Err(()) => return EXIT_USAGE_OR_IO,
+    };
+    let Some(formatted) = output.formatted_source else {
+        return if has_errors {
+            EXIT_STACK_ERROR
+        } else {
+            write_stderr_error("formatter produced no source or error diagnostic", stderr)
+        };
+    };
+    let changed = formatted.as_bytes() != source;
+
+    if mode == FormatMode::Check {
+        return if changed || has_errors {
+            EXIT_STACK_ERROR
+        } else {
+            EXIT_SUCCESS
+        };
+    }
+    if changed {
+        if let Err(error) = replace(path, formatted.as_bytes()) {
+            return write_stderr_error(
+                &format!(
+                    "cannot replace '{}': {}",
+                    path.display(),
+                    stable_io_error(error.kind())
+                ),
+                stderr,
+            );
+        }
     }
 
     if has_errors {
@@ -139,6 +272,116 @@ fn check_file_with(
     } else {
         EXIT_SUCCESS
     }
+}
+
+fn format_stdin(
+    mode: FormatMode,
+    stdin: &mut dyn Read,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let mut source = Vec::new();
+    if stdin.read_to_end(&mut source).is_err() {
+        return write_stderr_error("cannot read standard input", stderr);
+    }
+    format_stdin_with(mode, &source, stdout, stderr, |source| {
+        Engine::bundled().format(source)
+    })
+}
+
+fn format_stdin_with(
+    mode: FormatMode,
+    source: &[u8],
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+    format: impl FnOnce(&[u8]) -> Result<FormatOutput, OperationalError>,
+) -> u8 {
+    let output = match format(source) {
+        Ok(output) => output,
+        Err(error) => return write_stderr_error(&format!("cannot format stdin: {error}"), stderr),
+    };
+    let has_errors = match write_diagnostics(Path::new("<stdin>"), &output.diagnostics, stderr) {
+        Ok(has_errors) => has_errors,
+        Err(()) => return EXIT_USAGE_OR_IO,
+    };
+    let Some(formatted) = output.formatted_source else {
+        return if has_errors {
+            EXIT_STACK_ERROR
+        } else {
+            write_stderr_error("formatter produced no source or error diagnostic", stderr)
+        };
+    };
+    let changed = formatted.as_bytes() != source;
+
+    if mode == FormatMode::Check {
+        return if changed || has_errors {
+            EXIT_STACK_ERROR
+        } else {
+            EXIT_SUCCESS
+        };
+    }
+    if stdout.write_all(formatted.as_bytes()).is_err() {
+        return write_stderr_error("cannot write formatted source", stderr);
+    }
+    if has_errors {
+        EXIT_STACK_ERROR
+    } else {
+        EXIT_SUCCESS
+    }
+}
+
+fn atomic_replace(path: &Path, contents: &[u8]) -> io::Result<()> {
+    let permissions = fs::metadata(path)?.permissions();
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let (temporary_path, mut temporary_file) = create_temporary_file(parent)?;
+
+    let prepared = temporary_file
+        .write_all(contents)
+        .and_then(|()| temporary_file.set_permissions(permissions))
+        .and_then(|()| temporary_file.sync_all());
+    drop(temporary_file);
+    if let Err(error) = prepared {
+        let _ = fs::remove_file(&temporary_path);
+        return Err(error);
+    }
+    if let Err(error) = fs::rename(&temporary_path, path) {
+        let _ = fs::remove_file(&temporary_path);
+        return Err(error);
+    }
+    Ok(())
+}
+
+fn create_temporary_file(parent: &Path) -> io::Result<(PathBuf, File)> {
+    for attempt in 0..128_u8 {
+        let path = parent.join(format!(".stack-tmp-{}-{attempt}", std::process::id()));
+        match OpenOptions::new().write(true).create_new(true).open(&path) {
+            Ok(file) => return Ok((path, file)),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(error),
+        }
+    }
+    Err(io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        "could not reserve an atomic replacement file",
+    ))
+}
+
+fn write_diagnostics(
+    path: &Path,
+    diagnostics: &[Diagnostic],
+    stderr: &mut dyn Write,
+) -> Result<bool, ()> {
+    let has_errors = diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.severity == Severity::Error);
+    let rendered = render_diagnostics(path, diagnostics);
+    if !rendered.is_empty() && stderr.write_all(rendered.as_bytes()).is_err() {
+        return Err(());
+    }
+    Ok(has_errors)
 }
 
 fn render_diagnostics(path: &Path, diagnostics: &[Diagnostic]) -> String {
@@ -207,6 +450,14 @@ mod tests {
 
     struct FailingWriter;
 
+    struct FailingReader;
+
+    impl Read for FailingReader {
+        fn read(&mut self, _buffer: &mut [u8]) -> io::Result<usize> {
+            Err(io::Error::other("test reader failure"))
+        }
+    }
+
     impl Write for FailingWriter {
         fn write(&mut self, _buffer: &[u8]) -> io::Result<usize> {
             Err(io::Error::other("test writer failure"))
@@ -217,12 +468,20 @@ mod tests {
         }
     }
 
+    fn run_without_input(
+        arguments: impl IntoIterator<Item = OsString>,
+        stdout: &mut dyn Write,
+        stderr: &mut dyn Write,
+    ) -> u8 {
+        run(arguments, &mut io::empty(), stdout, stderr)
+    }
+
     #[test]
     fn help_version_and_argument_errors_have_stable_streams() {
         let mut stdout = Vec::new();
         let mut stderr = Vec::new();
         assert_eq!(
-            run([OsString::from("--version")], &mut stdout, &mut stderr),
+            run_without_input([OsString::from("--version")], &mut stdout, &mut stderr),
             EXIT_SUCCESS
         );
         assert_eq!(stdout, b"stack 0.1.0\n");
@@ -230,13 +489,16 @@ mod tests {
 
         stdout.clear();
         assert_eq!(
-            run([OsString::from("--help")], &mut stdout, &mut stderr),
+            run_without_input([OsString::from("--help")], &mut stdout, &mut stderr),
             EXIT_SUCCESS
         );
         assert_eq!(stdout, GENERAL_HELP.as_bytes());
 
         stdout.clear();
-        assert_eq!(run([], &mut stdout, &mut stderr), EXIT_USAGE_OR_IO);
+        assert_eq!(
+            run_without_input([], &mut stdout, &mut stderr),
+            EXIT_USAGE_OR_IO
+        );
         assert!(stdout.is_empty());
         assert!(String::from_utf8_lossy(&stderr).contains("error: missing command"));
     }
@@ -247,7 +509,7 @@ mod tests {
             let mut stdout = Vec::new();
             let mut stderr = Vec::new();
             assert_eq!(
-                run([OsString::from(alias)], &mut stdout, &mut stderr),
+                run_without_input([OsString::from(alias)], &mut stdout, &mut stderr),
                 EXIT_SUCCESS
             );
             assert!(!stdout.is_empty());
@@ -264,6 +526,19 @@ mod tests {
                 OsString::from("--help"),
                 OsString::from("extra"),
             ],
+            vec![OsString::from("fmt")],
+            vec![
+                OsString::from("fmt"),
+                OsString::from("--help"),
+                OsString::from("extra"),
+            ],
+            vec![OsString::from("fmt"), OsString::from("--check")],
+            vec![OsString::from("fmt"), OsString::from("--unknown")],
+            vec![
+                OsString::from("fmt"),
+                OsString::from("file.stack"),
+                OsString::from("extra"),
+            ],
             vec![
                 OsString::from("check"),
                 OsString::from("file.stack"),
@@ -272,7 +547,10 @@ mod tests {
         ] {
             let mut stdout = Vec::new();
             let mut stderr = Vec::new();
-            assert_eq!(run(arguments, &mut stdout, &mut stderr), EXIT_USAGE_OR_IO);
+            assert_eq!(
+                run_without_input(arguments, &mut stdout, &mut stderr),
+                EXIT_USAGE_OR_IO
+            );
             assert!(stdout.is_empty());
             assert!(String::from_utf8_lossy(&stderr).starts_with("error:"));
         }
@@ -280,7 +558,7 @@ mod tests {
         let mut stdout = Vec::new();
         let mut stderr = Vec::new();
         assert_eq!(
-            run(
+            run_without_input(
                 [OsString::from("check"), OsString::from("-h")],
                 &mut stdout,
                 &mut stderr,
@@ -289,6 +567,17 @@ mod tests {
         );
         assert_eq!(stdout, CHECK_HELP.as_bytes());
         assert!(stderr.is_empty());
+
+        stdout.clear();
+        assert_eq!(
+            run_without_input(
+                [OsString::from("fmt"), OsString::from("-h")],
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_SUCCESS
+        );
+        assert_eq!(stdout, FORMAT_HELP.as_bytes());
     }
 
     #[test]
@@ -374,5 +663,225 @@ mod tests {
         assert_eq!(status, EXIT_USAGE_OR_IO);
         assert_eq!(operational_status, EXIT_USAGE_OR_IO);
         assert!(String::from_utf8_lossy(&operational_stderr).contains("error: cannot check"));
+    }
+
+    #[test]
+    fn format_stream_failures_use_host_exit_status() {
+        let source = b"stack 1.0 diagram \"Valid\" { node api \"API\" }";
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        assert_eq!(
+            run(
+                [OsString::from("fmt"), OsString::from("-")],
+                &mut FailingReader,
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stderr).contains("cannot read standard input"));
+
+        stderr.clear();
+        assert_eq!(
+            format_stdin_with(FormatMode::Write, source, &mut stdout, &mut stderr, |_| {
+                Err(OperationalError::InvalidIntermediateRepresentation {
+                    reason: "test failure",
+                })
+            },),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stderr).contains("cannot format stdin"));
+
+        let output = Engine::bundled().format(source);
+        assert!(output.is_ok());
+        let Ok(mut empty_output) = output else {
+            return;
+        };
+        empty_output.formatted_source = None;
+        empty_output.diagnostics.clear();
+        stderr.clear();
+        assert_eq!(
+            format_stdin_with(FormatMode::Write, source, &mut stdout, &mut stderr, |_| Ok(
+                empty_output
+            ),),
+            EXIT_USAGE_OR_IO
+        );
+
+        let syntax = b"stack 1.0 diagram \"Incomplete\" {";
+        let mut failed_stderr = FailingWriter;
+        assert_eq!(
+            format_stdin_with(
+                FormatMode::Write,
+                syntax,
+                &mut stdout,
+                &mut failed_stderr,
+                |source| Engine::bundled().format(source),
+            ),
+            EXIT_USAGE_OR_IO
+        );
+
+        stderr.clear();
+        assert_eq!(
+            format_stdin_with(
+                FormatMode::Write,
+                syntax,
+                &mut stdout,
+                &mut stderr,
+                |source| Engine::bundled().format(source),
+            ),
+            EXIT_STACK_ERROR
+        );
+
+        let semantic = b"stack 1.0 diagram \"Invalid\" { node api \"A\" node api \"B\" }";
+        stdout.clear();
+        stderr.clear();
+        assert_eq!(
+            format_stdin_with(
+                FormatMode::Write,
+                semantic,
+                &mut stdout,
+                &mut stderr,
+                |source| Engine::bundled().format(source),
+            ),
+            EXIT_STACK_ERROR
+        );
+        assert!(!stdout.is_empty());
+
+        let mut failed_stdout = FailingWriter;
+        stderr.clear();
+        assert_eq!(
+            format_stdin_with(
+                FormatMode::Write,
+                source,
+                &mut failed_stdout,
+                &mut stderr,
+                |source| Engine::bundled().format(source),
+            ),
+            EXIT_USAGE_OR_IO
+        );
+    }
+
+    #[test]
+    fn format_file_failures_do_not_replace_the_source() {
+        let path = std::env::temp_dir().join(format!(
+            "stack-cli-format-failures-{}.stack",
+            std::process::id()
+        ));
+        let source = b"stack 1.0 diagram \"Valid\"{node api \"API\"}";
+        assert!(fs::write(&path, source).is_ok());
+
+        let mut stderr = Vec::new();
+        assert_eq!(
+            format_file_with(
+                FormatMode::Write,
+                &path,
+                &mut stderr,
+                |_| {
+                    Err(OperationalError::InvalidIntermediateRepresentation {
+                        reason: "test failure",
+                    })
+                },
+                atomic_replace,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+
+        let syntax = b"stack 1.0 diagram \"Incomplete\" {";
+        assert!(fs::write(&path, syntax).is_ok());
+        let mut failed_stderr = FailingWriter;
+        assert_eq!(
+            format_file_with(
+                FormatMode::Write,
+                &path,
+                &mut failed_stderr,
+                |source| Engine::bundled().format(source),
+                atomic_replace,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert_eq!(fs::read(&path).ok().as_deref(), Some(syntax.as_slice()));
+        assert!(fs::write(&path, source).is_ok());
+
+        let output = Engine::bundled().format(source);
+        assert!(output.is_ok());
+        let Ok(mut empty_output) = output else {
+            return;
+        };
+        empty_output.formatted_source = None;
+        empty_output.diagnostics.clear();
+        stderr.clear();
+        assert_eq!(
+            format_file_with(
+                FormatMode::Write,
+                &path,
+                &mut stderr,
+                |_| Ok(empty_output),
+                atomic_replace,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+
+        stderr.clear();
+        assert_eq!(
+            format_file_with(
+                FormatMode::Write,
+                &path,
+                &mut stderr,
+                |source| Engine::bundled().format(source),
+                |_, _| Err(io::Error::from(io::ErrorKind::PermissionDenied)),
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert_eq!(fs::read(&path).ok().as_deref(), Some(source.as_slice()));
+        assert!(fs::remove_file(path).is_ok());
+    }
+
+    #[test]
+    fn atomic_replace_removes_its_temporary_file_after_rename_failure() {
+        let root =
+            std::env::temp_dir().join(format!("stack-cli-rename-failure-{}", std::process::id()));
+        let target = root.join("target");
+        assert!(fs::create_dir(&root).is_ok());
+        assert!(fs::create_dir(&target).is_ok());
+        assert!(fs::write(target.join("keep"), b"keep").is_ok());
+
+        assert!(atomic_replace(&target, b"formatted").is_err());
+        assert_eq!(
+            fs::read_dir(&root).ok().map(|entries| entries.count()),
+            Some(1)
+        );
+        assert!(target.join("keep").is_file());
+        assert!(fs::remove_dir_all(root).is_ok());
+    }
+
+    #[test]
+    fn temporary_file_creation_skips_collisions_and_is_bounded() {
+        let parent =
+            std::env::temp_dir().join(format!("stack-cli-temporary-files-{}", std::process::id()));
+        assert!(fs::create_dir(&parent).is_ok());
+        for attempt in 0..128_u8 {
+            assert!(
+                fs::write(
+                    parent.join(format!(".stack-tmp-{}-{attempt}", std::process::id())),
+                    b"collision",
+                )
+                .is_ok()
+            );
+        }
+        let exhausted = create_temporary_file(&parent);
+        assert_eq!(
+            exhausted.err().map(|error| error.kind()),
+            Some(io::ErrorKind::AlreadyExists)
+        );
+        assert!(fs::remove_dir_all(parent).is_ok());
+
+        let missing =
+            std::env::temp_dir().join(format!("stack-cli-missing-parent-{}", std::process::id()));
+        assert_eq!(
+            create_temporary_file(&missing)
+                .err()
+                .map(|error| error.kind()),
+            Some(io::ErrorKind::NotFound)
+        );
     }
 }
