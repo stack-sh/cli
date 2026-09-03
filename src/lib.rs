@@ -8,7 +8,9 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 
-use stack_engine::{CheckOutput, Diagnostic, Engine, FormatOutput, OperationalError, Severity};
+use stack_engine::{
+    CheckOutput, Diagnostic, Engine, FormatOutput, OperationalError, RenderOutput, Severity,
+};
 
 /// Exit status used when a command completes without Stack error diagnostics.
 pub const EXIT_SUCCESS: u8 = 0;
@@ -17,15 +19,22 @@ pub const EXIT_STACK_ERROR: u8 = 1;
 /// Exit status used for argument, host I/O, or engine operational failures.
 pub const EXIT_USAGE_OR_IO: u8 = 2;
 
-const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack --help\n  stack --version\n\nCommands:\n  check    Validate a Stack source file without modifying it\n  fmt      Format a file in place or read from standard input\n";
+const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [-o <OUTPUT>]\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n";
 const CHECK_HELP: &str =
     "Validate a Stack source file without modifying it\n\nUsage:\n  stack check <FILE>\n";
 const FORMAT_HELP: &str = "Format Stack source canonically\n\nUsage:\n  stack fmt <FILE>\n  stack fmt --check <FILE>\n  stack fmt -\n\nArguments:\n  <FILE>    Format the file atomically in place\n  -         Read from standard input and write to standard output\n\nOptions:\n  --check   Report whether formatting is required without writing output\n";
+const RENDER_HELP: &str = "Render Stack source as standalone SVG\n\nUsage:\n  stack render <FILE>\n  stack render <FILE> -o <OUTPUT>\n\nArguments:\n  <FILE>      Read Stack source bytes from this file\n\nOptions:\n  -o <OUTPUT> Write SVG atomically instead of using standard output\n";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum FormatMode {
     Write,
     Check,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum RenderDestination {
+    Stdout,
+    File(PathBuf),
 }
 
 /// Runs the CLI with explicit streams and returns its process exit status.
@@ -68,11 +77,66 @@ pub fn run(
     if command == OsStr::new("fmt") {
         return run_format(arguments, stdin, stdout, stderr);
     }
+    if command == OsStr::new("render") {
+        return run_render(arguments, stdout, stderr);
+    }
 
     argument_error(
         &format!("unknown command '{}'", command.to_string_lossy()),
         stderr,
     )
+}
+
+fn run_render(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(source) = arguments.next() else {
+        return argument_error("missing file for 'stack render'", stderr);
+    };
+    if source == OsStr::new("--help") || source == OsStr::new("-h") {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(RENDER_HELP, stdout, stderr);
+    }
+    if source.to_string_lossy().starts_with('-') {
+        return argument_error(
+            &format!("unknown option '{}'", source.to_string_lossy()),
+            stderr,
+        );
+    }
+
+    let destination = match arguments.next() {
+        None => RenderDestination::Stdout,
+        Some(option) if option == OsStr::new("-o") => {
+            let Some(output) = arguments.next() else {
+                return argument_error("missing output file after '-o'", stderr);
+            };
+            if let Some(extra) = arguments.next() {
+                return argument_error(
+                    &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                    stderr,
+                );
+            }
+            if output == source {
+                return argument_error("input and output files must be different", stderr);
+            }
+            RenderDestination::File(PathBuf::from(output))
+        }
+        Some(extra) => {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+    };
+
+    render_file(Path::new(&source), destination, stdout, stderr)
 }
 
 fn run_format(
@@ -193,6 +257,85 @@ fn check_file_with(
     } else {
         EXIT_SUCCESS
     }
+}
+
+fn render_file(
+    path: &Path,
+    destination: RenderDestination,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    render_file_with(
+        path,
+        destination,
+        stdout,
+        stderr,
+        |source| Engine::bundled().render(source),
+        atomic_write_output,
+    )
+}
+
+fn render_file_with(
+    path: &Path,
+    destination: RenderDestination,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+    render: impl FnOnce(&[u8]) -> Result<RenderOutput, OperationalError>,
+    write_output: impl FnOnce(&Path, &[u8]) -> io::Result<()>,
+) -> u8 {
+    let source = match fs::read(path) {
+        Ok(source) => source,
+        Err(error) => {
+            return write_stderr_error(
+                &format!(
+                    "cannot read '{}': {}",
+                    path.display(),
+                    stable_io_error(error.kind())
+                ),
+                stderr,
+            );
+        }
+    };
+    let output = match render(&source) {
+        Ok(output) => output,
+        Err(error) => {
+            return write_stderr_error(
+                &format!("cannot render '{}': {error}", path.display()),
+                stderr,
+            );
+        }
+    };
+    let has_errors = match write_diagnostics(path, &output.diagnostics, stderr) {
+        Ok(has_errors) => has_errors,
+        Err(()) => return EXIT_USAGE_OR_IO,
+    };
+    if has_errors {
+        return EXIT_STACK_ERROR;
+    }
+    let Some(svg) = output.svg else {
+        return write_stderr_error("renderer produced no SVG or error diagnostic", stderr);
+    };
+
+    match destination {
+        RenderDestination::Stdout => {
+            if stdout.write_all(svg.as_bytes()).is_err() {
+                return write_stderr_error("cannot write rendered SVG", stderr);
+            }
+        }
+        RenderDestination::File(output_path) => {
+            if let Err(error) = write_output(&output_path, svg.as_bytes()) {
+                return write_stderr_error(
+                    &format!(
+                        "cannot write '{}': {}",
+                        output_path.display(),
+                        stable_io_error(error.kind())
+                    ),
+                    stderr,
+                );
+            }
+        }
+    }
+    EXIT_SUCCESS
 }
 
 fn format_file(mode: FormatMode, path: &Path, stderr: &mut dyn Write) -> u8 {
@@ -332,6 +475,23 @@ fn format_stdin_with(
 
 fn atomic_replace(path: &Path, contents: &[u8]) -> io::Result<()> {
     let permissions = fs::metadata(path)?.permissions();
+    atomic_write(path, contents, Some(permissions))
+}
+
+fn atomic_write_output(path: &Path, contents: &[u8]) -> io::Result<()> {
+    let permissions = match fs::metadata(path) {
+        Ok(metadata) => Some(metadata.permissions()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => None,
+        Err(error) => return Err(error),
+    };
+    atomic_write(path, contents, permissions)
+}
+
+fn atomic_write(
+    path: &Path,
+    contents: &[u8],
+    permissions: Option<fs::Permissions>,
+) -> io::Result<()> {
     let parent = path
         .parent()
         .filter(|parent| !parent.as_os_str().is_empty())
@@ -340,7 +500,10 @@ fn atomic_replace(path: &Path, contents: &[u8]) -> io::Result<()> {
 
     let prepared = temporary_file
         .write_all(contents)
-        .and_then(|()| temporary_file.set_permissions(permissions))
+        .and_then(|()| match permissions {
+            Some(permissions) => temporary_file.set_permissions(permissions),
+            None => Ok(()),
+        })
         .and_then(|()| temporary_file.sync_all());
     drop(temporary_file);
     if let Err(error) = prepared {
@@ -539,6 +702,36 @@ mod tests {
                 OsString::from("file.stack"),
                 OsString::from("extra"),
             ],
+            vec![OsString::from("render")],
+            vec![
+                OsString::from("render"),
+                OsString::from("--help"),
+                OsString::from("extra"),
+            ],
+            vec![OsString::from("render"), OsString::from("--unknown")],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("-o"),
+            ],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("unexpected"),
+            ],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("-o"),
+                OsString::from("out.svg"),
+                OsString::from("extra"),
+            ],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("-o"),
+                OsString::from("file.stack"),
+            ],
             vec![
                 OsString::from("check"),
                 OsString::from("file.stack"),
@@ -578,6 +771,17 @@ mod tests {
             EXIT_SUCCESS
         );
         assert_eq!(stdout, FORMAT_HELP.as_bytes());
+
+        stdout.clear();
+        assert_eq!(
+            run_without_input(
+                [OsString::from("render"), OsString::from("--help")],
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_SUCCESS
+        );
+        assert_eq!(stdout, RENDER_HELP.as_bytes());
     }
 
     #[test]
@@ -883,5 +1087,100 @@ mod tests {
                 .map(|error| error.kind()),
             Some(io::ErrorKind::NotFound)
         );
+    }
+
+    #[test]
+    fn render_failures_do_not_emit_partial_artifacts() {
+        let path = std::env::temp_dir().join(format!(
+            "stack-cli-render-failures-{}.stack",
+            std::process::id()
+        ));
+        let source = b"stack 1.0 diagram \"Valid\" { node api \"API\" }";
+        assert!(fs::write(&path, source).is_ok());
+
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        assert_eq!(
+            render_file_with(
+                &path,
+                RenderDestination::Stdout,
+                &mut stdout,
+                &mut stderr,
+                |_| {
+                    Err(OperationalError::InvalidIntermediateRepresentation {
+                        reason: "test failure",
+                    })
+                },
+                atomic_write_output,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(stdout.is_empty());
+
+        let output = Engine::bundled().render(source);
+        assert!(output.is_ok());
+        let Ok(mut empty_output) = output else {
+            return;
+        };
+        empty_output.svg = None;
+        empty_output.diagnostics.clear();
+        stderr.clear();
+        assert_eq!(
+            render_file_with(
+                &path,
+                RenderDestination::Stdout,
+                &mut stdout,
+                &mut stderr,
+                |_| Ok(empty_output),
+                atomic_write_output,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+
+        let mut failed_stdout = FailingWriter;
+        stderr.clear();
+        assert_eq!(
+            render_file_with(
+                &path,
+                RenderDestination::Stdout,
+                &mut failed_stdout,
+                &mut stderr,
+                |source| Engine::bundled().render(source),
+                atomic_write_output,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+
+        let output_path = path.with_extension("svg");
+        stderr.clear();
+        assert_eq!(
+            render_file_with(
+                &path,
+                RenderDestination::File(output_path.clone()),
+                &mut stdout,
+                &mut stderr,
+                |source| Engine::bundled().render(source),
+                |_, _| Err(io::Error::from(io::ErrorKind::PermissionDenied)),
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(!output_path.exists());
+
+        let syntax = b"stack 1.0 diagram \"Incomplete\" {";
+        assert!(fs::write(&path, syntax).is_ok());
+        let mut failed_stderr = FailingWriter;
+        assert_eq!(
+            render_file_with(
+                &path,
+                RenderDestination::Stdout,
+                &mut stdout,
+                &mut failed_stderr,
+                |source| Engine::bundled().render(source),
+                atomic_write_output,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(stdout.is_empty());
+        assert!(fs::remove_file(path).is_ok());
     }
 }

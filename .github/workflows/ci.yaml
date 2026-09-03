@@ -57,10 +57,15 @@ jobs:
         run: cargo +stable llvm-cov --all-features --locked --fail-under-lines 90 --fail-under-functions 95 --fail-under-regions 90
       - name: Build release binary
         run: cargo +stable build --release --locked
+      - name: Validate rendered SVG
+        run: python3 scripts/validate-render.py
       - name: Smoke test command metadata
         run: |
           ./target/release/stack --help
           ./target/release/stack --version
+          ./target/release/stack check --help
+          ./target/release/stack fmt --help
+          ./target/release/stack render --help
       - name: Verify repository files
         run: |
           test -s README.md
@@ -70,6 +75,7 @@ jobs:
           test -s Cargo.lock
           test -s src/main.rs
           test -s tests/specification-revision
+          test -s tests/fixtures/render.stack
 
   msrv:
     name: Minimum supported Rust
