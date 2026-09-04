@@ -6,16 +6,17 @@ Write repository content, code comments, commit messages, issues, and pull reque
 
 ## Architecture
 
-- Keep this repository focused on the native `stack` command, host I/O, exit codes, configuration discovery, and future authenticated theme delivery.
+- Keep this repository focused on the native `stack` command, host I/O, exit codes, configuration discovery, provider-pack import, and notice output.
 - Link `stack-engine` as a native Rust dependency; do not duplicate compiler, formatter, layout, or SVG-rendering logic.
-- Keep user authentication, token issuance, billing, and entitlement authority in the future web service. The CLI may only act as a scoped client.
-- Do not add auth or entitlement behavior before its threat model, token lifecycle, storage mechanism, and public service contract are reviewed.
+- Keep provider-pack import, local cache behavior, provenance display, and notice output at the CLI boundary. Do not make the engine read the filesystem or network.
+- Do not add authentication, billing, entitlement, or proprietary-theme delivery behavior; they are outside the product roadmap.
 
 ## Licensing and security
 
-- Do not describe this private source repository as open source or add an open-source `LICENSE` without an explicit product decision.
-- Complete `LICENSING.md` release requirements before distributing a CLI binary externally.
-- Never commit credentials, tokens, private keys, signing material, paid-theme contents, customer data, or local auth state.
+- Repository-authored work is Apache-2.0. Record every distributed dependency and asset in `THIRD_PARTY_LICENSES.md` before release.
+- Do not bundle vendor icons unless their exact terms permit the relevant source, binary, and generated-output distribution channels. Preserve upstream artwork, provenance, and notices.
+- Never commit credentials, tokens, private keys, signing material, customer data, or local auth state.
+- Report security vulnerabilities privately through the process in `SECURITY.md`.
 
 ## Delivery
 

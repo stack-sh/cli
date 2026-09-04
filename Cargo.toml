@@ -6,13 +6,15 @@ rust-version = "1.85"
 publish = false
 description = "Native command-line interface for Stack diagrams"
 repository = "https://github.com/stack-sh/cli"
+license = "Apache-2.0"
+readme = "README.md"
 
 [[bin]]
 name = "stack"
 path = "src/main.rs"
 
 [dependencies]
-stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "07b71c783a3c1f9037d865b19672a9522eb0b24d" }
+stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "e1240661b6d8cebd95ef24207618a62fadb15b48" }
 
 [features]
 conformance = []

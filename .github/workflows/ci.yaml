@@ -70,7 +70,12 @@ jobs:
         run: |
           test -s README.md
           test -s AGENTS.md
-          test -s LICENSING.md
+          test -s LICENSE
+          test -s NOTICE
+          test -s THIRD_PARTY_LICENSES.md
+          test -s CONTRIBUTING.md
+          test -s SECURITY.md
+          test -s docs/publication-audit.md
           test -s Cargo.toml
           test -s Cargo.lock
           test -s src/main.rs

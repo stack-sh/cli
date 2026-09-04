@@ -563,6 +563,9 @@ fn render_diagnostics(path: &Path, diagnostics: &[Diagnostic]) -> String {
             diagnostic.code,
             diagnostic.message
         );
+        if !diagnostic.expected.is_empty() {
+            let _ = writeln!(rendered, "  expected: {}", diagnostic.expected.join(", "));
+        }
         if let Some(help) = &diagnostic.help {
             let _ = writeln!(rendered, "  help: {help}");
         }
@@ -802,7 +805,8 @@ mod tests {
                     column: 4,
                 },
             },
-            help: None,
+            expected: vec!["node".to_owned(), "group".to_owned()],
+            help: Some("choose a declaration".to_owned()),
             related: vec![stack_engine::RelatedInformation {
                 message: "related".to_owned(),
                 range: stack_engine::SourceRange {
@@ -822,7 +826,7 @@ mod tests {
 
         assert_eq!(
             render_diagnostics(Path::new("arch.stack"), &[diagnostic]),
-            "arch.stack:2:3: error[STKTEST]: primary\narch.stack:4:5: note: related\n"
+            "arch.stack:2:3: error[STKTEST]: primary\n  expected: node, group\n  help: choose a declaration\narch.stack:4:5: note: related\n"
         );
     }
 

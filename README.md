@@ -1,8 +1,8 @@
 # Stack CLI
 
-`stack-sh/cli` is the private source repository for the native Rust `stack` command.
+`stack-sh/cli` is the open-source native Rust `stack` command for Stack architecture diagrams.
 
-The repository contains native validation, formatting, and rendering commands. The CLI is not yet distributed as a supported external binary and its interface remains pre-release.
+The repository contains native validation, formatting, and rendering commands. The interface remains pre-release and no supported binary distribution is published yet.
 
 ## Commands
 
@@ -27,9 +27,9 @@ stack render arch.stack -o arch.svg
 | One or more Stack error diagnostics, or `fmt --check` finds a difference | `1` |
 | Invalid arguments, host I/O failure, or engine operational failure | `2` |
 
-The CLI will link `stack-engine` as a native Rust dependency. It owns filesystem and standard-stream behavior, process exit codes, configuration discovery, and command presentation. It must not duplicate compiler, formatter, layout, or SVG-rendering logic.
+The CLI links `stack-engine` as a native Rust dependency. It owns filesystem and standard-stream behavior, process exit codes, configuration discovery, provider-pack import, notice output, and command presentation. It must not duplicate compiler, formatter, layout, or SVG-rendering logic.
 
-Future authenticated theme delivery may add a client for short-lived, scope-limited Stack tokens and entitlement-aware theme downloads. Credentials and downloaded paid-theme contents must never be committed to this repository.
+The bundled engine resolves the provider-neutral core icons `api`, `web`, `mobile`, `desktop`, `server`, `container`, `cluster`, `cloud`, `scheduler`, `webhook`, `identity`, and `observability`. Vendor assets are not bundled unless their exact terms permit software redistribution. Future provider-pack support will preserve upstream artwork and attach source and terms metadata.
 
 ## Development
 
@@ -45,6 +45,8 @@ CI validates formatting, unit and process-level integration tests, at least 90% 
 
 Canonical formatter behavior is checked against the pinned `stack-sh/specification` fixture revision recorded in `tests/specification-revision`.
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a change. Please report security vulnerabilities through the process in [SECURITY.md](./SECURITY.md), not a public issue.
+
 ## Licensing
 
-The private source code in this repository is not currently offered under an open-source license. See [LICENSING.md](./LICENSING.md) for the decisions required before external distribution.
+Repository-authored work is licensed under the [Apache License 2.0](./LICENSE) for personal and commercial use. Runtime and build dependency licenses are recorded in [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md). A future binary release must ship the applicable license and notice files described there.
