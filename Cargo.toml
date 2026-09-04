@@ -18,8 +18,8 @@ roxmltree = "=0.21.1"
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.151"
 sha2 = "=0.11.0"
-stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "b4a85b09f0d75d5966d50dc76b39d7ea4989c823" }
-stack-theme = { git = "https://github.com/stack-sh/theme.git", rev = "13e41b84167e810c36c3ab87fff2e1fda84a2b8f" }
+stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "2c9adabd2ffee627ac5fe3ee26331b0ad75bceac" }
+stack-theme = { git = "https://github.com/stack-sh/theme.git", rev = "7e208d6a3c90d255799f390a4e8b86248c73caee" }
 zip = { version = "=6.0.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [features]
