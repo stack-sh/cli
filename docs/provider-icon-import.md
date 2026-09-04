@@ -28,11 +28,11 @@ stack icons import aws ~/Downloads/aws-icons.zip \
 
 The manifest follows the public [`stack-sh/theme` provider-pack schema](https://github.com/stack-sh/theme/blob/main/PROVIDER_PACKS.md). It records the official source, archive and asset hashes, upstream paths, allowed output categories, transformations, official product names, terms URL, review date, and non-endorsement notice.
 
-Google publishes the audited core-product and category icons as separate archives. Supply both local files explicitly:
+Google publishes the audited core-product and category icons as separate archives. The positional `ARCHIVE` is the primary core-products ZIP. `--source categories=<ARCHIVE>` maps the second local ZIP to the required `categories` source ID; it is not a URL and does not download anything.
 
 ```sh
-stack icons import gcp ~/Downloads/core-products-icons.zip \
-  --source categories=~/Downloads/category-icons.zip \
+stack icons import gcp /path/to/core-products-icons.zip \
+  --source categories=/path/to/category-icons.zip \
   --accept-terms \
   -o .stack-icons/gcp
 ```
