@@ -1,0 +1,245 @@
+{
+  "$schema": "../schemas/example-catalog.schema.json",
+  "schemaVersion": "1.0",
+  "languageVersion": "1.0",
+  "examples": [
+    {
+      "id": "hello-stack",
+      "title": "Hello Stack",
+      "summary": "Start with two nodes and one directed edge.",
+      "learningStage": "starter",
+      "providers": [],
+      "features": ["directed-edges"],
+      "source": "01-minimal.stack",
+      "expected": {
+        "description": "A web app points to an API in one compact row.",
+        "nodes": 2,
+        "groups": 0,
+        "edges": 1
+      },
+      "thumbnail": {
+        "alt": "A minimal diagram with Web app connected to API"
+      }
+    },
+    {
+      "id": "application-and-data",
+      "title": "Application and data",
+      "summary": "Add semantic node kinds, icons, details, an edge label, and a light theme.",
+      "learningStage": "starter",
+      "providers": [],
+      "features": [
+        "themes",
+        "node-kinds",
+        "node-details",
+        "edge-labels",
+        "edge-kinds",
+        "directed-edges"
+      ],
+      "source": "02-node-semantics.stack",
+      "expected": {
+        "description": "An application sends SQL data to a PostgreSQL database.",
+        "nodes": 2,
+        "groups": 0,
+        "edges": 1
+      },
+      "thumbnail": {
+        "alt": "Application and Primary database nodes connected by a SQL edge"
+      }
+    },
+    {
+      "id": "groups-and-layout",
+      "title": "Groups and layout",
+      "summary": "Organize clients and platform services with explicit direction, rank, and order hints.",
+      "learningStage": "intermediate",
+      "providers": [],
+      "features": [
+        "node-kinds",
+        "groups",
+        "layout-direction",
+        "rank-constraints",
+        "order-constraints",
+        "edge-labels",
+        "edge-kinds",
+        "directed-edges"
+      ],
+      "source": "03-groups-and-layout.stack",
+      "expected": {
+        "description": "Browser and mobile clients converge on a gateway before the API and database.",
+        "nodes": 5,
+        "groups": 2,
+        "edges": 4
+      },
+      "thumbnail": {
+        "alt": "Client and Platform groups connected through an Edge gateway"
+      }
+    },
+    {
+      "id": "commerce-platform",
+      "title": "Commerce platform",
+      "summary": "Model a production-like commerce system with nested responsibilities and asynchronous processing.",
+      "learningStage": "advanced",
+      "providers": [],
+      "features": [
+        "node-kinds",
+        "node-details",
+        "groups",
+        "layout-direction",
+        "rank-constraints",
+        "order-constraints",
+        "edge-labels",
+        "edge-kinds",
+        "directed-edges"
+      ],
+      "source": "04-commerce-platform.stack",
+      "expected": {
+        "description": "Storefront, commerce, processing, data, and partner groups show a full order flow.",
+        "nodes": 13,
+        "groups": 5,
+        "edges": 12
+      },
+      "thumbnail": {
+        "alt": "A production commerce architecture from customer through storefront, services, data, and partners"
+      }
+    },
+    {
+      "id": "aws-serverless-checkout",
+      "title": "AWS serverless checkout",
+      "summary": "Follow a checkout request through AWS edge, serverless compute, events, and storage services.",
+      "learningStage": "intermediate",
+      "providers": ["aws"],
+      "features": [
+        "themes",
+        "node-kinds",
+        "groups",
+        "layout-direction",
+        "edge-labels",
+        "edge-kinds",
+        "directed-edges",
+        "provider-icons"
+      ],
+      "source": "05-aws-serverless.stack",
+      "expected": {
+        "description": "AWS edge and Lambda services emit an order event before persisting receipts.",
+        "nodes": 8,
+        "groups": 3,
+        "edges": 7
+      },
+      "thumbnail": {
+        "alt": "AWS checkout architecture with Edge, Serverless compute, and Data groups"
+      }
+    },
+    {
+      "id": "gcp-data-service",
+      "title": "GCP data service",
+      "summary": "Connect Cloud Run to transactional, object, and analytical data stores.",
+      "learningStage": "intermediate",
+      "providers": ["gcp"],
+      "features": [
+        "themes",
+        "node-kinds",
+        "groups",
+        "layout-direction",
+        "edge-labels",
+        "edge-kinds",
+        "directed-edges",
+        "provider-icons"
+      ],
+      "source": "06-gcp-data-service.stack",
+      "expected": {
+        "description": "A Cloud Run API serves a web client and feeds Cloud SQL, Cloud Storage, and BigQuery.",
+        "nodes": 6,
+        "groups": 2,
+        "edges": 5
+      },
+      "thumbnail": {
+        "alt": "GCP application and analytics groups connected to a web client"
+      }
+    },
+    {
+      "id": "azure-event-platform",
+      "title": "Azure event platform",
+      "summary": "Trace asynchronous work from Azure delivery services through functions, Service Bus, and data stores.",
+      "learningStage": "intermediate",
+      "providers": ["azure"],
+      "features": [
+        "themes",
+        "node-kinds",
+        "groups",
+        "layout-direction",
+        "edge-labels",
+        "edge-kinds",
+        "directed-edges",
+        "provider-icons"
+      ],
+      "source": "07-azure-event-platform.stack",
+      "expected": {
+        "description": "Front Door and App Service hand work to functions and Service Bus before storage.",
+        "nodes": 8,
+        "groups": 3,
+        "edges": 7
+      },
+      "thumbnail": {
+        "alt": "Azure delivery, event processing, and data groups in a left-to-right flow"
+      }
+    },
+    {
+      "id": "github-delivery-workflow",
+      "title": "GitHub delivery workflow",
+      "summary": "Describe a SaaS delivery path from source control and CI to hosting and error monitoring.",
+      "learningStage": "intermediate",
+      "providers": ["simple-icons"],
+      "features": [
+        "themes",
+        "node-kinds",
+        "groups",
+        "layout-direction",
+        "edge-labels",
+        "edge-kinds",
+        "directed-edges",
+        "provider-icons"
+      ],
+      "source": "08-github-delivery.stack",
+      "expected": {
+        "description": "A developer push triggers GitHub Actions, deployment, and error reporting.",
+        "nodes": 5,
+        "groups": 2,
+        "edges": 4
+      },
+      "thumbnail": {
+        "alt": "GitHub repository and Actions connected to Vercel and Sentry"
+      }
+    },
+    {
+      "id": "mixed-provider-platform",
+      "title": "Mixed-provider platform",
+      "summary": "Combine AWS, GCP, Azure, and SaaS services while preserving semantic kinds and portable flow.",
+      "learningStage": "advanced",
+      "providers": ["aws", "gcp", "azure", "simple-icons"],
+      "features": [
+        "themes",
+        "node-kinds",
+        "groups",
+        "nested-groups",
+        "layout-direction",
+        "rank-constraints",
+        "order-constraints",
+        "edge-labels",
+        "edge-kinds",
+        "directed-edges",
+        "bidirectional-edges",
+        "association-edges",
+        "provider-icons"
+      ],
+      "source": "09-mixed-provider-platform.stack",
+      "expected": {
+        "description": "A web client crosses provider boundaries for API, processing, events, data, and monitoring.",
+        "nodes": 7,
+        "groups": 4,
+        "edges": 6
+      },
+      "thumbnail": {
+        "alt": "A mixed-provider platform spanning Vercel, GCP, AWS, Azure, PostgreSQL, and Sentry"
+      }
+    }
+  ]
+}

@@ -10,6 +10,9 @@ The repository contains native validation, formatting, and rendering commands. T
 stack help
 stack help render
 stack version
+stack init
+stack init --template groups-and-layout
+stack init --template aws-serverless-checkout -o checkout.stack
 stack check arch.stack
 stack fmt arch.stack
 stack fmt --check arch.stack
@@ -24,6 +27,8 @@ stack render arch.stack -o arch.svg --notice arch.NOTICE.md
 ```
 
 `stack help`, `stack -h`, and `stack --help` print top-level help. Use `stack help <COMMAND>` or `<COMMAND> -h` / `<COMMAND> --help` for command-specific usage and examples; nested icon help is available through `stack help icons <COMMAND>`. `stack version`, `stack -v`, `stack -V`, and `stack --version` print the same Cargo package version. Help and version output use standard output and exit with status `0`. Invalid arguments and unknown commands use standard error and status `2`; close command typos include a suggested command and the relevant help invocation.
+
+`stack init` creates `diagram.stack` from the versioned `hello-stack` template without prompting. Use `--template <ID>` to select any of the nine curated examples shared with the public Stack specification and Web gallery, and `-o` / `--output` to choose another file. Existing paths are never replaced unless `--force` is explicit; forced writes use the same atomic output behavior as rendering. Provider templates print the exact `stack icons import` commands needed for branded rendering and remain valid with deterministic fallback icons when packs are absent. The embedded catalog and source bytes are pinned by `tests/specification-revision`, and CI rejects drift from that public specification commit.
 
 `stack check` reads the file as bytes and runs the full compiler, theme, layout, and routing validation pipeline without changing the source. Diagnostics are written to standard error in source order. Standard output remains empty.
 
@@ -58,6 +63,17 @@ cargo clippy --all-targets --all-features --locked -- -D warnings
 CI validates formatting, unit and process-level integration tests, at least 90% line/region coverage and 95% function coverage, Clippy, documentation, a release build, `--help`, and `--version` on stable Rust. Tests and Clippy also run on Rust 1.85.
 
 Canonical formatter behavior is checked against the pinned `stack-sh/specification` fixture revision recorded in `tests/specification-revision`.
+
+The same checkout validates and updates the embedded `stack init` templates:
+
+```sh
+STACK_SPECIFICATION_DIR=../specification \
+  node scripts/sync-example-templates.mjs --check
+STACK_SPECIFICATION_DIR=../specification \
+  node scripts/sync-example-templates.mjs
+STACK_SPECIFICATION_DIR=../specification \
+  cargo test --features conformance --test template-conformance --locked
+```
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a change. Please report security vulnerabilities through the process in [SECURITY.md](./SECURITY.md), not a public issue.
 

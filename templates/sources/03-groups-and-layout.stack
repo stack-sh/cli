@@ -1,0 +1,52 @@
+stack 1.0
+
+diagram "Public application" {
+  layout {
+    direction right
+  }
+
+  group clients "Clients" {
+    layout {
+      direction down
+      rank same [browser, mobile]
+      order [browser, mobile]
+    }
+
+    node browser "Browser" {
+      kind client
+      icon "web"
+    }
+
+    node mobile "Mobile app" {
+      kind client
+      icon "mobile"
+    }
+  }
+
+  node gateway "Edge gateway" {
+    icon "gateway"
+  }
+
+  group platform "Platform" {
+    node api "Application API"
+    node db "Primary database" {
+      kind database
+    }
+  }
+
+  edge browser -> gateway "HTTPS" {
+    kind request
+  }
+
+  edge mobile -> gateway "HTTPS" {
+    kind request
+  }
+
+  edge gateway -> api "HTTPS" {
+    kind request
+  }
+
+  edge api -> db "SQL" {
+    kind data
+  }
+}

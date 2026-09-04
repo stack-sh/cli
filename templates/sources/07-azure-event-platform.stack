@@ -1,0 +1,76 @@
+stack 1.0
+
+diagram "Azure event platform" {
+  theme light
+
+  layout {
+    direction right
+  }
+
+  node customer "Customer" {
+    kind actor
+  }
+
+  group delivery "Delivery" {
+    node frontdoor "Front Door" {
+      kind service
+      icon "azure:front-door-and-cdn-profiles"
+    }
+
+    node app "App Service" {
+      kind service
+      icon "azure:app-service"
+    }
+  }
+
+  group processing "Event processing" {
+    node ingest "Ingest function" {
+      kind function
+      icon "azure:function-apps"
+    }
+
+    node bus "Service Bus" {
+      kind queue
+      icon "azure:azure-service-bus"
+    }
+
+    node worker "Background function" {
+      kind worker
+      icon "azure:function-apps"
+    }
+  }
+
+  group data "Data" {
+    node database "Cosmos DB" {
+      kind database
+      icon "azure:azure-cosmos-db"
+    }
+
+    node archive "Storage account" {
+      kind storage
+      icon "azure:storage-accounts"
+    }
+  }
+
+  edge customer -> frontdoor "HTTPS" {
+    kind request
+  }
+  edge frontdoor -> app "Route" {
+    kind request
+  }
+  edge app -> ingest "Submit" {
+    kind request
+  }
+  edge ingest -> bus "Work item" {
+    kind event
+  }
+  edge bus -> worker "Dispatch" {
+    kind event
+  }
+  edge worker -> database "Persist" {
+    kind data
+  }
+  edge worker -> archive "Archive" {
+    kind data
+  }
+}

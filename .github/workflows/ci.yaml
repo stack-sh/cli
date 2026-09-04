@@ -32,6 +32,10 @@ jobs:
         run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
       - name: Validate provider catalogs
         run: node scripts/validate-provider-catalogs.mjs
+      - name: Validate pinned example templates
+        env:
+          STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
+        run: node scripts/sync-example-templates.mjs --check
       - name: Install latest stable Rust toolchain
         run: rustup toolchain install stable --profile minimal --component clippy,rustfmt,llvm-tools-preview
       - name: Check formatting
@@ -42,6 +46,10 @@ jobs:
         env:
           STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
         run: cargo +stable test --features conformance --test formatter-conformance --locked
+      - name: Run template conformance suite
+        env:
+          STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
+        run: cargo +stable test --features conformance --test template-conformance --locked
       - name: Run Clippy
         run: cargo +stable clippy --all-targets --all-features --locked -- -D warnings
       - name: Build documentation
@@ -72,6 +80,7 @@ jobs:
           ./target/release/stack -V
           ./target/release/stack --help
           ./target/release/stack --version
+          ./target/release/stack init --help
           ./target/release/stack check --help
           ./target/release/stack fmt --help
           ./target/release/stack render --help
@@ -94,6 +103,7 @@ jobs:
           test -s Cargo.lock
           test -s src/config.rs
           test -s src/main.rs
+          test -s src/templates.rs
           test -s src/provider.rs
           test -s src/provider_catalog.rs
           test -s catalogs/aws.json
@@ -101,7 +111,10 @@ jobs:
           test -s catalogs/azure.json
           test -s catalogs/simple-icons.json
           test -s scripts/generate-provider-catalogs.mjs
+          test -s scripts/sync-example-templates.mjs
           test -s scripts/validate-provider-catalogs.mjs
+          test -s templates/catalog.json
+          test -s templates/sources/01-minimal.stack
           test -s tests/specification-revision
           test -s tests/fixtures/render.stack
 

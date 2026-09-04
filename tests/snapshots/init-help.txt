@@ -1,0 +1,31 @@
+Create a Stack file from a versioned starter template
+
+Usage:
+  stack init [--template <TEMPLATE>] [-o <FILE>] [--force]
+
+Options:
+  --template <TEMPLATE>  Select a curated template; defaults to hello-stack
+  -o, --output <FILE>    Write to this path; defaults to diagram.stack
+  --force                Replace an existing output file atomically
+  -h, --help             Print help
+
+Templates:
+  hello-stack                Smallest directed diagram using built-in icons
+  application-and-data       Application, database, details, and edge labels
+  groups-and-layout          Groups, ordering, rank, and layout direction
+  commerce-platform         Production-like built-in architecture
+  aws-serverless-checkout    AWS serverless architecture
+  gcp-data-service           Google Cloud data service
+  azure-event-platform       Azure event-driven platform
+  github-delivery-workflow   GitHub delivery workflow
+  mixed-provider-platform    AWS, GCP, Azure, and SaaS architecture
+
+Provider templates remain valid without imported icon packs and render with
+deterministic fallback icons. Use 'stack icons import <PROVIDER> --accept-terms'
+before rendering when branded icons are required.
+
+Examples:
+  stack init
+  stack init --template groups-and-layout
+  stack init --template aws-serverless-checkout -o checkout.stack
+  stack init --force

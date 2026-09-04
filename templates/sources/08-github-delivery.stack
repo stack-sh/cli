@@ -1,0 +1,50 @@
+stack 1.0
+
+diagram "GitHub delivery workflow" {
+  theme dark
+
+  layout {
+    direction right
+  }
+
+  node developer "Developer" {
+    kind actor
+  }
+
+  group source "Source" {
+    node github "GitHub repository" {
+      kind service
+      icon "simple-icons:github"
+    }
+
+    node actions "GitHub Actions" {
+      kind worker
+      icon "simple-icons:githubactions"
+    }
+  }
+
+  group delivery "Delivery" {
+    node web "Vercel" {
+      kind external
+      icon "simple-icons:vercel"
+    }
+
+    node errors "Sentry" {
+      kind external
+      icon "simple-icons:sentry"
+    }
+  }
+
+  edge developer -> github "Push" {
+    kind data
+  }
+  edge github -> actions "Workflow" {
+    kind event
+  }
+  edge actions -> web "Deploy" {
+    kind dependency
+  }
+  edge web -> errors "Report errors" {
+    kind event
+  }
+}

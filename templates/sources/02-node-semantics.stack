@@ -1,0 +1,21 @@
+stack 1.0
+
+diagram "Application and datastore" {
+  theme light
+
+  node app "Application" {
+    kind service
+    icon "server"
+    detail "Business logic"
+  }
+
+  node db "Primary database" {
+    kind database
+    icon "kind-database"
+    detail "PostgreSQL"
+  }
+
+  edge app -> db "SQL" {
+    kind data
+  }
+}
