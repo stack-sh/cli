@@ -85,6 +85,7 @@ jobs:
           test -s docs/provider-icon-import.md
           test -s Cargo.toml
           test -s Cargo.lock
+          test -s src/config.rs
           test -s src/main.rs
           test -s src/provider.rs
           test -s src/provider_catalog.rs
