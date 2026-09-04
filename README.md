@@ -2,7 +2,7 @@
 
 `stack-sh/cli` is the open-source native Rust `stack` command for Stack architecture diagrams.
 
-The repository contains native validation, formatting, and rendering commands. The interface remains pre-release and no supported binary distribution is published yet.
+The repository contains native validation, formatting, and rendering commands. The interface remains pre-release and no supported binary distribution is published yet. The planned target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md).
 
 ## Commands
 
