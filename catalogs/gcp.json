@@ -1,0 +1,454 @@
+{
+  "catalogVersion": "1.0",
+  "packVersion": "0.2.0",
+  "provider": {
+    "id": "gcp",
+    "name": "Google Cloud"
+  },
+  "source": {
+    "pageUrl": "https://cloud.google.com/icons",
+    "archiveUrl": "https://services.google.com/fh/files/misc/core-products-icons.zip",
+    "archiveSha256": "sha256:6531a10f58bc599c24d9a455d81dd757c1a03c3c43da9cddf639b859c1c1eece",
+    "release": "Core product icons (May 2026 guide)",
+    "retrievedAt": "2026-09-04",
+    "termsUrl": "https://about.google/brand-resource-center/",
+    "termsReviewedAt": "2026-09-04",
+    "reviewAfter": "2026-12-03",
+    "copyright": "Copyright Google LLC",
+    "licenseId": "LicenseRef-Google-Cloud-Product-Icons-Terms",
+    "archiveLicenseIncluded": false
+  },
+  "additionalSources": [
+    {
+      "id": "categories",
+      "pageUrl": "https://cloud.google.com/icons",
+      "archiveUrl": "https://services.google.com/fh/files/misc/category-icons.zip",
+      "archiveSha256": "sha256:e5bc3abd3527dc2500e9bff7f15870783e2c764129c49b7cd4c1b4e105345002",
+      "release": "Product category icons (May 2026 guide)",
+      "retrievedAt": "2026-09-04",
+      "termsUrl": "https://about.google/brand-resource-center/",
+      "termsReviewedAt": "2026-09-04",
+      "reviewAfter": "2026-12-03",
+      "copyright": "Copyright Google LLC",
+      "licenseId": "LicenseRef-Google-Cloud-Product-Icons-Terms",
+      "archiveLicenseIncluded": false
+    }
+  ],
+  "rights": {
+    "termsAcceptanceRequired": true,
+    "permittedOutputs": [
+      "architecture-diagram",
+      "documentation"
+    ],
+    "redistribution": {
+      "cargo": false,
+      "npm": false,
+      "wasm": false,
+      "webAsset": false,
+      "nativeBinary": false,
+      "generatedOutput": true
+    },
+    "processing": {
+      "localOnly": true,
+      "automaticDownload": false,
+      "serverUpload": false,
+      "preserveColors": true,
+      "preserveGeometry": true,
+      "productNameNearby": true
+    },
+    "modificationPolicy": "visual-preservation-only"
+  },
+  "notice": {
+    "attribution": "Google Cloud product icons are owned by Google LLC.",
+    "termsSummary": "Use is limited to diagrams and technical documentation described by the official Google Cloud Icon Library and applicable Google brand terms.",
+    "nonEndorsement": "Google does not sponsor or endorse this diagram or Stack."
+  },
+  "icons": [
+    {
+      "id": "gcp:agents",
+      "subject": "Google Cloud product category",
+      "productName": "Agents category",
+      "recommendedNodeKind": "worker",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Agents/SVG/Agents-512-color.svg"
+    },
+    {
+      "id": "gcp:ai-and-machine-learning",
+      "subject": "Google Cloud product category",
+      "productName": "AI & Machine Learning category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/AI _ Machine Learning/SVG/AIMachineLearning-512-color.svg"
+    },
+    {
+      "id": "gcp:ai-hypercomputer",
+      "subject": "Google Cloud core product",
+      "productName": "AI Hypercomputer",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/AI Hypercomputer/SVG/AIHypercomputer-512-color.svg"
+    },
+    {
+      "id": "gcp:alloydb",
+      "subject": "Google Cloud core product",
+      "productName": "AlloyDB",
+      "recommendedNodeKind": "database",
+      "category": "Core products",
+      "archivePath": "Unique Icons/AlloyDB/SVG/AlloyDB-512-color.svg"
+    },
+    {
+      "id": "gcp:anthos",
+      "subject": "Google Cloud core product",
+      "productName": "Anthos",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Anthos/SVG/Anthos-512-color.svg"
+    },
+    {
+      "id": "gcp:apigee",
+      "subject": "Google Cloud core product",
+      "productName": "Apigee",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Apigee/SVG/Apigee-512-color-rgb.svg"
+    },
+    {
+      "id": "gcp:bigquery",
+      "subject": "Google Cloud core product",
+      "productName": "BigQuery",
+      "recommendedNodeKind": "database",
+      "category": "Core products",
+      "archivePath": "Unique Icons/BigQuery/SVG/BigQuery-512-color.svg"
+    },
+    {
+      "id": "gcp:business-intelligence",
+      "subject": "Google Cloud product category",
+      "productName": "Business Intelligence category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Business Intelligence/SVG/BusinessIntelligence-512-color.svg"
+    },
+    {
+      "id": "gcp:cloud-run",
+      "subject": "Google Cloud core product",
+      "productName": "Cloud Run",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Cloud Run/SVG/CloudRun-512-color-rgb.svg"
+    },
+    {
+      "id": "gcp:cloud-spanner",
+      "subject": "Google Cloud core product",
+      "productName": "Cloud Spanner",
+      "recommendedNodeKind": "database",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Cloud Spanner/SVG/CloudSpanner-512-color.svg"
+    },
+    {
+      "id": "gcp:cloud-sql",
+      "subject": "Google Cloud core product",
+      "productName": "Cloud SQL",
+      "recommendedNodeKind": "database",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Cloud SQL/SVG/CloudSQL-512-color.svg"
+    },
+    {
+      "id": "gcp:cloud-storage",
+      "subject": "Google Cloud core product",
+      "productName": "Cloud Storage",
+      "recommendedNodeKind": "storage",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Cloud Storage/SVG/Cloud_Storage-512-color.svg"
+    },
+    {
+      "id": "gcp:collaboration",
+      "subject": "Google Cloud product category",
+      "productName": "Collaboration category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Collaboration/SVG/Collaboration-512-color.svg"
+    },
+    {
+      "id": "gcp:compute",
+      "subject": "Google Cloud product category",
+      "productName": "Compute category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Compute/SVG/Compute-512-color.svg"
+    },
+    {
+      "id": "gcp:compute-engine",
+      "subject": "Google Cloud core product",
+      "productName": "Compute Engine",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Compute Engine/SVG/ComputeEngine-512-color-rgb.svg"
+    },
+    {
+      "id": "gcp:containers",
+      "subject": "Google Cloud product category",
+      "productName": "Containers category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Containers/SVG/Containers-512-color.svg"
+    },
+    {
+      "id": "gcp:data-analytics",
+      "subject": "Google Cloud product category",
+      "productName": "Data Analytics category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Data Analytics/SVG/DataAnalytics-512-color.svg"
+    },
+    {
+      "id": "gcp:databases",
+      "subject": "Google Cloud product category",
+      "productName": "Databases category",
+      "recommendedNodeKind": "database",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Databases/SVG/Databases-512-color.svg"
+    },
+    {
+      "id": "gcp:developer-tools",
+      "subject": "Google Cloud product category",
+      "productName": "Developer Tools category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Developer Tools/SVG/Developer_Tools-512-color.svg"
+    },
+    {
+      "id": "gcp:devops",
+      "subject": "Google Cloud product category",
+      "productName": "DevOps category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/DevOps/SVG/DevOps-512-color.svg"
+    },
+    {
+      "id": "gcp:distributed-cloud",
+      "subject": "Google Cloud core product",
+      "productName": "Distributed Cloud",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Distributed Cloud/SVG/DistributedCloud-512-color.svg"
+    },
+    {
+      "id": "gcp:gke",
+      "subject": "Google Cloud core product",
+      "productName": "Google Kubernetes Engine",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/GKE/SVG/GKE-512-color.svg"
+    },
+    {
+      "id": "gcp:hybrid-and-multicloud",
+      "subject": "Google Cloud product category",
+      "productName": "Hybrid & Multicloud category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Hybrid & Multicloud/SVG/HybridMulticloud-512-color.svg"
+    },
+    {
+      "id": "gcp:hyperdisk",
+      "subject": "Google Cloud core product",
+      "productName": "Hyperdisk",
+      "recommendedNodeKind": "storage",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Hyperdisk/SVG/Hyperdisk-512-color.svg"
+    },
+    {
+      "id": "gcp:integration-services",
+      "subject": "Google Cloud product category",
+      "productName": "Integration Services category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Integration Services/SVG/IntegrationServices-512-color.svg"
+    },
+    {
+      "id": "gcp:looker",
+      "subject": "Google Cloud core product",
+      "productName": "Looker",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Looker/SVG/Looker-512-color.svg"
+    },
+    {
+      "id": "gcp:management-tools",
+      "subject": "Google Cloud product category",
+      "productName": "Management Tools category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Management Tools/SVG/ManagementTools-512-color.svg"
+    },
+    {
+      "id": "gcp:mandiant",
+      "subject": "Google Cloud core product",
+      "productName": "Mandiant",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Mandiant/SVG/Mandiant-512-color.svg"
+    },
+    {
+      "id": "gcp:maps-and-geospatial",
+      "subject": "Google Cloud product category",
+      "productName": "Maps & Geospatial category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Maps & Geospatial/SVG/MapsGeospatial-512-color.svg"
+    },
+    {
+      "id": "gcp:marketplace",
+      "subject": "Google Cloud product category",
+      "productName": "Marketplace category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Marketplace/SVG/Marketplace-512-color.svg"
+    },
+    {
+      "id": "gcp:media-services",
+      "subject": "Google Cloud product category",
+      "productName": "Media Services category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Media Services/SVG/MediaServices-512-color.svg"
+    },
+    {
+      "id": "gcp:migration",
+      "subject": "Google Cloud product category",
+      "productName": "Migration category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Migration/SVG/Migration-512-color.svg"
+    },
+    {
+      "id": "gcp:mixed-reality",
+      "subject": "Google Cloud product category",
+      "productName": "Mixed Reality category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Mixed Reality/SVG/MixedReality-512-color.svg"
+    },
+    {
+      "id": "gcp:networking",
+      "subject": "Google Cloud product category",
+      "productName": "Networking category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Networking/SVG/Networking-512-color-rgb.svg"
+    },
+    {
+      "id": "gcp:observability",
+      "subject": "Google Cloud product category",
+      "productName": "Observability category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Observability/SVG/Observability-512-color.svg"
+    },
+    {
+      "id": "gcp:operations",
+      "subject": "Google Cloud product category",
+      "productName": "Operations category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Operations/SVG/Operations-512-color.svg"
+    },
+    {
+      "id": "gcp:security-command-center",
+      "subject": "Google Cloud core product",
+      "productName": "Security Command Center",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Security Command Center/SVG/SecurityCommandCenter-512-color.svg"
+    },
+    {
+      "id": "gcp:security-identity",
+      "subject": "Google Cloud product category",
+      "productName": "Security Identity category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Security Identity/SVG/SecurityIdentity-512-color.svg"
+    },
+    {
+      "id": "gcp:security-operations",
+      "subject": "Google Cloud core product",
+      "productName": "Security Operations",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Security Operations/SVG/SecOps-512-color-rgb.svg"
+    },
+    {
+      "id": "gcp:serverless",
+      "subject": "Google Cloud product category",
+      "productName": "Serverless Computing category",
+      "recommendedNodeKind": "function",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Serverless Computing/SVG/ServerlessComputing-512-color.svg"
+    },
+    {
+      "id": "gcp:storage",
+      "subject": "Google Cloud product category",
+      "productName": "Storage category",
+      "recommendedNodeKind": "storage",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Storage/SVG/Storage-512-color.svg"
+    },
+    {
+      "id": "gcp:threat-intelligence",
+      "subject": "Google Cloud core product",
+      "productName": "Threat Intelligence",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Threat Intelligence/SVG/ThreatIntelligence-512-color.svg"
+    },
+    {
+      "id": "gcp:vertex-ai",
+      "subject": "Google Cloud core product",
+      "productName": "Vertex AI",
+      "recommendedNodeKind": "service",
+      "category": "Core products",
+      "archivePath": "Unique Icons/Vertex AI/SVG/VertexAI-512-color.svg"
+    },
+    {
+      "id": "gcp:web-and-mobile",
+      "subject": "Google Cloud product category",
+      "productName": "Web & Mobile category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Web & Mobile/SVG/WebMobile-512-color.svg"
+    },
+    {
+      "id": "gcp:web3",
+      "subject": "Google Cloud product category",
+      "productName": "Web3 category",
+      "recommendedNodeKind": "service",
+      "category": "Product categories",
+      "sourceId": "categories",
+      "archivePath": "Category Icons/Web3/SVG/Web3-512-color.svg"
+    }
+  ]
+}

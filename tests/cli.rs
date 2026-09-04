@@ -150,8 +150,41 @@ fn help_and_version_are_stdout_only() -> Result<(), Box<dyn Error>> {
 
     let version = stack(["--version"])?;
     assert_eq!(version.status.code(), Some(0));
-    assert_eq!(version.stdout, b"stack 0.1.0\n");
+    assert_eq!(version.stdout, b"stack 0.2.0\n");
     assert!(version.stderr.is_empty());
+    Ok(())
+}
+
+#[test]
+fn provider_catalog_commands_are_available_from_the_binary() -> Result<(), Box<dyn Error>> {
+    let listed = stack(["icons", "list", "simple-icons", "linear"])?;
+    assert_eq!(listed.status.code(), Some(0));
+    assert!(listed.stderr.is_empty());
+    let listing = String::from_utf8(listed.stdout)?;
+    assert!(listing.contains("simple-icons:linear"));
+    assert!(listing.contains("Linear"));
+    assert!(!listing.contains("<svg"));
+
+    let unknown_list = stack(["icons", "list", "unknown"])?;
+    assert_eq!(unknown_list.status.code(), Some(2));
+    assert!(unknown_list.stdout.is_empty());
+    assert!(String::from_utf8(unknown_list.stderr)?.contains("unknown provider 'unknown'"));
+
+    let directory = TestDirectory::new("provider-import")?;
+    let output = directory.path.join("pack");
+    let unknown_import = stack([
+        OsStr::new("icons"),
+        OsStr::new("import"),
+        OsStr::new("unknown"),
+        OsStr::new("missing.zip"),
+        OsStr::new("--accept-terms"),
+        OsStr::new("-o"),
+        output.as_os_str(),
+    ])?;
+    assert_eq!(unknown_import.status.code(), Some(2));
+    assert!(unknown_import.stdout.is_empty());
+    assert!(String::from_utf8(unknown_import.stderr)?.contains("unknown provider 'unknown'"));
+    assert!(!output.exists());
     Ok(())
 }
 

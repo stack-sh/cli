@@ -222,9 +222,10 @@ dependencies = [
 
 [[package]]
 name = "stack-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "roxmltree",
+ "serde",
  "serde_json",
  "sha2",
  "stack-engine",
@@ -239,8 +240,8 @@ source = "git+https://github.com/stack-sh/compiler.git?rev=4a18fac42afc2256a1bb3
 
 [[package]]
 name = "stack-engine"
-version = "0.5.0"
-source = "git+https://github.com/stack-sh/engine.git?rev=c82595e33c6f26b67fec7b5c2171921765e30000#c82595e33c6f26b67fec7b5c2171921765e30000"
+version = "0.6.0"
+source = "git+https://github.com/stack-sh/engine.git?rev=b4a85b09f0d75d5966d50dc76b39d7ea4989c823#b4a85b09f0d75d5966d50dc76b39d7ea4989c823"
 dependencies = [
  "roxmltree",
  "serde_json",
@@ -253,15 +254,15 @@ dependencies = [
 [[package]]
 name = "stack-formatter"
 version = "0.1.0"
-source = "git+https://github.com/stack-sh/engine.git?rev=c82595e33c6f26b67fec7b5c2171921765e30000#c82595e33c6f26b67fec7b5c2171921765e30000"
+source = "git+https://github.com/stack-sh/engine.git?rev=b4a85b09f0d75d5966d50dc76b39d7ea4989c823#b4a85b09f0d75d5966d50dc76b39d7ea4989c823"
 dependencies = [
  "stack-compiler",
 ]
 
 [[package]]
 name = "stack-theme"
-version = "0.4.0"
-source = "git+https://github.com/stack-sh/theme.git?rev=2347315e6e86ab9d2708e05fd3f9b5f3d87e1241#2347315e6e86ab9d2708e05fd3f9b5f3d87e1241"
+version = "0.5.0"
+source = "git+https://github.com/stack-sh/theme.git?rev=13e41b84167e810c36c3ab87fff2e1fda84a2b8f#13e41b84167e810c36c3ab87fff2e1fda84a2b8f"
 dependencies = [
  "serde",
  "serde_json",

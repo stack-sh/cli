@@ -1,0 +1,674 @@
+{
+  "catalogVersion": "1.0",
+  "packVersion": "0.2.0",
+  "provider": {
+    "id": "simple-icons",
+    "name": "Simple Icons (curated tools)"
+  },
+  "source": {
+    "pageUrl": "https://simpleicons.org/",
+    "archiveUrl": "https://github.com/simple-icons/simple-icons/archive/refs/tags/16.29.0.zip",
+    "archiveSha256": "sha256:99f30fabd5be19dab51e09b2adebb6fe54fce1f3709ddfdc936a1338dfebc68d",
+    "release": "16.29.0",
+    "retrievedAt": "2026-09-04",
+    "termsUrl": "https://github.com/simple-icons/simple-icons/blob/16.29.0/DISCLAIMER.md",
+    "termsReviewedAt": "2026-09-04",
+    "reviewAfter": "2026-12-03",
+    "copyright": "Simple Icons contributors and the respective trademark owners",
+    "licenseId": "LicenseRef-Simple-Icons-CC0-and-Brand-Rights",
+    "archiveLicenseIncluded": true
+  },
+  "additionalSources": [],
+  "rights": {
+    "termsAcceptanceRequired": true,
+    "permittedOutputs": [
+      "architecture-diagram",
+      "documentation",
+      "presentation"
+    ],
+    "redistribution": {
+      "cargo": false,
+      "npm": false,
+      "wasm": false,
+      "webAsset": false,
+      "nativeBinary": false,
+      "generatedOutput": true
+    },
+    "processing": {
+      "localOnly": true,
+      "automaticDownload": false,
+      "serverUpload": false,
+      "preserveColors": true,
+      "preserveGeometry": true,
+      "productNameNearby": true
+    },
+    "modificationPolicy": "visual-preservation-only"
+  },
+  "notice": {
+    "attribution": "Glyphs are sourced from Simple Icons 16.29.0. Product names and marks belong to their respective owners.",
+    "termsSummary": "Simple Icons is CC0, but that does not imply that every included brand icon is CC0. Review each icon's recorded brand source and guidelines before use.",
+    "nonEndorsement": "Simple Icons and the named brands do not sponsor or endorse this diagram or Stack."
+  },
+  "icons": [
+    {
+      "id": "simple-icons:1password",
+      "subject": "Collaboration tool or service",
+      "productName": "1Password",
+      "brandSourceUrl": "https://1password.com/press",
+      "brandGuidelinesUrl": "https://1password.com/press",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/1password.svg"
+    },
+    {
+      "id": "simple-icons:ansible",
+      "subject": "Infrastructure tool or service",
+      "productName": "Ansible",
+      "brandSourceUrl": "https://www.ansible.com/logos",
+      "brandGuidelinesUrl": "https://www.ansible.com/logos",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/ansible.svg"
+    },
+    {
+      "id": "simple-icons:apacheairflow",
+      "subject": "Data tool or service",
+      "productName": "Apache Airflow",
+      "brandSourceUrl": "https://apache.org/logos",
+      "brandGuidelinesUrl": "https://www.apache.org/foundation/marks",
+      "recommendedNodeKind": "service",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/apacheairflow.svg"
+    },
+    {
+      "id": "simple-icons:apachekafka",
+      "subject": "Data tool or service",
+      "productName": "Apache Kafka",
+      "brandSourceUrl": "https://apache.org/logos",
+      "brandGuidelinesUrl": "https://www.apache.org/foundation/marks",
+      "recommendedNodeKind": "queue",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/apachekafka.svg"
+    },
+    {
+      "id": "simple-icons:argo",
+      "subject": "Infrastructure tool or service",
+      "productName": "Argo",
+      "brandSourceUrl": "https://github.com/cncf/artwork/blob/c2e619cdf85e8bac090ceca7c0834c5cfedf9426/projects/argo/icon/black/argo-icon-black.svg",
+      "brandGuidelinesUrl": "https://github.com/cncf/artwork/blob/c2e619cdf85e8bac090ceca7c0834c5cfedf9426/projects/argo/icon/black/argo-icon-black.svg",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/argo.svg"
+    },
+    {
+      "id": "simple-icons:atlassian",
+      "subject": "Collaboration tool or service",
+      "productName": "Atlassian",
+      "brandSourceUrl": "https://atlassian.design/resources/logo-library",
+      "brandGuidelinesUrl": "https://atlassian.design/foundations/logos",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/atlassian.svg"
+    },
+    {
+      "id": "simple-icons:auth0",
+      "subject": "Identity tool or service",
+      "productName": "Auth0",
+      "brandSourceUrl": "https://auth0.com",
+      "brandGuidelinesUrl": "https://auth0.com",
+      "recommendedNodeKind": "external",
+      "category": "Identity",
+      "archivePath": "simple-icons-16.29.0/icons/auth0.svg"
+    },
+    {
+      "id": "simple-icons:bitbucket",
+      "subject": "Collaboration tool or service",
+      "productName": "Bitbucket",
+      "brandSourceUrl": "https://atlassian.design/resources/logo-library",
+      "brandGuidelinesUrl": "https://atlassian.design/foundations/logos",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/bitbucket.svg"
+    },
+    {
+      "id": "simple-icons:bun",
+      "subject": "Development tool or service",
+      "productName": "Bun",
+      "brandSourceUrl": "https://bun.sh/press-kit",
+      "brandGuidelinesUrl": "https://bun.sh/press-kit",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/bun.svg"
+    },
+    {
+      "id": "simple-icons:circleci",
+      "subject": "Infrastructure tool or service",
+      "productName": "CircleCI",
+      "brandSourceUrl": "https://circleci.com/press",
+      "brandGuidelinesUrl": "https://circleci.com/press",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/circleci.svg"
+    },
+    {
+      "id": "simple-icons:cloudflare",
+      "subject": "Infrastructure tool or service",
+      "productName": "Cloudflare",
+      "brandSourceUrl": "https://www.cloudflare.com/logo/",
+      "brandGuidelinesUrl": "https://www.cloudflare.com/trademark/",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/cloudflare.svg"
+    },
+    {
+      "id": "simple-icons:confluence",
+      "subject": "Collaboration tool or service",
+      "productName": "Confluence",
+      "brandSourceUrl": "https://www.atlassian.com/company/news/press-kit",
+      "brandGuidelinesUrl": "https://www.atlassian.com/company/news/press-kit",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/confluence.svg"
+    },
+    {
+      "id": "simple-icons:datadog",
+      "subject": "Observability tool or service",
+      "productName": "Datadog",
+      "brandSourceUrl": "https://www.datadoghq.com/about/resources",
+      "brandGuidelinesUrl": "https://www.datadoghq.com/about/resources/",
+      "recommendedNodeKind": "service",
+      "category": "Observability",
+      "archivePath": "simple-icons-16.29.0/icons/datadog.svg"
+    },
+    {
+      "id": "simple-icons:deno",
+      "subject": "Development tool or service",
+      "productName": "Deno",
+      "brandSourceUrl": "https://github.com/denoland/docs/blob/5dee713844c7447f80acd4093caa9d350d80bf36/static/img/logo.svg",
+      "brandGuidelinesUrl": "https://deno.com/brand",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/deno.svg"
+    },
+    {
+      "id": "simple-icons:discord",
+      "subject": "Collaboration tool or service",
+      "productName": "Discord",
+      "brandSourceUrl": "https://discord.com/branding",
+      "brandGuidelinesUrl": "https://discord.com/branding",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/discord.svg"
+    },
+    {
+      "id": "simple-icons:docker",
+      "subject": "Infrastructure tool or service",
+      "productName": "Docker",
+      "brandSourceUrl": "https://www.docker.com/company/newsroom/media-resources",
+      "brandGuidelinesUrl": "https://www.docker.com/company/newsroom/media-resources",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/docker.svg"
+    },
+    {
+      "id": "simple-icons:elastic",
+      "subject": "Data tool or service",
+      "productName": "Elastic",
+      "brandSourceUrl": "https://www.elastic.co/brand",
+      "brandGuidelinesUrl": "https://www.elastic.co/brand",
+      "recommendedNodeKind": "service",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/elastic.svg"
+    },
+    {
+      "id": "simple-icons:figma",
+      "subject": "Collaboration tool or service",
+      "productName": "Figma",
+      "brandSourceUrl": "https://www.figma.com/using-the-figma-brand/",
+      "brandGuidelinesUrl": "https://www.figma.com/using-the-figma-brand/",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/figma.svg"
+    },
+    {
+      "id": "simple-icons:firebase",
+      "subject": "Data tool or service",
+      "productName": "Firebase",
+      "brandSourceUrl": "https://firebase.google.com/brand-guidelines",
+      "brandGuidelinesUrl": "https://firebase.google.com/brand-guidelines",
+      "recommendedNodeKind": "database",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/firebase.svg"
+    },
+    {
+      "id": "simple-icons:git",
+      "subject": "Development tool or service",
+      "productName": "Git",
+      "brandSourceUrl": "https://git-scm.com/community/logos",
+      "brandGuidelinesUrl": "https://git-scm.com/community/logos",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/git.svg"
+    },
+    {
+      "id": "simple-icons:github",
+      "subject": "Collaboration tool or service",
+      "productName": "GitHub",
+      "brandSourceUrl": "https://github.com/logos",
+      "brandGuidelinesUrl": "https://github.com/logos",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/github.svg"
+    },
+    {
+      "id": "simple-icons:githubactions",
+      "subject": "Collaboration tool or service",
+      "productName": "GitHub Actions",
+      "brandSourceUrl": "https://github.com/features/actions",
+      "brandGuidelinesUrl": "https://github.com/features/actions",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/githubactions.svg"
+    },
+    {
+      "id": "simple-icons:gitlab",
+      "subject": "Collaboration tool or service",
+      "productName": "GitLab",
+      "brandSourceUrl": "https://about.gitlab.com/press/press-kit/",
+      "brandGuidelinesUrl": "https://about.gitlab.com/handbook/marketing/corporate-marketing/brand-activation/trademark-guidelines/",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/gitlab.svg"
+    },
+    {
+      "id": "simple-icons:go",
+      "subject": "Development tool or service",
+      "productName": "Go",
+      "brandSourceUrl": "https://blog.golang.org/go-brand",
+      "brandGuidelinesUrl": "https://blog.golang.org/go-brand",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/go.svg"
+    },
+    {
+      "id": "simple-icons:grafana",
+      "subject": "Observability tool or service",
+      "productName": "Grafana",
+      "brandSourceUrl": "https://grafana.com",
+      "brandGuidelinesUrl": "https://grafana.com",
+      "recommendedNodeKind": "service",
+      "category": "Observability",
+      "archivePath": "simple-icons-16.29.0/icons/grafana.svg"
+    },
+    {
+      "id": "simple-icons:helm",
+      "subject": "Infrastructure tool or service",
+      "productName": "Helm",
+      "brandSourceUrl": "https://helm.sh",
+      "brandGuidelinesUrl": "https://helm.sh",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/helm.svg"
+    },
+    {
+      "id": "simple-icons:jenkins",
+      "subject": "Infrastructure tool or service",
+      "productName": "Jenkins",
+      "brandSourceUrl": "https://get.jenkins.io/art/",
+      "brandGuidelinesUrl": "https://www.jenkins.io/press/",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/jenkins.svg"
+    },
+    {
+      "id": "simple-icons:jira",
+      "subject": "Collaboration tool or service",
+      "productName": "Jira",
+      "brandSourceUrl": "https://atlassian.design/resources/logo-library",
+      "brandGuidelinesUrl": "https://atlassian.design/foundations/logos/",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/jira.svg"
+    },
+    {
+      "id": "simple-icons:kubernetes",
+      "subject": "Infrastructure tool or service",
+      "productName": "Kubernetes",
+      "brandSourceUrl": "https://github.com/kubernetes/kubernetes/tree/cac53883f4714452f3084a22e4be20d042a9df33/logo",
+      "brandGuidelinesUrl": "https://github.com/kubernetes/kubernetes/tree/cac53883f4714452f3084a22e4be20d042a9df33/logo",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/kubernetes.svg"
+    },
+    {
+      "id": "simple-icons:linear",
+      "subject": "Collaboration tool or service",
+      "productName": "Linear",
+      "brandSourceUrl": "https://linear.app",
+      "brandGuidelinesUrl": "https://linear.app",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/linear.svg"
+    },
+    {
+      "id": "simple-icons:miro",
+      "subject": "Collaboration tool or service",
+      "productName": "Miro",
+      "brandSourceUrl": "https://miro.com",
+      "brandGuidelinesUrl": "https://miro.com",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/miro.svg"
+    },
+    {
+      "id": "simple-icons:mongodb",
+      "subject": "Data tool or service",
+      "productName": "MongoDB",
+      "brandSourceUrl": "https://www.mongodb.com/pressroom",
+      "brandGuidelinesUrl": "https://www.mongodb.com/pressroom",
+      "recommendedNodeKind": "database",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/mongodb.svg"
+    },
+    {
+      "id": "simple-icons:mysql",
+      "subject": "Data tool or service",
+      "productName": "MySQL",
+      "brandSourceUrl": "https://www.mysql.com/about/legal/logos.html",
+      "brandGuidelinesUrl": "https://www.mysql.com/about/legal/logos.html",
+      "recommendedNodeKind": "database",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/mysql.svg"
+    },
+    {
+      "id": "simple-icons:netlify",
+      "subject": "Infrastructure tool or service",
+      "productName": "Netlify",
+      "brandSourceUrl": "https://www.netlify.com/press/",
+      "brandGuidelinesUrl": "https://www.netlify.com/press/",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/netlify.svg"
+    },
+    {
+      "id": "simple-icons:newrelic",
+      "subject": "Observability tool or service",
+      "productName": "New Relic",
+      "brandSourceUrl": "https://newrelic.com/about/media-assets",
+      "brandGuidelinesUrl": "https://newrelic.com/about/media-assets#guidelines",
+      "recommendedNodeKind": "service",
+      "category": "Observability",
+      "archivePath": "simple-icons-16.29.0/icons/newrelic.svg"
+    },
+    {
+      "id": "simple-icons:nextdotjs",
+      "subject": "Development tool or service",
+      "productName": "Next.js",
+      "brandSourceUrl": "https://vercel.com/design/brands#next-js",
+      "brandGuidelinesUrl": "https://vercel.com/design/brands#next-js",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/nextdotjs.svg"
+    },
+    {
+      "id": "simple-icons:nginx",
+      "subject": "Infrastructure tool or service",
+      "productName": "NGINX",
+      "brandSourceUrl": "https://www.nginx.com/press/",
+      "brandGuidelinesUrl": "https://www.nginx.com/press/",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/nginx.svg"
+    },
+    {
+      "id": "simple-icons:nodedotjs",
+      "subject": "Development tool or service",
+      "productName": "Node.js",
+      "brandSourceUrl": "https://nodejs.org/en/about/branding",
+      "brandGuidelinesUrl": "https://nodejs.org/en/about/branding",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/nodedotjs.svg"
+    },
+    {
+      "id": "simple-icons:notion",
+      "subject": "Collaboration tool or service",
+      "productName": "Notion",
+      "brandSourceUrl": "https://www.notion.so",
+      "brandGuidelinesUrl": "https://www.notion.so",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/notion.svg"
+    },
+    {
+      "id": "simple-icons:npm",
+      "subject": "Development tool or service",
+      "productName": "npm",
+      "brandSourceUrl": "https://www.npmjs.com",
+      "brandGuidelinesUrl": "https://docs.npmjs.com/policies/logos-and-usage",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/npm.svg"
+    },
+    {
+      "id": "simple-icons:okta",
+      "subject": "Identity tool or service",
+      "productName": "Okta",
+      "brandSourceUrl": "https://www.okta.com/press-room/media-assets/",
+      "brandGuidelinesUrl": "https://www.okta.com/terms-of-use-for-okta-content/",
+      "recommendedNodeKind": "external",
+      "category": "Identity",
+      "archivePath": "simple-icons-16.29.0/icons/okta.svg"
+    },
+    {
+      "id": "simple-icons:opentofu",
+      "subject": "Infrastructure tool or service",
+      "productName": "OpenTofu",
+      "brandSourceUrl": "https://github.com/opentofu/brand-artifacts/blob/0d4d0d6050ca0ff06471400bc3249a64c145f659/symbol-only/transparent/SVG/on-light-mono.svg",
+      "brandGuidelinesUrl": "https://github.com/opentofu/brand-artifacts/blob/0d4d0d6050ca0ff06471400bc3249a64c145f659/symbol-only/transparent/SVG/on-light-mono.svg",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/opentofu.svg"
+    },
+    {
+      "id": "simple-icons:pagerduty",
+      "subject": "Observability tool or service",
+      "productName": "PagerDuty",
+      "brandSourceUrl": "https://www.pagerduty.com/brand/",
+      "brandGuidelinesUrl": "https://www.pagerduty.com/brand/",
+      "recommendedNodeKind": "service",
+      "category": "Observability",
+      "archivePath": "simple-icons-16.29.0/icons/pagerduty.svg"
+    },
+    {
+      "id": "simple-icons:pnpm",
+      "subject": "Development tool or service",
+      "productName": "pnpm",
+      "brandSourceUrl": "https://pnpm.io/logos",
+      "brandGuidelinesUrl": "https://pnpm.io/logos",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/pnpm.svg"
+    },
+    {
+      "id": "simple-icons:postgresql",
+      "subject": "Data tool or service",
+      "productName": "PostgreSQL",
+      "brandSourceUrl": "https://wiki.postgresql.org/wiki/Logo",
+      "brandGuidelinesUrl": "https://www.postgresql.org/about/policies/trademarks/",
+      "recommendedNodeKind": "database",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/postgresql.svg"
+    },
+    {
+      "id": "simple-icons:prometheus",
+      "subject": "Observability tool or service",
+      "productName": "Prometheus",
+      "brandSourceUrl": "https://prometheus.io",
+      "brandGuidelinesUrl": "https://prometheus.io",
+      "recommendedNodeKind": "service",
+      "category": "Observability",
+      "archivePath": "simple-icons-16.29.0/icons/prometheus.svg"
+    },
+    {
+      "id": "simple-icons:pulumi",
+      "subject": "Infrastructure tool or service",
+      "productName": "Pulumi",
+      "brandSourceUrl": "https://www.pulumi.com",
+      "brandGuidelinesUrl": "https://www.pulumi.com/brand/",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/pulumi.svg"
+    },
+    {
+      "id": "simple-icons:python",
+      "subject": "Development tool or service",
+      "productName": "Python",
+      "brandSourceUrl": "https://www.python.org/community/logos/",
+      "brandGuidelinesUrl": "https://www.python.org/community/logos/",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/python.svg"
+    },
+    {
+      "id": "simple-icons:rabbitmq",
+      "subject": "Data tool or service",
+      "productName": "RabbitMQ",
+      "brandSourceUrl": "https://www.rabbitmq.com",
+      "brandGuidelinesUrl": "https://www.rabbitmq.com/trademark-guidelines.html",
+      "recommendedNodeKind": "queue",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/rabbitmq.svg"
+    },
+    {
+      "id": "simple-icons:react",
+      "subject": "Development tool or service",
+      "productName": "React",
+      "brandSourceUrl": "https://github.com/facebook/create-react-app/blob/282c03f9525fdf8061ffa1ec50dce89296d916bd/test/fixtures/relative-paths/src/logo.svg",
+      "brandGuidelinesUrl": "https://github.com/facebook/create-react-app/blob/282c03f9525fdf8061ffa1ec50dce89296d916bd/test/fixtures/relative-paths/src/logo.svg",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/react.svg"
+    },
+    {
+      "id": "simple-icons:redis",
+      "subject": "Data tool or service",
+      "productName": "Redis",
+      "brandSourceUrl": "https://redis.io/brand-guidelines",
+      "brandGuidelinesUrl": "https://redis.io/brand-guidelines",
+      "recommendedNodeKind": "cache",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/redis.svg"
+    },
+    {
+      "id": "simple-icons:rust",
+      "subject": "Development tool or service",
+      "productName": "Rust",
+      "brandSourceUrl": "https://www.rust-lang.org",
+      "brandGuidelinesUrl": "https://www.rust-lang.org/policies/media-guide",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/rust.svg"
+    },
+    {
+      "id": "simple-icons:sentry",
+      "subject": "Observability tool or service",
+      "productName": "Sentry",
+      "brandSourceUrl": "https://sentry.io/branding/",
+      "brandGuidelinesUrl": "https://sentry.io/branding/",
+      "recommendedNodeKind": "service",
+      "category": "Observability",
+      "archivePath": "simple-icons-16.29.0/icons/sentry.svg"
+    },
+    {
+      "id": "simple-icons:snowflake",
+      "subject": "Data tool or service",
+      "productName": "Snowflake",
+      "brandSourceUrl": "https://www.snowflake.com/brand-guidelines/",
+      "brandGuidelinesUrl": "https://www.snowflake.com/brand-guidelines/",
+      "recommendedNodeKind": "database",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/snowflake.svg"
+    },
+    {
+      "id": "simple-icons:splunk",
+      "subject": "Observability tool or service",
+      "productName": "Splunk",
+      "brandSourceUrl": "https://www.splunk.com",
+      "brandGuidelinesUrl": "https://www.splunk.com",
+      "recommendedNodeKind": "service",
+      "category": "Observability",
+      "archivePath": "simple-icons-16.29.0/icons/splunk.svg"
+    },
+    {
+      "id": "simple-icons:supabase",
+      "subject": "Data tool or service",
+      "productName": "Supabase",
+      "brandSourceUrl": "https://github.com/supabase/supabase/blob/4031a7549f5d46da7bc79c01d56be4177dc7c114/packages/common/assets/images/supabase-logo-wordmark--light.svg",
+      "brandGuidelinesUrl": "https://github.com/supabase/supabase/blob/4031a7549f5d46da7bc79c01d56be4177dc7c114/packages/common/assets/images/supabase-logo-wordmark--light.svg",
+      "recommendedNodeKind": "database",
+      "category": "Data",
+      "archivePath": "simple-icons-16.29.0/icons/supabase.svg"
+    },
+    {
+      "id": "simple-icons:svelte",
+      "subject": "Development tool or service",
+      "productName": "Svelte",
+      "brandSourceUrl": "https://github.com/sveltejs/branding/blob/c4dfca6743572087a6aef0e109ffe3d95596e86a/svelte-logo.svg",
+      "brandGuidelinesUrl": "https://github.com/sveltejs/branding/blob/c4dfca6743572087a6aef0e109ffe3d95596e86a/svelte-logo.svg",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/svelte.svg"
+    },
+    {
+      "id": "simple-icons:terraform",
+      "subject": "Infrastructure tool or service",
+      "productName": "Terraform",
+      "brandSourceUrl": "https://www.hashicorp.com/brand",
+      "brandGuidelinesUrl": "https://www.hashicorp.com/brand",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/terraform.svg"
+    },
+    {
+      "id": "simple-icons:trello",
+      "subject": "Collaboration tool or service",
+      "productName": "Trello",
+      "brandSourceUrl": "https://atlassian.design/resources/logo-library",
+      "brandGuidelinesUrl": "https://atlassian.design/foundations/logos",
+      "recommendedNodeKind": "external",
+      "category": "Collaboration",
+      "archivePath": "simple-icons-16.29.0/icons/trello.svg"
+    },
+    {
+      "id": "simple-icons:vercel",
+      "subject": "Infrastructure tool or service",
+      "productName": "Vercel",
+      "brandSourceUrl": "https://vercel.com/geist/brands",
+      "brandGuidelinesUrl": "https://vercel.com/geist/brands",
+      "recommendedNodeKind": "service",
+      "category": "Infrastructure",
+      "archivePath": "simple-icons-16.29.0/icons/vercel.svg"
+    },
+    {
+      "id": "simple-icons:vite",
+      "subject": "Development tool or service",
+      "productName": "Vite",
+      "brandSourceUrl": "https://github.com/voidzero-dev/community-design-resources/blob/55902097229cf01cf2a4ceb376f992f5cf306756/brand-assets/vite/vite-icon-color-bracketless.svg",
+      "brandGuidelinesUrl": "https://github.com/voidzero-dev/community-design-resources/blob/55902097229cf01cf2a4ceb376f992f5cf306756/brand-assets/vite/vite-icon-color-bracketless.svg",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/vite.svg"
+    },
+    {
+      "id": "simple-icons:vuedotjs",
+      "subject": "Development tool or service",
+      "productName": "Vue.js",
+      "brandSourceUrl": "https://github.com/vuejs/art/blob/a1c78b74569b70a25300925b4eacfefcc143b8f6/logo.svg",
+      "brandGuidelinesUrl": "https://github.com/vuejs/art/blob/a1c78b74569b70a25300925b4eacfefcc143b8f6/README.md",
+      "recommendedNodeKind": "service",
+      "category": "Development",
+      "archivePath": "simple-icons-16.29.0/icons/vuedotjs.svg"
+    }
+  ]
+}

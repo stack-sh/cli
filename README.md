@@ -13,6 +13,8 @@ stack fmt --check arch.stack
 stack fmt -
 stack render arch.stack
 stack render arch.stack -o arch.svg
+stack icons list
+stack icons list aws s3
 stack icons import aws ~/Downloads/aws-icons.zip --accept-terms -o .stack-icons/aws
 stack render arch.stack --provider-pack .stack-icons/aws -o arch.svg --notice arch.NOTICE.md
 ```
@@ -23,7 +25,9 @@ stack render arch.stack --provider-pack .stack-icons/aws -o arch.svg --notice ar
 
 `stack render` uses the same engine pipeline to produce deterministic standalone SVG. Without `-o`, standard output contains only SVG. With `-o`, the output is written atomically in the destination directory. Repeat `--provider-pack <DIRECTORY>` to load local imported packs, and use `--notice <NOTICE>` to save the exact provider pack revisions, terms, source archives, and icon IDs embedded in that artifact. Pack files are bounded and validated before rendering; the command performs no download or upload. Diagnostics remain on standard error, warnings preserve SVG, and Stack errors never create or replace output.
 
-`stack icons import` creates a local provider pack from an official ZIP archive that the user selected. It performs no network request or upload, requires explicit terms acceptance, verifies the complete archive against an audited SHA-256, reads only allowlisted SVG entries with fixed size limits, removes active or external content, preserves the official colors and geometry, and writes the manifest, notice, and processed SVGs atomically to a new directory. The initial audited profiles import 7 AWS, 6 Google Cloud, or 5 Azure icons. See [the provider icon import guide](./docs/provider-icon-import.md) for exact sources, hashes, IDs, and terms.
+`stack icons list [PROVIDER] [QUERY]` searches the asset-free catalog by ID, product name, or category. The catalog currently contains 1,051 IDs: 305 AWS, 45 Google Cloud, 639 Azure, and 62 curated developer and collaboration tool icons. This command reads only metadata embedded in the CLI.
+
+`stack icons import` creates a local provider pack from official ZIP archives that the user selected. It performs no network request or upload, requires explicit terms acceptance, verifies every complete archive against an audited SHA-256, reads only allowlisted SVG entries with fixed size limits, removes active or external content, preserves official colors and geometry, and writes the manifest, notice, and processed SVGs atomically to a new directory. Google Cloud combines its core and category archives with `--source categories=<ARCHIVE>`. Simple Icons entries also retain the recorded rights-owner source and brand-guideline links because that project's CC0 distribution does not grant rights to every underlying brand. See [the provider icon import guide](./docs/provider-icon-import.md) for sources, hashes, usage, and rights boundaries.
 
 | Result | Exit status |
 | --- | ---: |
