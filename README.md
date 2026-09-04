@@ -33,7 +33,7 @@ stack render arch.stack --provider-pack .stack-icons/aws -o arch.svg --notice ar
 
 The CLI links `stack-engine` as a native Rust dependency. It owns filesystem and standard-stream behavior, process exit codes, configuration discovery, provider-pack import, notice output, and command presentation. It must not duplicate compiler, formatter, layout, or SVG-rendering logic.
 
-The bundled engine resolves the provider-neutral core icons `api`, `web`, `mobile`, `desktop`, `server`, `container`, `cluster`, `cloud`, `scheduler`, `webhook`, `identity`, and `observability`. Vendor assets are not bundled. Local provider-pack import preserves upstream artwork and attaches source, archive hash, transformation, terms, and notice metadata. Rendering resolves namespaced IDs such as `aws:s3`, preserves the authored semantic `kind`, embeds only the selected local asset, and writes its provenance into SVG metadata and the optional notice sidecar.
+The bundled engine resolves 30 provider-neutral core icons: `api`, `web`, `mobile`, `desktop`, `server`, `container`, `cluster`, `cloud`, `scheduler`, `webhook`, `identity`, `observability`, `gateway`, `load-balancer`, `dns`, `cdn`, `firewall`, `network`, `event`, `stream`, `search`, `analytics`, `repository`, `pipeline`, `secret`, `document`, `task`, `chat`, `email`, and `ai`. Vendor assets are not bundled. Local provider-pack import preserves upstream artwork and attaches source, archive hash, transformation, terms, and notice metadata. Rendering resolves namespaced IDs such as `aws:s3`, preserves the authored semantic `kind`, embeds only the selected local asset, and writes its provenance into SVG metadata and the optional notice sidecar.
 
 ## Development
 

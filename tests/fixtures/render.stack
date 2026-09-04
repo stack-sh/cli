@@ -1,5 +1,7 @@
 stack 1.0 diagram "CLI render" {
   node web "Web"
   edge web -> api "HTTPS"
-  node api "API"
+  node api "API" {
+    icon "gateway"
+  }
 }
