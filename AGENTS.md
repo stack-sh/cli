@@ -2,13 +2,14 @@
 
 ## Language
 
-Write repository content, code comments, commit messages, issues, and pull requests in English even though this repository is private.
+Write repository content, code comments, commit messages, issues, and pull requests in English.
 
 ## Architecture
 
 - Keep this repository focused on the native `stack` command, host I/O, exit codes, configuration discovery, provider-pack import, and notice output.
 - Link `stack-engine` as a native Rust dependency; do not duplicate compiler, formatter, layout, or SVG-rendering logic.
 - Keep provider-pack import, local cache behavior, provenance display, and notice output at the CLI boundary. Do not make the engine read the filesystem or network.
+- Import only audited local archives with pinned complete-file hashes and allowlisted entries. Bound archive and entry sizes, reject unsafe paths and active SVG content, and write new pack directories atomically without overwriting existing data.
 - Do not add authentication, billing, entitlement, or proprietary-theme delivery behavior; they are outside the product roadmap.
 
 ## Licensing and security
