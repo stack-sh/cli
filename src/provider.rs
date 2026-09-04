@@ -1,4 +1,4 @@
-//! Local-only provider icon archive import.
+//! Audited provider icon archive import.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{self, Write as _};
@@ -18,10 +18,12 @@ use crate::provider_catalog::{ProviderCatalog, provider_catalog, provider_catalo
 
 const PROVIDER_PACK_SCHEMA: &str =
     "https://raw.githubusercontent.com/stack-sh/theme/main/schemas/provider-pack.schema.json";
-const MAX_ARCHIVE_BYTES: u64 = 32 * 1024 * 1024;
+pub(crate) const MAX_ARCHIVE_BYTES: u64 = 32 * 1024 * 1024;
 const MAX_ICON_BYTES: u64 = 1024 * 1024;
 const SVG_NAMESPACE: &str = "http://www.w3.org/2000/svg";
 const XLINK_NAMESPACE: &str = "http://www.w3.org/1999/xlink";
+
+type ArchiveFetcher<'a> = dyn FnMut(&str, u64) -> Result<Vec<u8>, String> + 'a;
 
 const ALLOWED_ELEMENTS: &[&str] = &[
     "circle",
@@ -102,7 +104,7 @@ pub(crate) struct ImportError {
 }
 
 impl ImportError {
-    fn new(message: impl Into<String>) -> Self {
+    pub(crate) fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
         }
@@ -129,28 +131,77 @@ struct ParsedViewBox {
 }
 
 /// Imports one audited official archive into a new local pack directory.
+#[cfg(test)]
 pub(crate) fn import_provider_pack(
     provider: &str,
     archive_path: &Path,
     additional_archive_paths: &BTreeMap<String, PathBuf>,
     output_path: &Path,
 ) -> Result<ImportSummary, ImportError> {
-    let profile = provider_catalog(provider).map_err(ImportError::new)?;
+    let profile = match provider_catalog(provider) {
+        Ok(profile) => profile,
+        Err(error) => return Err(ImportError::new(error)),
+    };
     import_profile(profile, archive_path, additional_archive_paths, output_path)
 }
 
+/// Downloads every audited official source and imports it into a new local pack directory.
+pub(crate) fn import_provider_pack_from_official_sources(
+    provider: &str,
+    output_path: &Path,
+    fetch: &mut ArchiveFetcher<'_>,
+) -> Result<ImportSummary, ImportError> {
+    let profile = provider_catalog(provider).map_err(ImportError::new)?;
+    import_profile_from_official_sources(profile, output_path, fetch)
+}
+
+fn import_profile_from_official_sources(
+    profile: ProviderCatalog,
+    output_path: &Path,
+    fetch: &mut ArchiveFetcher<'_>,
+) -> Result<ImportSummary, ImportError> {
+    ensure_output_available(output_path)?;
+    let mut archives = BTreeMap::new();
+    archives.insert("primary".to_owned(), fetch_source(&profile.source, fetch)?);
+    for additional in &profile.additional_sources {
+        archives.insert(
+            additional.id.clone(),
+            fetch_source(&additional.source, fetch)?,
+        );
+    }
+    import_profile_bytes(profile, archives, output_path)
+}
+
+fn fetch_source(
+    source: &ProviderPackSource,
+    fetch: &mut ArchiveFetcher<'_>,
+) -> Result<Vec<u8>, ImportError> {
+    if !source.archive_url.starts_with("https://") {
+        return Err(ImportError::new(
+            "audited provider archive URL must use HTTPS",
+        ));
+    }
+    let bytes = match fetch(&source.archive_url, MAX_ARCHIVE_BYTES) {
+        Ok(bytes) => bytes,
+        Err(error) => return Err(ImportError::new(error)),
+    };
+    if bytes.len() as u64 > MAX_ARCHIVE_BYTES {
+        return Err(ImportError::new(
+            "downloaded archive exceeds the 32 MiB limit",
+        ));
+    }
+    verify_archive_hash(&bytes, source)?;
+    Ok(bytes)
+}
+
+#[cfg(test)]
 fn import_profile(
     profile: ProviderCatalog,
     archive_path: &Path,
     additional_archive_paths: &BTreeMap<String, PathBuf>,
     output_path: &Path,
 ) -> Result<ImportSummary, ImportError> {
-    if output_path.exists() {
-        return Err(ImportError::new(format!(
-            "output '{}' already exists",
-            output_path.display()
-        )));
-    }
+    ensure_output_available(output_path)?;
     let expected_additional = profile
         .additional_sources
         .iter()
@@ -174,19 +225,43 @@ fn import_profile(
         )));
     }
 
-    let mut archives = BTreeMap::new();
-    archives.insert(
+    let mut archive_bytes = BTreeMap::new();
+    archive_bytes.insert(
         "primary".to_owned(),
-        open_archive(archive_path, &profile.source)?,
+        read_archive(archive_path, &profile.source)?,
     );
     for additional in &profile.additional_sources {
         let Some(path) = additional_archive_paths.get(&additional.id) else {
             return Err(ImportError::new("missing additional provider archive"));
         };
-        archives.insert(
+        archive_bytes.insert(
             additional.id.clone(),
-            open_archive(path, &additional.source)?,
+            read_archive(path, &additional.source)?,
         );
+    }
+    import_profile_bytes(profile, archive_bytes, output_path)
+}
+
+fn import_profile_bytes(
+    profile: ProviderCatalog,
+    archive_bytes: BTreeMap<String, Vec<u8>>,
+    output_path: &Path,
+) -> Result<ImportSummary, ImportError> {
+    ensure_output_available(output_path)?;
+    let mut archives = BTreeMap::new();
+    for (id, bytes) in archive_bytes {
+        let source = if id == "primary" {
+            &profile.source
+        } else {
+            profile
+                .additional_sources
+                .iter()
+                .find(|source| source.id == id)
+                .map(|source| &source.source)
+                .ok_or_else(|| ImportError::new(format!("unknown archive source '{id}'")))?
+        };
+        verify_archive_hash(&bytes, source)?;
+        archives.insert(id, open_archive_bytes(bytes)?);
     }
     let mut manifest_icons = Vec::with_capacity(profile.icons.len());
     let mut processed_assets = Vec::with_capacity(profile.icons.len());
@@ -267,9 +342,28 @@ fn import_profile(
         Some(path) if !path.as_os_str().is_empty() => path,
         _ => Path::new("."),
     };
-    if !parent.is_dir() {
+    if !parent.exists() {
+        if let Err(error) = fs::create_dir_all(parent) {
+            return Err(ImportError::new(format!(
+                "output parent '{}' is not a directory or cannot be created: {}",
+                parent.display(),
+                stable_io_error(error.kind())
+            )));
+        }
+    }
+    let parent_metadata = match fs::symlink_metadata(parent) {
+        Ok(metadata) => metadata,
+        Err(error) => {
+            return Err(ImportError::new(format!(
+                "cannot inspect output parent '{}': {}",
+                parent.display(),
+                stable_io_error(error.kind())
+            )));
+        }
+    };
+    if parent_metadata.file_type().is_symlink() || !parent_metadata.is_dir() {
         return Err(ImportError::new(format!(
-            "output parent '{}' is not a directory",
+            "output parent '{}' is not a directory or is a symlink",
             parent.display()
         )));
     }
@@ -301,10 +395,18 @@ fn import_profile(
     })
 }
 
-fn open_archive(
-    archive_path: &Path,
-    source: &ProviderPackSource,
-) -> Result<ZipArchive<Cursor<Vec<u8>>>, ImportError> {
+fn ensure_output_available(output_path: &Path) -> Result<(), ImportError> {
+    if output_path.exists() {
+        return Err(ImportError::new(format!(
+            "output '{}' already exists",
+            output_path.display()
+        )));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+fn read_archive(archive_path: &Path, source: &ProviderPackSource) -> Result<Vec<u8>, ImportError> {
     let metadata = match fs::metadata(archive_path) {
         Ok(metadata) => metadata,
         Err(error) => {
@@ -337,14 +439,23 @@ fn open_archive(
             )));
         }
     };
-    let archive_digest = sha256(&archive_bytes);
+    verify_archive_hash(&archive_bytes, source)?;
+    Ok(archive_bytes)
+}
+
+fn verify_archive_hash(bytes: &[u8], source: &ProviderPackSource) -> Result<(), ImportError> {
+    let archive_digest = sha256(bytes);
     if archive_digest != source.archive_sha256 {
         return Err(ImportError::new(format!(
             "archive hash does not match the audited {} release; expected {}, received {}",
             source.release, source.archive_sha256, archive_digest
         )));
     }
-    ZipArchive::new(Cursor::new(archive_bytes))
+    Ok(())
+}
+
+fn open_archive_bytes(bytes: Vec<u8>) -> Result<ZipArchive<Cursor<Vec<u8>>>, ImportError> {
+    ZipArchive::new(Cursor::new(bytes))
         .map_err(|_| ImportError::new("archive is not a supported ZIP file"))
 }
 
@@ -1144,7 +1255,7 @@ fn create_temporary_directory(parent: &Path) -> Result<PathBuf, ImportError> {
 
 fn render_notice(manifest: &ProviderPack) -> String {
     let mut notice = format!(
-        "# Stack provider icon pack notice\n\nProvider: {} (`{}`)\n\n{}\n\n{}\n\n{}\n\nThis local pack was created from archives selected by the user. Stack does not redistribute these asset bytes. Use and distribute generated diagrams only as permitted by the linked provider and brand terms.\n\n## Sources\n",
+        "# Stack provider icon pack notice\n\nProvider: {} (`{}`)\n\n{}\n\n{}\n\n{}\n\nThis local pack was created from audited official archives. Stack does not redistribute these asset bytes. Use and distribute generated diagrams only as permitted by the linked provider and brand terms.\n\n## Sources\n",
         manifest.provider.name,
         manifest.provider.id,
         manifest.notice.attribution,
@@ -1319,6 +1430,113 @@ mod tests {
             Ok(62)
         );
         assert!(provider_catalog("unknown").is_err());
+    }
+
+    #[test]
+    fn official_import_fetches_verified_sources_before_creating_the_store() {
+        let root = temporary_root("official-success");
+        let _ = fs::remove_dir_all(&root);
+        let output_path = root.join("icons/example");
+        let svg = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#123456" d="M0 0h24v24H0z"/></svg>"##;
+        let archive = zip_with_entry("icons/storage.svg", svg);
+        let profile = test_profile(&sha256(&archive), "icons/storage.svg");
+        assert!(profile.is_ok());
+        let Ok(mut profile) = profile else {
+            return;
+        };
+        let gcp = provider_catalog("gcp");
+        assert!(gcp.is_ok());
+        let Ok(gcp) = gcp else {
+            return;
+        };
+        let Some(mut additional) = gcp.additional_sources.into_iter().next() else {
+            return;
+        };
+        additional.source.archive_url = "https://example.com/categories.zip".to_owned();
+        additional.source.archive_sha256 = sha256(&archive);
+        profile.additional_sources.push(additional);
+        let mut fetched_urls = Vec::new();
+        let mut fetch = |url: &str, limit: u64| {
+            fetched_urls.push(url.to_owned());
+            assert_eq!(limit, MAX_ARCHIVE_BYTES);
+            Ok(archive.clone())
+        };
+        let imported = import_profile_from_official_sources(profile, &output_path, &mut fetch);
+        assert!(imported.is_ok());
+        assert_eq!(
+            fetched_urls,
+            [
+                "https://example.com/icons.zip",
+                "https://example.com/categories.zip"
+            ]
+        );
+        assert!(output_path.join("manifest.json").is_file());
+        assert!(output_path.join("assets/storage.svg").is_file());
+        assert!(fs::remove_dir_all(&root).is_ok());
+    }
+
+    #[test]
+    fn official_import_rejects_unverified_or_insecure_archives_without_output() {
+        let root = temporary_root("official-rejected");
+        let _ = fs::remove_dir_all(&root);
+        let output_path = root.join("icons/example");
+        let mut fetch = |_: &str, _: u64| Ok(Vec::new());
+        assert!(
+            import_provider_pack_from_official_sources("unknown", &output_path, &mut fetch)
+                .err()
+                .is_some_and(|error| error.to_string().contains("unknown provider"))
+        );
+        let valid_archive = zip_with_entry(
+            "icons/storage.svg",
+            br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"/>"#,
+        );
+        let profile = test_profile(&sha256(&valid_archive), "icons/storage.svg");
+        assert!(profile.is_ok());
+        let Ok(profile) = profile else {
+            return;
+        };
+        let mut fetch = |_: &str, _: u64| Ok(b"changed archive".to_vec());
+        let rejected = import_profile_from_official_sources(profile, &output_path, &mut fetch);
+        assert!(
+            rejected
+                .err()
+                .is_some_and(|error| error.to_string().contains("archive hash does not match"))
+        );
+        assert!(!root.exists());
+
+        let profile = test_profile(&sha256(&valid_archive), "icons/storage.svg");
+        assert!(profile.is_ok());
+        let Ok(mut profile) = profile else {
+            return;
+        };
+        profile.source.archive_url = "http://example.com/icons.zip".to_owned();
+        let mut fetched = false;
+        let mut fetch = |_: &str, _: u64| {
+            fetched = true;
+            Ok(valid_archive.clone())
+        };
+        let rejected = import_profile_from_official_sources(profile, &output_path, &mut fetch);
+        assert!(
+            rejected
+                .err()
+                .is_some_and(|error| error.to_string().contains("must use HTTPS"))
+        );
+        assert!(!fetched);
+        assert!(!root.exists());
+
+        let profile = test_profile("sha256:unused", "icons/storage.svg");
+        assert!(profile.is_ok());
+        let Ok(profile) = profile else {
+            return;
+        };
+        let mut fetch = |_: &str, _: u64| Ok(vec![0; MAX_ARCHIVE_BYTES as usize + 1]);
+        let rejected = import_profile_from_official_sources(profile, &output_path, &mut fetch);
+        assert!(
+            rejected
+                .err()
+                .is_some_and(|error| error.to_string().contains("32 MiB limit"))
+        );
+        assert!(!root.exists());
     }
 
     #[test]

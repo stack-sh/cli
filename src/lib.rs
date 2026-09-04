@@ -2,18 +2,19 @@
 
 #![forbid(unsafe_code)]
 
-use std::collections::BTreeMap;
 use std::ffi::{OsStr, OsString};
 use std::fmt::Write as _;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
+use std::time::Duration;
 
 use stack_engine::{
     CheckOutput, Diagnostic, Engine, FormatOutput, OperationalError, ProviderAsset, ProviderNotice,
     ProviderPack, RenderOutput, Severity,
 };
 
+mod config;
 mod provider;
 mod provider_catalog;
 
@@ -24,17 +25,16 @@ pub const EXIT_STACK_ERROR: u8 = 1;
 /// Exit status used for argument, host I/O, or engine operational failures.
 pub const EXIT_USAGE_OR_IO: u8 = 2;
 
-const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [--provider-pack <DIRECTORY>]... [-o <OUTPUT>] [--notice <NOTICE>]\n  stack icons list [PROVIDER] [QUERY]\n  stack icons import <PROVIDER> <ARCHIVE> [--source <ID>=<ARCHIVE>]... --accept-terms -o <DIRECTORY>\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n  icons     List catalogs and import local provider icon archives\n";
+const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>]\n  stack icons list [PROVIDER] [QUERY]\n  stack icons import <PROVIDER> --accept-terms [-o <DIRECTORY>]\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n  icons     List catalogs and import audited provider icon archives\n";
 const CHECK_HELP: &str =
     "Validate a Stack source file without modifying it\n\nUsage:\n  stack check <FILE>\n";
 const FORMAT_HELP: &str = "Format Stack source canonically\n\nUsage:\n  stack fmt <FILE>\n  stack fmt --check <FILE>\n  stack fmt -\n\nArguments:\n  <FILE>    Format the file atomically in place\n  -         Read from standard input and write to standard output\n\nOptions:\n  --check   Report whether formatting is required without writing output\n";
-const RENDER_HELP: &str = "Render Stack source as standalone SVG\n\nUsage:\n  stack render <FILE> [--provider-pack <DIRECTORY>]... [-o <OUTPUT>] [--notice <NOTICE>]\n\nArguments:\n  <FILE>                     Read Stack source bytes from this file\n\nOptions:\n  --provider-pack <DIRECTORY> Load one local imported provider pack; repeatable\n  -o <OUTPUT>                 Write SVG atomically instead of using standard output\n  --notice <NOTICE>           Write exact used-provider notices atomically\n";
-const ICONS_HELP: &str = "Manage local provider icon packs\n\nUsage:\n  stack icons list [PROVIDER] [QUERY]\n  stack icons import <PROVIDER> <ARCHIVE> [--source <ID>=<ARCHIVE>]... --accept-terms -o <DIRECTORY>\n\nProviders:\n  aws            305 AWS Architecture Icons\n  gcp             45 Google Cloud product and category icons\n  azure          639 Azure Public Service Icons\n  simple-icons    62 curated developer and collaboration tools\n";
+const RENDER_HELP: &str = "Render Stack source as standalone SVG\n\nUsage:\n  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>]\n\nArguments:\n  <FILE>                      Read Stack source bytes from this file\n\nOptions:\n  --provider-pack <DIRECTORY> Read known provider packs from this icon-store root\n  -o <OUTPUT>                 Write SVG atomically instead of using standard output\n  --notice <NOTICE>           Write exact used-provider notices atomically\n\nDefault icon store:\n  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons\n";
+const ICONS_HELP: &str = "Manage local provider icon packs\n\nUsage:\n  stack icons list [PROVIDER] [QUERY]\n  stack icons import <PROVIDER> --accept-terms [-o <DIRECTORY>]\n\nProviders:\n  aws            305 AWS Architecture Icons\n  gcp             45 Google Cloud product and category icons\n  azure          639 Azure Public Service Icons\n  simple-icons    62 curated developer and collaboration tools\n";
 const ICONS_LIST_HELP: &str = "List searchable asset-free provider catalog metadata\n\nUsage:\n  stack icons list\n  stack icons list <PROVIDER> [QUERY]\n\nArguments:\n  <PROVIDER>  aws, gcp, azure, or simple-icons\n  [QUERY]     Case-insensitive ID, product, or category substring\n";
-const ICONS_IMPORT_HELP: &str = "Import audited provider icon archives locally\n\nUsage:\n  stack icons import <PROVIDER> <ARCHIVE> [--source <ID>=<ARCHIVE>]... --accept-terms -o <DIRECTORY>\n\nArguments:\n  <PROVIDER>   aws, gcp, azure, or simple-icons\n  <ARCHIVE>    Local primary ZIP archive; Stack performs no download or upload\n\nOptions:\n  --source <ID>=<ARCHIVE>  Map an additional local ZIP by source ID; GCP requires categories=<PATH>\n  --accept-terms           Confirm that you reviewed all provider and brand terms\n  -o <DIRECTORY>          Create a new local pack directory atomically\n";
+const ICONS_IMPORT_HELP: &str = "Download and import audited provider icon archives\n\nUsage:\n  stack icons import <PROVIDER> --accept-terms [-o <DIRECTORY>]\n\nArguments:\n  <PROVIDER>  aws, gcp, azure, or simple-icons\n\nOptions:\n  --accept-terms  Confirm that you reviewed all provider and brand terms\n  -o <DIRECTORY>  Store packs below this icon-store root\n\nDefault icon store:\n  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons\n";
 const MAX_PROVIDER_MANIFEST_BYTES: usize = 1024 * 1024;
 const MAX_PROVIDER_ASSET_BYTES: usize = 1024 * 1024;
-const MAX_PROVIDER_PACKS: usize = 32;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum FormatMode {
@@ -47,6 +47,8 @@ enum RenderDestination {
     Stdout,
     File(PathBuf),
 }
+
+type ImportProvider = fn(&str, &Path) -> Result<provider::ImportSummary, provider::ImportError>;
 
 /// Runs the CLI with explicit streams and returns its process exit status.
 pub fn run(
@@ -171,6 +173,20 @@ fn run_icons_import(
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
+    run_icons_import_with(
+        arguments,
+        stdout,
+        stderr,
+        import_provider_from_official_sources,
+    )
+}
+
+fn run_icons_import_with(
+    arguments: &mut dyn Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+    import: ImportProvider,
+) -> u8 {
     let Some(provider) = arguments.next() else {
         return argument_error("missing provider for 'stack icons import'", stderr);
     };
@@ -189,19 +205,20 @@ fn run_icons_import(
             stderr,
         );
     }
-    let Some(archive) = arguments.next() else {
-        return argument_error("missing archive for 'stack icons import'", stderr);
+    let Some(provider_name) = provider.to_str() else {
+        return argument_error("provider must be valid UTF-8", stderr);
     };
-    if archive.to_string_lossy().starts_with('-') {
+    if !provider_catalog::PROVIDER_IDS.contains(&provider_name) {
         return argument_error(
-            &format!("unknown option '{}'", archive.to_string_lossy()),
+            &format!(
+                "unknown provider '{provider_name}'; expected aws, gcp, azure, or simple-icons"
+            ),
             stderr,
         );
     }
 
     let mut accepted_terms = false;
-    let mut output = None;
-    let mut additional_sources = BTreeMap::new();
+    let mut output_root = None;
     while let Some(option) = arguments.next() {
         if option == OsStr::new("--accept-terms") {
             if accepted_terms {
@@ -209,32 +226,13 @@ fn run_icons_import(
             }
             accepted_terms = true;
         } else if option == OsStr::new("-o") {
-            if output.is_some() {
+            if output_root.is_some() {
                 return argument_error("duplicate '-o' option", stderr);
             }
             let Some(path) = arguments.next() else {
                 return argument_error("missing output directory after '-o'", stderr);
             };
-            output = Some(PathBuf::from(path));
-        } else if option == OsStr::new("--source") {
-            let Some(value) = arguments.next() else {
-                return argument_error("missing <ID>=<ARCHIVE> after '--source'", stderr);
-            };
-            let Some(value) = value.to_str() else {
-                return argument_error("source ID and archive must be valid UTF-8", stderr);
-            };
-            let Some((id, path)) = value.split_once('=') else {
-                return argument_error("source must use <ID>=<ARCHIVE>", stderr);
-            };
-            if id.is_empty() || path.is_empty() {
-                return argument_error("source must use non-empty <ID>=<ARCHIVE>", stderr);
-            }
-            if additional_sources
-                .insert(id.to_owned(), PathBuf::from(path))
-                .is_some()
-            {
-                return argument_error(&format!("duplicate source ID '{id}'"), stderr);
-            }
+            output_root = Some(PathBuf::from(path));
         } else {
             return argument_error(
                 &format!("unexpected argument '{}'", option.to_string_lossy()),
@@ -248,25 +246,14 @@ fn run_icons_import(
             stderr,
         );
     }
-    let Some(output) = output else {
-        return argument_error("missing output directory after '-o'", stderr);
+    let environment = config::Environment::capture();
+    let icon_store_root = match config::icon_store_root(output_root.as_deref(), &environment) {
+        Ok(path) => path,
+        Err(error) => return write_stderr_error(&error, stderr),
     };
-    if output == Path::new(&archive) {
-        return argument_error("archive and output directory must be different", stderr);
-    }
-    if additional_sources.values().any(|path| path == &output) {
-        return argument_error(
-            "source archive and output directory must be different",
-            stderr,
-        );
-    }
-    let provider_name = provider.to_string_lossy();
-    match provider::import_provider_pack(
-        &provider_name,
-        Path::new(&archive),
-        &additional_sources,
-        &output,
-    ) {
+    let output = icon_store_root.join(provider_name);
+    let result = import(provider_name, &output);
+    match result {
         Ok(summary) => write_stdout(
             &format!(
                 "Imported {} {} icons to '{}'.\nManifest: {}\nNotice: {}\n",
@@ -280,6 +267,38 @@ fn run_icons_import(
             stderr,
         ),
         Err(error) => write_stderr_error(&format!("cannot import provider icons: {error}"), stderr),
+    }
+}
+
+fn import_provider_from_official_sources(
+    provider: &str,
+    output: &Path,
+) -> Result<provider::ImportSummary, provider::ImportError> {
+    let mut download = download_provider_archive;
+    provider::import_provider_pack_from_official_sources(provider, output, &mut download)
+}
+
+fn download_provider_archive(url: &str, limit: u64) -> Result<Vec<u8>, String> {
+    let config = ureq::Agent::config_builder()
+        .https_only(true)
+        .timeout_global(Some(Duration::from_secs(120)))
+        .build();
+    let agent = ureq::Agent::new_with_config(config);
+    let response = agent.get(url).call();
+    let mut response = match response {
+        Ok(response) => response,
+        Err(error) => {
+            return Err(format!(
+                "cannot download audited archive from '{url}': {error}"
+            ));
+        }
+    };
+    let body = response.body_mut().with_config().limit(limit).read_to_vec();
+    match body {
+        Ok(bytes) => Ok(bytes),
+        Err(error) => Err(format!(
+            "cannot download audited archive from '{url}': {error}"
+        )),
     }
 }
 
@@ -309,7 +328,7 @@ fn run_render(
 
     let mut destination = None;
     let mut notice_path = None;
-    let mut provider_pack_paths = Vec::new();
+    let mut provider_pack_root = None;
     while let Some(option) = arguments.next() {
         if option == OsStr::new("-o") {
             if destination.is_some() {
@@ -328,13 +347,13 @@ fn run_render(
             };
             notice_path = Some(PathBuf::from(path));
         } else if option == OsStr::new("--provider-pack") {
-            let Some(path) = arguments.next() else {
-                return argument_error("missing provider pack directory", stderr);
-            };
-            provider_pack_paths.push(PathBuf::from(path));
-            if provider_pack_paths.len() > MAX_PROVIDER_PACKS {
-                return argument_error("at most 32 provider packs may be loaded", stderr);
+            if provider_pack_root.is_some() {
+                return argument_error("duplicate '--provider-pack' option", stderr);
             }
+            let Some(path) = arguments.next() else {
+                return argument_error("missing provider icon-store directory", stderr);
+            };
+            provider_pack_root = Some(PathBuf::from(path));
         } else {
             return argument_error(
                 &format!("unexpected argument '{}'", option.to_string_lossy()),
@@ -357,10 +376,19 @@ fn run_render(
         return argument_error("output and notice files must be different", stderr);
     }
 
+    let explicit_provider_pack_root = provider_pack_root.is_some();
+    let environment = config::Environment::capture();
+    let provider_pack_root =
+        match config::icon_store_root(provider_pack_root.as_deref(), &environment) {
+            Ok(path) => path,
+            Err(error) => return write_stderr_error(&error, stderr),
+        };
+
     render_file(
         Path::new(&source),
         destination,
-        &provider_pack_paths,
+        &provider_pack_root,
+        !explicit_provider_pack_root,
         notice_path.as_deref(),
         stdout,
         stderr,
@@ -490,27 +518,25 @@ fn check_file_with(
 fn render_file(
     path: &Path,
     destination: RenderDestination,
-    provider_pack_paths: &[PathBuf],
+    provider_pack_root: &Path,
+    allow_missing_provider_pack_root: bool,
     notice_path: Option<&Path>,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
-    let mut provider_packs = Vec::with_capacity(provider_pack_paths.len());
-    for provider_pack_path in provider_pack_paths {
-        let provider_pack = match load_provider_pack(provider_pack_path) {
-            Ok(provider_pack) => provider_pack,
+    let provider_packs =
+        match load_provider_store(provider_pack_root, allow_missing_provider_pack_root) {
+            Ok(provider_packs) => provider_packs,
             Err(reason) => {
                 return write_stderr_error(
                     &format!(
-                        "cannot load provider pack '{}': {reason}",
-                        provider_pack_path.display()
+                        "cannot load provider icon store '{}': {reason}",
+                        provider_pack_root.display()
                     ),
                     stderr,
                 );
             }
         };
-        provider_packs.push(provider_pack);
-    }
     let engine = match Engine::with_provider_packs(&provider_packs) {
         Ok(engine) => engine,
         Err(error) => {
@@ -526,6 +552,36 @@ fn render_file(
         |source| engine.render(source),
         atomic_write_output,
     )
+}
+
+fn load_provider_store(root: &Path, allow_missing: bool) -> Result<Vec<ProviderPack>, String> {
+    let metadata = match fs::symlink_metadata(root) {
+        Ok(metadata) => metadata,
+        Err(error) if allow_missing && error.kind() == io::ErrorKind::NotFound => {
+            return Ok(Vec::new());
+        }
+        Err(error) => return Err(stable_io_error(error.kind()).to_owned()),
+    };
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err("store path must be a real directory, not a symlink".to_owned());
+    }
+
+    let mut packs = Vec::new();
+    for provider_id in provider_catalog::PROVIDER_IDS {
+        let pack_root = root.join(provider_id);
+        match fs::symlink_metadata(&pack_root) {
+            Ok(_) => packs.push(load_provider_pack_for(&pack_root, provider_id)?),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => {
+                return Err(format!(
+                    "cannot inspect '{}': {}",
+                    pack_root.display(),
+                    stable_io_error(error.kind())
+                ));
+            }
+        }
+    }
+    Ok(packs)
 }
 
 fn render_file_with(
@@ -605,7 +661,19 @@ fn render_file_with(
     EXIT_SUCCESS
 }
 
+#[cfg(test)]
 fn load_provider_pack(root: &Path) -> Result<ProviderPack, String> {
+    load_provider_pack_with_expected_id(root, None)
+}
+
+fn load_provider_pack_for(root: &Path, expected_provider_id: &str) -> Result<ProviderPack, String> {
+    load_provider_pack_with_expected_id(root, Some(expected_provider_id))
+}
+
+fn load_provider_pack_with_expected_id(
+    root: &Path,
+    expected_provider_id: Option<&str>,
+) -> Result<ProviderPack, String> {
     let root_metadata =
         fs::symlink_metadata(root).map_err(|error| stable_io_error(error.kind()).to_owned())?;
     if root_metadata.file_type().is_symlink() || !root_metadata.is_dir() {
@@ -616,6 +684,14 @@ fn load_provider_pack(root: &Path) -> Result<ProviderPack, String> {
     let manifest_bytes = read_bounded_regular_file(&manifest_path, MAX_PROVIDER_MANIFEST_BYTES)?;
     let manifest: stack_theme::ProviderPack = serde_json::from_slice(&manifest_bytes)
         .map_err(|_| "manifest.json is invalid".to_owned())?;
+    if let Some(expected_provider_id) = expected_provider_id {
+        if manifest.provider.id != expected_provider_id {
+            return Err(format!(
+                "manifest provider '{}' does not match directory '{}'",
+                manifest.provider.id, expected_provider_id
+            ));
+        }
+    }
     let mut assets = Vec::with_capacity(manifest.icons.len());
     for icon in &manifest.icons {
         let relative = safe_provider_asset_path(&icon.asset.path)?;
@@ -1047,7 +1123,7 @@ mod tests {
             run_without_input([OsString::from("--version")], &mut stdout, &mut stderr),
             EXIT_SUCCESS
         );
-        assert_eq!(stdout, b"stack 0.2.0\n");
+        assert_eq!(stdout, b"stack 0.3.0\n");
         assert!(stderr.is_empty());
 
         stdout.clear();
@@ -1240,18 +1316,21 @@ mod tests {
             assert!(String::from_utf8_lossy(&stderr).starts_with("error:"));
         }
 
-        let mut too_many_packs = vec![OsString::from("render"), OsString::from("file.stack")];
-        for index in 0..=MAX_PROVIDER_PACKS {
-            too_many_packs.push(OsString::from("--provider-pack"));
-            too_many_packs.push(OsString::from(format!("pack-{index}")));
-        }
+        let duplicate_provider_store = vec![
+            OsString::from("render"),
+            OsString::from("file.stack"),
+            OsString::from("--provider-pack"),
+            OsString::from("first"),
+            OsString::from("--provider-pack"),
+            OsString::from("second"),
+        ];
         let mut stdout = Vec::new();
         let mut stderr = Vec::new();
         assert_eq!(
-            run_without_input(too_many_packs, &mut stdout, &mut stderr),
+            run_without_input(duplicate_provider_store, &mut stdout, &mut stderr),
             EXIT_USAGE_OR_IO
         );
-        assert!(String::from_utf8_lossy(&stderr).contains("at most 32 provider packs"));
+        assert!(String::from_utf8_lossy(&stderr).contains("duplicate '--provider-pack'"));
 
         stdout.clear();
         stderr.clear();
@@ -1365,6 +1444,64 @@ mod tests {
         assert!(listing.contains("aws:s3\tAmazon Simple Storage Service"));
         assert!(listing.lines().count() >= 2);
         assert!(stderr.is_empty());
+    }
+
+    #[test]
+    fn provider_import_command_resolves_a_store_root_and_reports_results() {
+        fn successful_import(
+            provider_id: &str,
+            output: &Path,
+        ) -> Result<provider::ImportSummary, provider::ImportError> {
+            assert_eq!(provider_id, "gcp");
+            assert_eq!(output, Path::new(".stack-icons/gcp"));
+            Ok(provider::ImportSummary {
+                provider_name: "Google Cloud".to_owned(),
+                icon_count: 45,
+                manifest_path: output.join("manifest.json"),
+                notice_path: output.join("NOTICE.md"),
+            })
+        }
+
+        fn failed_import(
+            _: &str,
+            _: &Path,
+        ) -> Result<provider::ImportSummary, provider::ImportError> {
+            Err(provider::ImportError::new("download failed"))
+        }
+
+        let mut arguments = [
+            OsString::from("gcp"),
+            OsString::from("--accept-terms"),
+            OsString::from("-o"),
+            OsString::from(".stack-icons"),
+        ]
+        .into_iter();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        let status =
+            run_icons_import_with(&mut arguments, &mut stdout, &mut stderr, successful_import);
+        assert_eq!(status, EXIT_SUCCESS);
+        assert!(stderr.is_empty());
+        let rendered_stdout = String::from_utf8_lossy(&stdout);
+        assert!(rendered_stdout.contains("Imported 45 Google Cloud icons"));
+        assert!(rendered_stdout.contains(".stack-icons/gcp/manifest.json"));
+
+        let mut arguments = [
+            OsString::from("aws"),
+            OsString::from("--accept-terms"),
+            OsString::from("-o"),
+            OsString::from(".stack-icons"),
+        ]
+        .into_iter();
+        stdout.clear();
+        stderr.clear();
+        let status = run_icons_import_with(&mut arguments, &mut stdout, &mut stderr, failed_import);
+        assert_eq!(status, EXIT_USAGE_OR_IO);
+        assert!(stdout.is_empty());
+        assert!(String::from_utf8_lossy(&stderr).contains("download failed"));
+
+        assert!(import_provider_from_official_sources("unknown", Path::new("unused")).is_err());
+        assert!(download_provider_archive("http://example.com/archive.zip", 1).is_err());
     }
 
     #[test]
@@ -1740,6 +1877,22 @@ mod tests {
             assert!(read_bounded_regular_file(&linked, 5).is_err());
             assert!(load_provider_pack(&linked).is_err());
         }
+        assert!(fs::remove_dir_all(root).is_ok());
+    }
+
+    #[test]
+    fn provider_store_discovers_only_known_provider_directories() {
+        let root =
+            std::env::temp_dir().join(format!("stack-cli-provider-store-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        assert!(load_provider_store(&root, true).is_ok_and(|packs| packs.is_empty()));
+        assert!(fs::create_dir_all(root.join("unknown")).is_ok());
+        assert!(fs::write(root.join("unknown/manifest.json"), b"invalid").is_ok());
+        assert!(load_provider_store(&root, false).is_ok_and(|packs| packs.is_empty()));
+
+        assert!(fs::create_dir_all(root.join("aws")).is_ok());
+        assert!(fs::write(root.join("aws/manifest.json"), b"invalid").is_ok());
+        assert!(load_provider_store(&root, false).is_err());
         assert!(fs::remove_dir_all(root).is_ok());
     }
 

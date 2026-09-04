@@ -11,6 +11,8 @@ const GCP_CATALOG: &str = include_str!("../catalogs/gcp.json");
 const AZURE_CATALOG: &str = include_str!("../catalogs/azure.json");
 const SIMPLE_ICONS_CATALOG: &str = include_str!("../catalogs/simple-icons.json");
 
+pub(crate) const PROVIDER_IDS: [&str; 4] = ["aws", "gcp", "azure", "simple-icons"];
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ProviderCatalog {
@@ -65,10 +67,7 @@ pub(crate) fn provider_catalog(provider: &str) -> Result<ProviderCatalog, String
 }
 
 pub(crate) fn provider_catalogs() -> Result<Vec<ProviderCatalog>, String> {
-    ["aws", "gcp", "azure", "simple-icons"]
-        .into_iter()
-        .map(provider_catalog)
-        .collect()
+    PROVIDER_IDS.into_iter().map(provider_catalog).collect()
 }
 
 #[cfg(test)]

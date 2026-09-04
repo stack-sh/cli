@@ -40,6 +40,10 @@ impl Drop for TestDirectory {
 fn stack(arguments: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Result<Output, Box<dyn Error>> {
     Ok(Command::new(env!("CARGO_BIN_EXE_stack"))
         .args(arguments)
+        .env(
+            "XDG_CONFIG_HOME",
+            env::temp_dir().join(format!("stack-cli-empty-config-{}", std::process::id())),
+        )
         .output()?)
 }
 
@@ -49,6 +53,10 @@ fn stack_with_input(
 ) -> Result<Output, Box<dyn Error>> {
     let mut child = Command::new(env!("CARGO_BIN_EXE_stack"))
         .args(arguments)
+        .env(
+            "XDG_CONFIG_HOME",
+            env::temp_dir().join(format!("stack-cli-empty-config-{}", std::process::id())),
+        )
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -150,7 +158,7 @@ fn help_and_version_are_stdout_only() -> Result<(), Box<dyn Error>> {
 
     let version = stack(["--version"])?;
     assert_eq!(version.status.code(), Some(0));
-    assert_eq!(version.stdout, b"stack 0.2.0\n");
+    assert_eq!(version.stdout, b"stack 0.3.0\n");
     assert!(version.stderr.is_empty());
     Ok(())
 }

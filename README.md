@@ -15,19 +15,20 @@ stack render arch.stack
 stack render arch.stack -o arch.svg
 stack icons list
 stack icons list aws s3
-stack icons import aws ~/Downloads/aws-icons.zip --accept-terms -o .stack-icons/aws
-stack render arch.stack --provider-pack .stack-icons/aws -o arch.svg --notice arch.NOTICE.md
+stack icons import gcp --accept-terms
+stack icons import simple-icons --accept-terms
+stack render arch.stack -o arch.svg --notice arch.NOTICE.md
 ```
 
 `stack check` reads the file as bytes and runs the full compiler, theme, layout, and routing validation pipeline without changing the source. Diagnostics are written to standard error in source order. Standard output remains empty.
 
 `stack fmt` uses the engine formatter and preserves comments. File mode replaces changed source atomically through a temporary file in the same directory; unchanged files are not replaced. Syntax, encoding, and host I/O failures leave the original file untouched. `stack fmt -` reads bytes from standard input and writes only canonical source to standard output. `--check` never writes source and exits with status `1` when formatting is required.
 
-`stack render` uses the same engine pipeline to produce deterministic standalone SVG. Without `-o`, standard output contains only SVG. With `-o`, the output is written atomically in the destination directory. Repeat `--provider-pack <DIRECTORY>` to load local imported packs, and use `--notice <NOTICE>` to save the exact provider pack revisions, terms, source archives, and icon IDs embedded in that artifact. Pack files are bounded and validated before rendering; the command performs no download or upload. Diagnostics remain on standard error, warnings preserve SVG, and Stack errors never create or replace output.
+`stack render` uses the same engine pipeline to produce deterministic standalone SVG. Without `-o`, standard output contains only SVG. With `-o`, the output is written atomically in the destination directory. It discovers imported `aws`, `gcp`, `azure`, and `simple-icons` packs below the shared icon store. Use `--provider-pack <DIRECTORY>` for a project-local icon-store root, and use `--notice <NOTICE>` to save the exact provider pack revisions, terms, source archives, and icon IDs embedded in that artifact. Pack files are bounded and validated before rendering. Diagnostics remain on standard error, warnings preserve SVG, and Stack errors never create or replace output.
 
 `stack icons list [PROVIDER] [QUERY]` searches the asset-free catalog by ID, product name, or category. The catalog currently contains 1,051 IDs: 305 AWS, 45 Google Cloud, 639 Azure, and 62 curated developer and collaboration tool icons. This command reads only metadata embedded in the CLI.
 
-`stack icons import` creates a local provider pack from official ZIP archives that the user selected. It performs no network request or upload, requires explicit terms acceptance, verifies every complete archive against an audited SHA-256, reads only allowlisted SVG entries with fixed size limits, removes active or external content, preserves official colors and geometry, and writes the manifest, notice, and processed SVGs atomically to a new directory. Google Cloud combines its core and category archives with `--source categories=<ARCHIVE>`. Simple Icons entries also retain the recorded rights-owner source and brand-guideline links because that project's CC0 distribution does not grant rights to every underlying brand. See [the provider icon import guide](./docs/provider-icon-import.md) for sources, hashes, usage, and rights boundaries.
+`stack icons import <PROVIDER> --accept-terms` downloads the audited official archive set, verifies every complete SHA-256 before ZIP processing, reads allowlisted SVG entries with fixed size limits, sanitizes active and external content, preserves official colors and geometry, and writes the manifest, notice, and processed SVGs atomically. The default store is `$XDG_CONFIG_HOME/stack/icons`, falling back to `$HOME/.config/stack/icons`. `$XDG_CONFIG_HOME/stack/config.yaml` can set an absolute `default_icons_path`. Use `-o <DIRECTORY>` to put provider child directories below a project-local root. See [the provider icon guide](./docs/provider-icon-import.md) for configuration, project-local usage, sources, hashes, and rights.
 
 | Result | Exit status |
 | --- | ---: |
@@ -37,7 +38,7 @@ stack render arch.stack --provider-pack .stack-icons/aws -o arch.svg --notice ar
 
 The CLI links `stack-engine` as a native Rust dependency. It owns filesystem and standard-stream behavior, process exit codes, configuration discovery, provider-pack import, notice output, and command presentation. It must not duplicate compiler, formatter, layout, or SVG-rendering logic.
 
-The bundled engine resolves 30 provider-neutral core icons: `api`, `web`, `mobile`, `desktop`, `server`, `container`, `cluster`, `cloud`, `scheduler`, `webhook`, `identity`, `observability`, `gateway`, `load-balancer`, `dns`, `cdn`, `firewall`, `network`, `event`, `stream`, `search`, `analytics`, `repository`, `pipeline`, `secret`, `document`, `task`, `chat`, `email`, and `ai`. Vendor assets are not bundled. Local provider-pack import preserves upstream artwork and attaches source, archive hash, transformation, terms, and notice metadata. Rendering resolves namespaced IDs such as `aws:s3`, preserves the authored semantic `kind`, embeds only the selected local asset, and writes its provenance into SVG metadata and the optional notice sidecar.
+The bundled engine resolves 30 provider-neutral core icons: `api`, `web`, `mobile`, `desktop`, `server`, `container`, `cluster`, `cloud`, `scheduler`, `webhook`, `identity`, `observability`, `gateway`, `load-balancer`, `dns`, `cdn`, `firewall`, `network`, `event`, `stream`, `search`, `analytics`, `repository`, `pipeline`, `secret`, `document`, `task`, `chat`, `email`, and `ai`. User-managed provider packs preserve upstream artwork and attach source, archive hash, transformation, terms, and notice metadata. Rendering resolves namespaced IDs such as `aws:s3`, preserves the authored semantic `kind`, embeds the selected local asset, and writes its provenance into SVG metadata and the optional notice sidecar.
 
 ## Development
 
