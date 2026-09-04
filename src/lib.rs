@@ -6,10 +6,11 @@ use std::ffi::{OsStr, OsString};
 use std::fmt::Write as _;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use stack_engine::{
-    CheckOutput, Diagnostic, Engine, FormatOutput, OperationalError, RenderOutput, Severity,
+    CheckOutput, Diagnostic, Engine, FormatOutput, OperationalError, ProviderAsset, ProviderNotice,
+    ProviderPack, RenderOutput, Severity,
 };
 
 mod provider;
@@ -21,13 +22,16 @@ pub const EXIT_STACK_ERROR: u8 = 1;
 /// Exit status used for argument, host I/O, or engine operational failures.
 pub const EXIT_USAGE_OR_IO: u8 = 2;
 
-const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [-o <OUTPUT>]\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n  icons     Import local provider icon archives\n";
+const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [--provider-pack <DIRECTORY>]... [-o <OUTPUT>] [--notice <NOTICE>]\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n  icons     Import local provider icon archives\n";
 const CHECK_HELP: &str =
     "Validate a Stack source file without modifying it\n\nUsage:\n  stack check <FILE>\n";
 const FORMAT_HELP: &str = "Format Stack source canonically\n\nUsage:\n  stack fmt <FILE>\n  stack fmt --check <FILE>\n  stack fmt -\n\nArguments:\n  <FILE>    Format the file atomically in place\n  -         Read from standard input and write to standard output\n\nOptions:\n  --check   Report whether formatting is required without writing output\n";
-const RENDER_HELP: &str = "Render Stack source as standalone SVG\n\nUsage:\n  stack render <FILE>\n  stack render <FILE> -o <OUTPUT>\n\nArguments:\n  <FILE>      Read Stack source bytes from this file\n\nOptions:\n  -o <OUTPUT> Write SVG atomically instead of using standard output\n";
+const RENDER_HELP: &str = "Render Stack source as standalone SVG\n\nUsage:\n  stack render <FILE> [--provider-pack <DIRECTORY>]... [-o <OUTPUT>] [--notice <NOTICE>]\n\nArguments:\n  <FILE>                     Read Stack source bytes from this file\n\nOptions:\n  --provider-pack <DIRECTORY> Load one local imported provider pack; repeatable\n  -o <OUTPUT>                 Write SVG atomically instead of using standard output\n  --notice <NOTICE>           Write exact used-provider notices atomically\n";
 const ICONS_HELP: &str = "Manage local provider icon packs\n\nUsage:\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n\nProviders:\n  aws       AWS Architecture Icons release 2026-07-31\n  gcp       Google Cloud core product icons from the May 2026 guide\n  azure     Azure Public Service Icons V24\n";
 const ICONS_IMPORT_HELP: &str = "Import an audited official provider icon archive locally\n\nUsage:\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n\nArguments:\n  <PROVIDER>   aws, gcp, or azure\n  <ARCHIVE>    Local official ZIP archive; Stack performs no download or upload\n\nOptions:\n  --accept-terms  Confirm that you reviewed and accept the provider terms\n  -o <DIRECTORY> Create a new local pack directory atomically\n";
+const MAX_PROVIDER_MANIFEST_BYTES: usize = 1024 * 1024;
+const MAX_PROVIDER_ASSET_BYTES: usize = 1024 * 1024;
+const MAX_PROVIDER_PACKS: usize = 32;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum FormatMode {
@@ -233,32 +237,64 @@ fn run_render(
         );
     }
 
-    let destination = match arguments.next() {
-        None => RenderDestination::Stdout,
-        Some(option) if option == OsStr::new("-o") => {
+    let mut destination = None;
+    let mut notice_path = None;
+    let mut provider_pack_paths = Vec::new();
+    while let Some(option) = arguments.next() {
+        if option == OsStr::new("-o") {
+            if destination.is_some() {
+                return argument_error("duplicate '-o' option", stderr);
+            }
             let Some(output) = arguments.next() else {
                 return argument_error("missing output file after '-o'", stderr);
             };
-            if let Some(extra) = arguments.next() {
-                return argument_error(
-                    &format!("unexpected argument '{}'", extra.to_string_lossy()),
-                    stderr,
-                );
+            destination = Some(RenderDestination::File(PathBuf::from(output)));
+        } else if option == OsStr::new("--notice") {
+            if notice_path.is_some() {
+                return argument_error("duplicate '--notice' option", stderr);
             }
-            if output == source {
-                return argument_error("input and output files must be different", stderr);
+            let Some(path) = arguments.next() else {
+                return argument_error("missing notice file after '--notice'", stderr);
+            };
+            notice_path = Some(PathBuf::from(path));
+        } else if option == OsStr::new("--provider-pack") {
+            let Some(path) = arguments.next() else {
+                return argument_error("missing provider pack directory", stderr);
+            };
+            provider_pack_paths.push(PathBuf::from(path));
+            if provider_pack_paths.len() > MAX_PROVIDER_PACKS {
+                return argument_error("at most 32 provider packs may be loaded", stderr);
             }
-            RenderDestination::File(PathBuf::from(output))
-        }
-        Some(extra) => {
+        } else {
             return argument_error(
-                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                &format!("unexpected argument '{}'", option.to_string_lossy()),
                 stderr,
             );
         }
-    };
+    }
 
-    render_file(Path::new(&source), destination, stdout, stderr)
+    let destination = destination.unwrap_or(RenderDestination::Stdout);
+    if matches!(&destination, RenderDestination::File(path) if path.as_os_str() == source) {
+        return argument_error("input and output files must be different", stderr);
+    }
+    if notice_path
+        .as_ref()
+        .is_some_and(|path| path.as_os_str() == source)
+    {
+        return argument_error("input and notice files must be different", stderr);
+    }
+    if matches!(&destination, RenderDestination::File(path) if notice_path.as_ref() == Some(path)) {
+        return argument_error("output and notice files must be different", stderr);
+    }
+
+    render_file(
+        Path::new(&source),
+        destination,
+        &provider_pack_paths,
+        notice_path.as_deref(),
+        stdout,
+        stderr,
+    )
 }
 
 fn run_format(
@@ -384,15 +420,40 @@ fn check_file_with(
 fn render_file(
     path: &Path,
     destination: RenderDestination,
+    provider_pack_paths: &[PathBuf],
+    notice_path: Option<&Path>,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
+    let mut provider_packs = Vec::with_capacity(provider_pack_paths.len());
+    for provider_pack_path in provider_pack_paths {
+        let provider_pack = match load_provider_pack(provider_pack_path) {
+            Ok(provider_pack) => provider_pack,
+            Err(reason) => {
+                return write_stderr_error(
+                    &format!(
+                        "cannot load provider pack '{}': {reason}",
+                        provider_pack_path.display()
+                    ),
+                    stderr,
+                );
+            }
+        };
+        provider_packs.push(provider_pack);
+    }
+    let engine = match Engine::with_provider_packs(&provider_packs) {
+        Ok(engine) => engine,
+        Err(error) => {
+            return write_stderr_error(&format!("cannot load provider packs: {error}"), stderr);
+        }
+    };
     render_file_with(
         path,
         destination,
+        notice_path,
         stdout,
         stderr,
-        |source| Engine::bundled().render(source),
+        |source| engine.render(source),
         atomic_write_output,
     )
 }
@@ -400,10 +461,11 @@ fn render_file(
 fn render_file_with(
     path: &Path,
     destination: RenderDestination,
+    notice_path: Option<&Path>,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
     render: impl FnOnce(&[u8]) -> Result<RenderOutput, OperationalError>,
-    write_output: impl FnOnce(&Path, &[u8]) -> io::Result<()>,
+    mut write_output: impl FnMut(&Path, &[u8]) -> io::Result<()>,
 ) -> u8 {
     let source = match fs::read(path) {
         Ok(source) => source,
@@ -457,7 +519,134 @@ fn render_file_with(
             }
         }
     }
+    if let Some(notice_path) = notice_path {
+        let notice = render_provider_notices(&output.provider_notices);
+        if let Err(error) = write_output(notice_path, notice.as_bytes()) {
+            return write_stderr_error(
+                &format!(
+                    "cannot write '{}': {}",
+                    notice_path.display(),
+                    stable_io_error(error.kind())
+                ),
+                stderr,
+            );
+        }
+    }
     EXIT_SUCCESS
+}
+
+fn load_provider_pack(root: &Path) -> Result<ProviderPack, String> {
+    let root_metadata =
+        fs::symlink_metadata(root).map_err(|error| stable_io_error(error.kind()).to_owned())?;
+    if root_metadata.file_type().is_symlink() || !root_metadata.is_dir() {
+        return Err("pack path must be a real directory, not a symlink".to_owned());
+    }
+
+    let manifest_path = root.join("manifest.json");
+    let manifest_bytes = read_bounded_regular_file(&manifest_path, MAX_PROVIDER_MANIFEST_BYTES)?;
+    let manifest: stack_theme::ProviderPack = serde_json::from_slice(&manifest_bytes)
+        .map_err(|_| "manifest.json is invalid".to_owned())?;
+    let mut assets = Vec::with_capacity(manifest.icons.len());
+    for icon in &manifest.icons {
+        let relative = safe_provider_asset_path(&icon.asset.path)?;
+        let path = root.join(relative);
+        let svg = read_bounded_regular_file(&path, MAX_PROVIDER_ASSET_BYTES)?;
+        let svg =
+            String::from_utf8(svg).map_err(|_| format!("'{}' is not UTF-8 SVG", path.display()))?;
+        assets.push(ProviderAsset::new(&icon.asset.path, svg));
+    }
+    ProviderPack::new(manifest, assets).map_err(|error| error.to_string())
+}
+
+fn read_bounded_regular_file(path: &Path, limit: usize) -> Result<Vec<u8>, String> {
+    let metadata = fs::symlink_metadata(path).map_err(|error| {
+        format!(
+            "cannot read '{}': {}",
+            path.display(),
+            stable_io_error(error.kind())
+        )
+    })?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err(format!(
+            "'{}' must be a regular file, not a symlink",
+            path.display()
+        ));
+    }
+    if metadata.len() > limit as u64 {
+        return Err(format!("'{}' exceeds the size limit", path.display()));
+    }
+    let mut contents = Vec::with_capacity(metadata.len() as usize);
+    File::open(path)
+        .and_then(|mut file| file.read_to_end(&mut contents))
+        .map_err(|error| {
+            format!(
+                "cannot read '{}': {}",
+                path.display(),
+                stable_io_error(error.kind())
+            )
+        })?;
+    if contents.len() > limit {
+        return Err(format!("'{}' exceeds the size limit", path.display()));
+    }
+    Ok(contents)
+}
+
+fn safe_provider_asset_path(value: &str) -> Result<&Path, String> {
+    let path = Path::new(value);
+    let components = path.components().collect::<Vec<_>>();
+    if components.len() != 2
+        || components[0] != Component::Normal(OsStr::new("assets"))
+        || !matches!(components[1], Component::Normal(_))
+        || path.extension() != Some(OsStr::new("svg"))
+    {
+        return Err(format!("unsafe provider asset path '{value}'"));
+    }
+    Ok(path)
+}
+
+fn render_provider_notices(notices: &[ProviderNotice]) -> String {
+    let mut output = String::from("# Stack provider icon notices\n");
+    if notices.is_empty() {
+        output.push_str("\nNo provider icons were embedded in this artifact.\n");
+        return output;
+    }
+    for notice in notices {
+        let _ = write!(
+            output,
+            "\n## {} (`{}`)\n\n- Pack version: {}\n- Pack revision: `{}`\n- Source release: {}\n- Archive SHA-256: `{}`\n- Terms URL: {}\n\n{}\n\n{}\n\n{}\n\nUsed icons:\n",
+            notice_text(&notice.provider_name),
+            notice.provider_id,
+            notice_text(&notice.pack_version),
+            notice.pack_revision,
+            notice_text(&notice.source_release),
+            notice.archive_sha256,
+            notice_text(&notice.terms_url),
+            notice_text(&notice.attribution),
+            notice_text(&notice.terms_summary),
+            notice_text(&notice.non_endorsement),
+        );
+        for icon in &notice.icons {
+            let _ = writeln!(
+                output,
+                "- `{}`: {}",
+                icon.id,
+                notice_text(&icon.product_name)
+            );
+        }
+    }
+    output
+}
+
+fn notice_text(value: &str) -> String {
+    value
+        .chars()
+        .map(|character| match character {
+            '\r' | '\n' | '\t' => ' ',
+            '<' | '>' => ' ',
+            _ if character.is_control() => ' ',
+            _ => character,
+        })
+        .collect()
 }
 
 fn format_file(mode: FormatMode, path: &Path, stderr: &mut dyn Write) -> u8 {
@@ -855,7 +1044,47 @@ mod tests {
                 OsString::from("render"),
                 OsString::from("file.stack"),
                 OsString::from("-o"),
+                OsString::from("one.svg"),
+                OsString::from("-o"),
+                OsString::from("two.svg"),
+            ],
+            vec![
+                OsString::from("render"),
                 OsString::from("file.stack"),
+                OsString::from("--notice"),
+            ],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("--notice"),
+                OsString::from("one.md"),
+                OsString::from("--notice"),
+                OsString::from("two.md"),
+            ],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("--provider-pack"),
+            ],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("-o"),
+                OsString::from("file.stack"),
+            ],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("--notice"),
+                OsString::from("file.stack"),
+            ],
+            vec![
+                OsString::from("render"),
+                OsString::from("file.stack"),
+                OsString::from("-o"),
+                OsString::from("artifact"),
+                OsString::from("--notice"),
+                OsString::from("artifact"),
             ],
             vec![OsString::from("icons")],
             vec![OsString::from("icons"), OsString::from("unknown")],
@@ -907,8 +1136,21 @@ mod tests {
             assert!(String::from_utf8_lossy(&stderr).starts_with("error:"));
         }
 
+        let mut too_many_packs = vec![OsString::from("render"), OsString::from("file.stack")];
+        for index in 0..=MAX_PROVIDER_PACKS {
+            too_many_packs.push(OsString::from("--provider-pack"));
+            too_many_packs.push(OsString::from(format!("pack-{index}")));
+        }
         let mut stdout = Vec::new();
         let mut stderr = Vec::new();
+        assert_eq!(
+            run_without_input(too_many_packs, &mut stdout, &mut stderr),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stderr).contains("at most 32 provider packs"));
+
+        stdout.clear();
+        stderr.clear();
         assert_eq!(
             run_without_input(
                 [OsString::from("check"), OsString::from("-h")],
@@ -1276,6 +1518,85 @@ mod tests {
     }
 
     #[test]
+    fn provider_pack_loader_rejects_untrusted_host_inputs() {
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("fixtures")
+            .join("provider-pack");
+        let pack = load_provider_pack(&fixture);
+        assert_eq!(
+            pack.ok().map(|pack| pack.manifest().provider.id.clone()),
+            Some("example".to_owned())
+        );
+
+        assert!(safe_provider_asset_path("assets/icon.svg").is_ok());
+        for path in [
+            "icon.svg",
+            "assets",
+            "assets/nested/icon.svg",
+            "assets/../icon.svg",
+            "/assets/icon.svg",
+            "assets/icon.png",
+        ] {
+            assert!(safe_provider_asset_path(path).is_err(), "accepted {path}");
+        }
+
+        let root =
+            std::env::temp_dir().join(format!("stack-cli-provider-loader-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        assert!(load_provider_pack(&root).is_err());
+        assert!(fs::write(&root, b"not a directory").is_ok());
+        assert!(load_provider_pack(&root).is_err());
+        assert!(fs::remove_file(&root).is_ok());
+        assert!(fs::create_dir_all(root.join("assets")).is_ok());
+
+        let manifest_path = root.join("manifest.json");
+        assert!(fs::write(&manifest_path, b"{}").is_ok());
+        assert!(load_provider_pack(&root).is_err());
+        assert!(
+            fs::write(
+                &manifest_path,
+                include_bytes!("../tests/fixtures/provider-pack/manifest.json")
+            )
+            .is_ok()
+        );
+        let asset_path = root.join("assets/storage.svg");
+        assert!(fs::write(&asset_path, [0xff]).is_ok());
+        assert!(load_provider_pack(&root).is_err());
+        assert!(fs::write(&asset_path, b"<svg/>").is_ok());
+        assert!(load_provider_pack(&root).is_err());
+
+        let oversized = root.join("oversized");
+        assert!(fs::write(&oversized, vec![b'x'; 5]).is_ok());
+        assert!(read_bounded_regular_file(&oversized, 4).is_err());
+        assert!(read_bounded_regular_file(&root, 4).is_err());
+        assert_eq!(
+            read_bounded_regular_file(&oversized, 5).ok(),
+            Some(vec![b'x'; 5])
+        );
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::symlink;
+
+            let linked = root.join("linked");
+            assert!(symlink(&oversized, &linked).is_ok());
+            assert!(read_bounded_regular_file(&linked, 5).is_err());
+            assert!(load_provider_pack(&linked).is_err());
+        }
+        assert!(fs::remove_dir_all(root).is_ok());
+    }
+
+    #[test]
+    fn provider_notice_text_is_stable_and_inert() {
+        assert_eq!(
+            render_provider_notices(&[]),
+            "# Stack provider icon notices\n\nNo provider icons were embedded in this artifact.\n"
+        );
+        assert_eq!(notice_text("line\n<unsafe>\ttext"), "line  unsafe  text");
+    }
+
+    #[test]
     fn render_failures_do_not_emit_partial_artifacts() {
         let path = std::env::temp_dir().join(format!(
             "stack-cli-render-failures-{}.stack",
@@ -1290,6 +1611,7 @@ mod tests {
             render_file_with(
                 &path,
                 RenderDestination::Stdout,
+                None,
                 &mut stdout,
                 &mut stderr,
                 |_| {
@@ -1315,6 +1637,7 @@ mod tests {
             render_file_with(
                 &path,
                 RenderDestination::Stdout,
+                None,
                 &mut stdout,
                 &mut stderr,
                 |_| Ok(empty_output),
@@ -1329,6 +1652,7 @@ mod tests {
             render_file_with(
                 &path,
                 RenderDestination::Stdout,
+                None,
                 &mut failed_stdout,
                 &mut stderr,
                 |source| Engine::bundled().render(source),
@@ -1343,6 +1667,7 @@ mod tests {
             render_file_with(
                 &path,
                 RenderDestination::File(output_path.clone()),
+                None,
                 &mut stdout,
                 &mut stderr,
                 |source| Engine::bundled().render(source),
@@ -1359,6 +1684,7 @@ mod tests {
             render_file_with(
                 &path,
                 RenderDestination::Stdout,
+                None,
                 &mut stdout,
                 &mut failed_stderr,
                 |source| Engine::bundled().render(source),

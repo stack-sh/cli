@@ -28,6 +28,21 @@ stack icons import aws ~/Downloads/aws-icons.zip \
 
 The manifest follows the public [`stack-sh/theme` provider-pack schema](https://github.com/stack-sh/theme/blob/main/PROVIDER_PACKS.md). It records the official source, archive and asset hashes, upstream paths, allowed output categories, transformations, official product names, terms URL, review date, and non-endorsement notice.
 
+## Rendering with a local pack
+
+Use the imported directory explicitly when a diagram contains a namespaced provider icon:
+
+```sh
+stack render architecture.stack \
+  --provider-pack .stack-icons/aws \
+  -o architecture.svg \
+  --notice architecture.NOTICE.md
+```
+
+`--provider-pack` is repeatable for diagrams that use more than one provider. The renderer reads only `manifest.json` and its declared `assets/*.svg` regular files, rejects symbolic links and unsafe relative paths, caps each file at 1 MiB and each validated pack at 32 MiB, and performs no discovery, download, upload, or cache mutation. A provider icon changes only the visual asset; the authored node `kind` remains the source of semantic styling and layout behavior.
+
+`--notice` writes the exact pack revision, official archive hash, source release, terms URL, attribution, non-endorsement text, and used icon IDs for that rendered artifact. A missing pack or icon keeps the existing `STK5001` warning and provider-neutral fallback. Review the imported pack's `NOTICE.md` and linked terms before selecting it, and distribute the generated diagram and sidecar only as those terms permit.
+
 ## Audited sources
 
 | Provider | Official source | Audited release | Complete archive SHA-256 | Terms and guidance | Imported IDs |
