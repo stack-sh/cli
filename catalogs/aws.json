@@ -1,0 +1,2496 @@
+{
+  "catalogVersion": "1.0",
+  "packVersion": "0.2.0",
+  "provider": {
+    "id": "aws",
+    "name": "Amazon Web Services"
+  },
+  "source": {
+    "pageUrl": "https://aws.amazon.com/architecture/icons/",
+    "archiveUrl": "https://d1.awsstatic.com/onedam/marketing-channels/website/public/shared/architecture-icon-release/Icon-package_07312026.5846e92413caa21490223536cc97f1269e44fa92.zip",
+    "archiveSha256": "sha256:d2d166c453526471749d520e0db022c459abef759d2946cf2dd1d1c992dc6526",
+    "release": "Icon-package_07312026",
+    "retrievedAt": "2026-09-04",
+    "termsUrl": "https://aws.amazon.com/trademark-guidelines/",
+    "termsReviewedAt": "2026-09-04",
+    "reviewAfter": "2026-12-03",
+    "copyright": "Copyright Amazon Web Services, Inc. or its affiliates",
+    "licenseId": "LicenseRef-AWS-Architecture-Icons-Terms",
+    "archiveLicenseIncluded": false
+  },
+  "additionalSources": [],
+  "rights": {
+    "termsAcceptanceRequired": true,
+    "permittedOutputs": [
+      "architecture-diagram",
+      "whitepaper",
+      "presentation",
+      "data-sheet",
+      "poster"
+    ],
+    "redistribution": {
+      "cargo": false,
+      "npm": false,
+      "wasm": false,
+      "webAsset": false,
+      "nativeBinary": false,
+      "generatedOutput": true
+    },
+    "processing": {
+      "localOnly": true,
+      "automaticDownload": false,
+      "serverUpload": false,
+      "preserveColors": true,
+      "preserveGeometry": true,
+      "productNameNearby": true
+    },
+    "modificationPolicy": "visual-preservation-only"
+  },
+  "notice": {
+    "attribution": "AWS architecture icons are owned by Amazon Web Services, Inc. or its affiliates.",
+    "termsSummary": "Use is limited to the architecture-diagram materials described by the official AWS Architecture Icons page and applicable AWS trademark guidelines.",
+    "nonEndorsement": "Amazon Web Services does not sponsor or endorse this diagram or Stack."
+  },
+  "icons": [
+    {
+      "id": "aws:amazon-api-gateway",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "Amazon API Gateway",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_Amazon-API-Gateway_48.svg"
+    },
+    {
+      "id": "aws:amazon-appflow",
+      "subject": "Application Integration product or service",
+      "productName": "Amazon AppFlow",
+      "recommendedNodeKind": "service",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_Amazon-AppFlow_48.svg"
+    },
+    {
+      "id": "aws:amazon-application-recovery-controller",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "Amazon Application Recovery Controller",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_Amazon-Application-Recovery-Controller_48.svg"
+    },
+    {
+      "id": "aws:amazon-athena",
+      "subject": "Analytics product or service",
+      "productName": "Amazon Athena",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-Athena_48.svg"
+    },
+    {
+      "id": "aws:amazon-augmented-ai-a2i",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Augmented AI A2I",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Augmented-AI-A2I_48.svg"
+    },
+    {
+      "id": "aws:amazon-aurora",
+      "subject": "Databases product or service",
+      "productName": "Amazon Aurora",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-Aurora_48.svg"
+    },
+    {
+      "id": "aws:amazon-bedrock",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Bedrock",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Bedrock_48.svg"
+    },
+    {
+      "id": "aws:amazon-bedrock-agentcore",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Bedrock AgentCore",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Bedrock-AgentCore_48.svg"
+    },
+    {
+      "id": "aws:amazon-braket",
+      "subject": "Quantum Technologies product or service",
+      "productName": "Amazon Braket",
+      "recommendedNodeKind": "service",
+      "category": "Quantum Technologies",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Quantum-Technologies/48/Arch_Amazon-Braket_48.svg"
+    },
+    {
+      "id": "aws:amazon-chime",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon Chime",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-Chime_48.svg"
+    },
+    {
+      "id": "aws:amazon-chime-sdk",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon Chime SDK",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-Chime-SDK_48.svg"
+    },
+    {
+      "id": "aws:amazon-cloud-directory",
+      "subject": "Security Identity product or service",
+      "productName": "Amazon Cloud Directory",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_Amazon-Cloud-Directory_48.svg"
+    },
+    {
+      "id": "aws:amazon-cloudfront",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "Amazon CloudFront",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_Amazon-CloudFront_48.svg"
+    },
+    {
+      "id": "aws:amazon-cloudsearch",
+      "subject": "Analytics product or service",
+      "productName": "Amazon CloudSearch",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-CloudSearch_48.svg"
+    },
+    {
+      "id": "aws:amazon-cloudwatch",
+      "subject": "Management Tools product or service",
+      "productName": "Amazon CloudWatch",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_Amazon-CloudWatch_48.svg"
+    },
+    {
+      "id": "aws:amazon-codecatalyst",
+      "subject": "Developer Tools product or service",
+      "productName": "Amazon CodeCatalyst",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_Amazon-CodeCatalyst_48.svg"
+    },
+    {
+      "id": "aws:amazon-codeguru",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon CodeGuru",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-CodeGuru_48.svg"
+    },
+    {
+      "id": "aws:amazon-codewhisperer",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon CodeWhisperer",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-CodeWhisperer_48.svg"
+    },
+    {
+      "id": "aws:amazon-cognito",
+      "subject": "Security Identity product or service",
+      "productName": "Amazon Cognito",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_Amazon-Cognito_48.svg"
+    },
+    {
+      "id": "aws:amazon-comprehend",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Comprehend",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Comprehend_48.svg"
+    },
+    {
+      "id": "aws:amazon-comprehend-medical",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Comprehend Medical",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Comprehend-Medical_48.svg"
+    },
+    {
+      "id": "aws:amazon-connect",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon Connect",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-Connect_48.svg"
+    },
+    {
+      "id": "aws:amazon-corretto",
+      "subject": "Developer Tools product or service",
+      "productName": "Amazon Corretto",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_Amazon-Corretto_48.svg"
+    },
+    {
+      "id": "aws:amazon-data-firehose",
+      "subject": "Analytics product or service",
+      "productName": "Amazon Data Firehose",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-Data-Firehose_48.svg"
+    },
+    {
+      "id": "aws:amazon-datazone",
+      "subject": "Analytics product or service",
+      "productName": "Amazon DataZone",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-DataZone_48.svg"
+    },
+    {
+      "id": "aws:amazon-dcv",
+      "subject": "Compute product or service",
+      "productName": "Amazon DCV",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Amazon-DCV_48.svg"
+    },
+    {
+      "id": "aws:amazon-detective",
+      "subject": "Security Identity product or service",
+      "productName": "Amazon Detective",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_Amazon-Detective_48.svg"
+    },
+    {
+      "id": "aws:amazon-devops-guru",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon DevOps Guru",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-DevOps-Guru_48.svg"
+    },
+    {
+      "id": "aws:amazon-documentdb",
+      "subject": "Databases product or service",
+      "productName": "Amazon DocumentDB",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-DocumentDB_48.svg"
+    },
+    {
+      "id": "aws:amazon-ec2-auto-scaling",
+      "subject": "Compute product or service",
+      "productName": "Amazon EC2 Auto Scaling",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Amazon-EC2-Auto-Scaling_48.svg"
+    },
+    {
+      "id": "aws:amazon-ec2-image-builder",
+      "subject": "Compute product or service",
+      "productName": "Amazon EC2 Image Builder",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Amazon-EC2-Image-Builder_48.svg"
+    },
+    {
+      "id": "aws:amazon-ecs-anywhere",
+      "subject": "Containers product or service",
+      "productName": "Amazon ECS Anywhere",
+      "recommendedNodeKind": "service",
+      "category": "Containers",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_Amazon-ECS-Anywhere_48.svg"
+    },
+    {
+      "id": "aws:amazon-efs",
+      "subject": "Storage product or service",
+      "productName": "Amazon EFS",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-EFS_48.svg"
+    },
+    {
+      "id": "aws:amazon-eks-anywhere",
+      "subject": "Containers product or service",
+      "productName": "Amazon EKS Anywhere",
+      "recommendedNodeKind": "service",
+      "category": "Containers",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_Amazon-EKS-Anywhere_48.svg"
+    },
+    {
+      "id": "aws:amazon-eks-distro",
+      "subject": "Containers product or service",
+      "productName": "Amazon EKS Distro",
+      "recommendedNodeKind": "service",
+      "category": "Containers",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_Amazon-EKS-Distro_48.svg"
+    },
+    {
+      "id": "aws:amazon-elastic-block-store",
+      "subject": "Storage product or service",
+      "productName": "Amazon Elastic Block Store",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-Elastic-Block-Store_48.svg"
+    },
+    {
+      "id": "aws:amazon-elastic-container-registry",
+      "subject": "Containers product or service",
+      "productName": "Amazon Elastic Container Registry",
+      "recommendedNodeKind": "service",
+      "category": "Containers",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_Amazon-Elastic-Container-Registry_48.svg"
+    },
+    {
+      "id": "aws:amazon-elastic-container-service",
+      "subject": "Containers product or service",
+      "productName": "Amazon Elastic Container Service",
+      "recommendedNodeKind": "service",
+      "category": "Containers",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_Amazon-Elastic-Container-Service_48.svg"
+    },
+    {
+      "id": "aws:amazon-elastic-inference",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Elastic Inference",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Elastic-Inference_48.svg"
+    },
+    {
+      "id": "aws:amazon-elastic-vmware-service",
+      "subject": "Compute product or service",
+      "productName": "Amazon Elastic VMware Service",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Amazon-Elastic-VMware-Service_48.svg"
+    },
+    {
+      "id": "aws:amazon-elasticache",
+      "subject": "Databases product or service",
+      "productName": "Amazon ElastiCache",
+      "recommendedNodeKind": "cache",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-ElastiCache_48.svg"
+    },
+    {
+      "id": "aws:amazon-emr",
+      "subject": "Analytics product or service",
+      "productName": "Amazon EMR",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-EMR_48.svg"
+    },
+    {
+      "id": "aws:amazon-eventbridge",
+      "subject": "Application Integration product or service",
+      "productName": "Amazon EventBridge",
+      "recommendedNodeKind": "queue",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_Amazon-EventBridge_48.svg"
+    },
+    {
+      "id": "aws:amazon-file-cache",
+      "subject": "Storage product or service",
+      "productName": "Amazon File Cache",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-File-Cache_48.svg"
+    },
+    {
+      "id": "aws:amazon-finspace",
+      "subject": "Analytics product or service",
+      "productName": "Amazon FinSpace",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-FinSpace_48.svg"
+    },
+    {
+      "id": "aws:amazon-forecast",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Forecast",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Forecast_48.svg"
+    },
+    {
+      "id": "aws:amazon-fraud-detector",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Fraud Detector",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Fraud-Detector_48.svg"
+    },
+    {
+      "id": "aws:amazon-fsx",
+      "subject": "Storage product or service",
+      "productName": "Amazon FSx",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-FSx_48.svg"
+    },
+    {
+      "id": "aws:amazon-fsx-for-lustre",
+      "subject": "Storage product or service",
+      "productName": "Amazon FSx for Lustre",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-FSx-for-Lustre_48.svg"
+    },
+    {
+      "id": "aws:amazon-fsx-for-netapp-ontap",
+      "subject": "Storage product or service",
+      "productName": "Amazon FSx for NetApp ONTAP",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-FSx-for-NetApp-ONTAP_48.svg"
+    },
+    {
+      "id": "aws:amazon-fsx-for-openzfs",
+      "subject": "Storage product or service",
+      "productName": "Amazon FSx for OpenZFS",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-FSx-for-OpenZFS_48.svg"
+    },
+    {
+      "id": "aws:amazon-fsx-for-wfs",
+      "subject": "Storage product or service",
+      "productName": "Amazon FSx for WFS",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-FSx-for-WFS_48.svg"
+    },
+    {
+      "id": "aws:amazon-gamelift-servers",
+      "subject": "Games product or service",
+      "productName": "Amazon GameLift Servers",
+      "recommendedNodeKind": "service",
+      "category": "Games",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Games/48/Arch_Amazon-GameLift-Servers_48.svg"
+    },
+    {
+      "id": "aws:amazon-gamelift-streams",
+      "subject": "Games product or service",
+      "productName": "Amazon GameLift Streams",
+      "recommendedNodeKind": "service",
+      "category": "Games",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Games/48/Arch_Amazon-GameLift-Streams_48.svg"
+    },
+    {
+      "id": "aws:amazon-guardduty",
+      "subject": "Security Identity product or service",
+      "productName": "Amazon GuardDuty",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_Amazon-GuardDuty_48.svg"
+    },
+    {
+      "id": "aws:amazon-inspector",
+      "subject": "Security Identity product or service",
+      "productName": "Amazon Inspector",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_Amazon-Inspector_48.svg"
+    },
+    {
+      "id": "aws:amazon-interactive-video-service",
+      "subject": "Media Services product or service",
+      "productName": "Amazon Interactive Video Service",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_Amazon-Interactive-Video-Service_48.svg"
+    },
+    {
+      "id": "aws:amazon-kendra",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Kendra",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Kendra_48.svg"
+    },
+    {
+      "id": "aws:amazon-keyspaces",
+      "subject": "Databases product or service",
+      "productName": "Amazon Keyspaces",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-Keyspaces_48.svg"
+    },
+    {
+      "id": "aws:amazon-kinesis",
+      "subject": "Analytics product or service",
+      "productName": "Amazon Kinesis",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-Kinesis_48.svg"
+    },
+    {
+      "id": "aws:amazon-kinesis-data-streams",
+      "subject": "Analytics product or service",
+      "productName": "Amazon Kinesis Data Streams",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-Kinesis-Data-Streams_48.svg"
+    },
+    {
+      "id": "aws:amazon-kinesis-video-streams",
+      "subject": "Analytics product or service",
+      "productName": "Amazon Kinesis Video Streams",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-Kinesis-Video-Streams_48.svg"
+    },
+    {
+      "id": "aws:amazon-kinesis-video-streams-media-services",
+      "subject": "Media Services product or service",
+      "productName": "Amazon Kinesis Video Streams",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_Amazon-Kinesis-Video-Streams_48.svg"
+    },
+    {
+      "id": "aws:amazon-lex",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Lex",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Lex_48.svg"
+    },
+    {
+      "id": "aws:amazon-lightsail",
+      "subject": "Compute product or service",
+      "productName": "Amazon Lightsail",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Amazon-Lightsail_48.svg"
+    },
+    {
+      "id": "aws:amazon-lightsail-for-research",
+      "subject": "Compute product or service",
+      "productName": "Amazon Lightsail for Research",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Amazon-Lightsail-for-Research_48.svg"
+    },
+    {
+      "id": "aws:amazon-location-service",
+      "subject": "Front End Web Mobile product or service",
+      "productName": "Amazon Location Service",
+      "recommendedNodeKind": "service",
+      "category": "Front End Web Mobile",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Front-End-Web-Mobile/48/Arch_Amazon-Location-Service_48.svg"
+    },
+    {
+      "id": "aws:amazon-lookout-for-equipment",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Lookout for Equipment",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Lookout-for-Equipment_48.svg"
+    },
+    {
+      "id": "aws:amazon-lookout-for-vision",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Lookout for Vision",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Lookout-for-Vision_48.svg"
+    },
+    {
+      "id": "aws:amazon-macie",
+      "subject": "Security Identity product or service",
+      "productName": "Amazon Macie",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_Amazon-Macie_48.svg"
+    },
+    {
+      "id": "aws:amazon-managed-blockchain",
+      "subject": "Blockchain product or service",
+      "productName": "Amazon Managed Blockchain",
+      "recommendedNodeKind": "service",
+      "category": "Blockchain",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Blockchain/48/Arch_Amazon-Managed-Blockchain_48.svg"
+    },
+    {
+      "id": "aws:amazon-managed-grafana",
+      "subject": "Management Tools product or service",
+      "productName": "Amazon Managed Grafana",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_Amazon-Managed-Grafana_48.svg"
+    },
+    {
+      "id": "aws:amazon-managed-service-for-apache-flink",
+      "subject": "Analytics product or service",
+      "productName": "Amazon Managed Service for Apache Flink",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-Managed-Service-for-Apache-Flink_48.svg"
+    },
+    {
+      "id": "aws:amazon-managed-service-for-prometheus",
+      "subject": "Management Tools product or service",
+      "productName": "Amazon Managed Service for Prometheus",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_Amazon-Managed-Service-for-Prometheus_48.svg"
+    },
+    {
+      "id": "aws:amazon-managed-streaming-for-apache-kafka",
+      "subject": "Analytics product or service",
+      "productName": "Amazon Managed Streaming for Apache Kafka",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-Managed-Streaming-for-Apache-Kafka_48.svg"
+    },
+    {
+      "id": "aws:amazon-managed-workflows-for-apache-airflow",
+      "subject": "Application Integration product or service",
+      "productName": "Amazon Managed Workflows for Apache Airflow",
+      "recommendedNodeKind": "service",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_Amazon-Managed-Workflows-for-Apache-Airflow_48.svg"
+    },
+    {
+      "id": "aws:amazon-memorydb",
+      "subject": "Databases product or service",
+      "productName": "Amazon MemoryDB",
+      "recommendedNodeKind": "cache",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-MemoryDB_48.svg"
+    },
+    {
+      "id": "aws:amazon-monitron",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Monitron",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Monitron_48.svg"
+    },
+    {
+      "id": "aws:amazon-mq",
+      "subject": "Application Integration product or service",
+      "productName": "Amazon MQ",
+      "recommendedNodeKind": "service",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_Amazon-MQ_48.svg"
+    },
+    {
+      "id": "aws:amazon-neptune",
+      "subject": "Databases product or service",
+      "productName": "Amazon Neptune",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-Neptune_48.svg"
+    },
+    {
+      "id": "aws:amazon-nova",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Nova",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Nova_48.svg"
+    },
+    {
+      "id": "aws:amazon-opensearch-service",
+      "subject": "Analytics product or service",
+      "productName": "Amazon OpenSearch Service",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-OpenSearch-Service_48.svg"
+    },
+    {
+      "id": "aws:amazon-personalize",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Personalize",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Personalize_48.svg"
+    },
+    {
+      "id": "aws:amazon-pinpoint",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon Pinpoint",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-Pinpoint_48.svg"
+    },
+    {
+      "id": "aws:amazon-pinpoint-apis",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon Pinpoint APIs",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-Pinpoint-APIs_48.svg"
+    },
+    {
+      "id": "aws:amazon-polly",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Polly",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Polly_48.svg"
+    },
+    {
+      "id": "aws:amazon-q",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Q",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Q_48.svg"
+    },
+    {
+      "id": "aws:amazon-quick",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon Quick",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-Quick_48.svg"
+    },
+    {
+      "id": "aws:amazon-redshift",
+      "subject": "Analytics product or service",
+      "productName": "Amazon Redshift",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-Redshift_48.svg"
+    },
+    {
+      "id": "aws:amazon-rekognition",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Rekognition",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Rekognition_48.svg"
+    },
+    {
+      "id": "aws:amazon-route-53",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "Amazon Route 53",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_Amazon-Route-53_48.svg"
+    },
+    {
+      "id": "aws:amazon-s3-on-outposts",
+      "subject": "Storage product or service",
+      "productName": "Amazon S3 on Outposts",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-S3-on-Outposts_48.svg"
+    },
+    {
+      "id": "aws:amazon-sagemaker",
+      "subject": "Analytics product or service",
+      "productName": "Amazon SageMaker",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_Amazon-SageMaker_48.svg"
+    },
+    {
+      "id": "aws:amazon-sagemaker-ai",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon SageMaker AI",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-SageMaker-AI_48.svg"
+    },
+    {
+      "id": "aws:amazon-sagemaker-ground-truth",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon SageMaker Ground Truth",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-SageMaker-Ground-Truth_48.svg"
+    },
+    {
+      "id": "aws:amazon-sagemaker-studio-lab",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon SageMaker Studio Lab",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-SageMaker-Studio-Lab_48.svg"
+    },
+    {
+      "id": "aws:amazon-security-lake",
+      "subject": "Security Identity product or service",
+      "productName": "Amazon Security Lake",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_Amazon-Security-Lake_48.svg"
+    },
+    {
+      "id": "aws:amazon-simple-email-service",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon Simple Email Service",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-Simple-Email-Service_48.svg"
+    },
+    {
+      "id": "aws:amazon-simple-notification-service",
+      "subject": "Application Integration product or service",
+      "productName": "Amazon Simple Notification Service",
+      "recommendedNodeKind": "service",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_Amazon-Simple-Notification-Service_48.svg"
+    },
+    {
+      "id": "aws:amazon-simple-storage-service-glacier",
+      "subject": "Storage product or service",
+      "productName": "Amazon Simple Storage Service Glacier",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service-Glacier_48.svg"
+    },
+    {
+      "id": "aws:amazon-textract",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Textract",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Textract_48.svg"
+    },
+    {
+      "id": "aws:amazon-timestream",
+      "subject": "Databases product or service",
+      "productName": "Amazon Timestream",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-Timestream_48.svg"
+    },
+    {
+      "id": "aws:amazon-transcribe",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Transcribe",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Transcribe_48.svg"
+    },
+    {
+      "id": "aws:amazon-translate",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Amazon Translate",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Amazon-Translate_48.svg"
+    },
+    {
+      "id": "aws:amazon-verified-permissions",
+      "subject": "Security Identity product or service",
+      "productName": "Amazon Verified Permissions",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_Amazon-Verified-Permissions_48.svg"
+    },
+    {
+      "id": "aws:amazon-virtual-private-cloud",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "Amazon Virtual Private Cloud",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_Amazon-Virtual-Private-Cloud_48.svg"
+    },
+    {
+      "id": "aws:amazon-vpc-lattice",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "Amazon VPC Lattice",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_Amazon-VPC-Lattice_48.svg"
+    },
+    {
+      "id": "aws:amazon-workdocs",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon WorkDocs",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-WorkDocs_48.svg"
+    },
+    {
+      "id": "aws:amazon-workdocs-sdk",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon WorkDocs SDK",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-WorkDocs-SDK_48.svg"
+    },
+    {
+      "id": "aws:amazon-workmail",
+      "subject": "Business Applications product or service",
+      "productName": "Amazon WorkMail",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_Amazon-WorkMail_48.svg"
+    },
+    {
+      "id": "aws:amazon-workspaces",
+      "subject": "End User Computing product or service",
+      "productName": "Amazon WorkSpaces",
+      "recommendedNodeKind": "service",
+      "category": "End User Computing",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_End-User-Computing/48/Arch_Amazon-WorkSpaces_48.svg"
+    },
+    {
+      "id": "aws:apache-mxnet-on-aws",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "Apache MXNet on AWS",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_Apache-MXNet-on-AWS_48.svg"
+    },
+    {
+      "id": "aws:aws-activate",
+      "subject": "Customer Enablement product or service",
+      "productName": "AWS Activate",
+      "recommendedNodeKind": "service",
+      "category": "Customer Enablement",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Customer-Enablement/48/Arch_AWS-Activate_48.svg"
+    },
+    {
+      "id": "aws:aws-amplify",
+      "subject": "Front End Web Mobile product or service",
+      "productName": "AWS Amplify",
+      "recommendedNodeKind": "service",
+      "category": "Front End Web Mobile",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Front-End-Web-Mobile/48/Arch_AWS-Amplify_48.svg"
+    },
+    {
+      "id": "aws:aws-app-mesh",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS App Mesh",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-App-Mesh_48.svg"
+    },
+    {
+      "id": "aws:aws-app-runner",
+      "subject": "Compute product or service",
+      "productName": "AWS App Runner",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-App-Runner_48.svg"
+    },
+    {
+      "id": "aws:aws-app-studio",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS App Studio",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-App-Studio_48.svg"
+    },
+    {
+      "id": "aws:aws-appconfig",
+      "subject": "Management Tools product or service",
+      "productName": "AWS AppConfig",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-AppConfig_48.svg"
+    },
+    {
+      "id": "aws:aws-appfabric",
+      "subject": "Business Applications product or service",
+      "productName": "AWS AppFabric",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_AWS-AppFabric_48.svg"
+    },
+    {
+      "id": "aws:aws-application-auto-scaling",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Application Auto Scaling",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Application-Auto-Scaling_48.svg"
+    },
+    {
+      "id": "aws:aws-application-discovery-service",
+      "subject": "Migration Modernization product or service",
+      "productName": "AWS Application Discovery Service",
+      "recommendedNodeKind": "service",
+      "category": "Migration Modernization",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Migration-Modernization/48/Arch_AWS-Application-Discovery-Service_48.svg"
+    },
+    {
+      "id": "aws:aws-application-migration-service",
+      "subject": "Migration Modernization product or service",
+      "productName": "AWS Application Migration Service",
+      "recommendedNodeKind": "service",
+      "category": "Migration Modernization",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Migration-Modernization/48/Arch_AWS-Application-Migration-Service_48.svg"
+    },
+    {
+      "id": "aws:aws-appsync",
+      "subject": "Application Integration product or service",
+      "productName": "AWS AppSync",
+      "recommendedNodeKind": "service",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_AWS-AppSync_48.svg"
+    },
+    {
+      "id": "aws:aws-artifact",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Artifact",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Artifact_48.svg"
+    },
+    {
+      "id": "aws:aws-audit-manager",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Audit Manager",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Audit-Manager_48.svg"
+    },
+    {
+      "id": "aws:aws-auto-scaling",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Auto Scaling",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Auto-Scaling_48.svg"
+    },
+    {
+      "id": "aws:aws-b2b-data-interchange",
+      "subject": "Application Integration product or service",
+      "productName": "AWS B2B Data Interchange",
+      "recommendedNodeKind": "service",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_AWS-B2B-Data-Interchange_48.svg"
+    },
+    {
+      "id": "aws:aws-backint-agent",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Backint Agent",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Backint-Agent_48.svg"
+    },
+    {
+      "id": "aws:aws-backup",
+      "subject": "Storage product or service",
+      "productName": "AWS Backup",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_AWS-Backup_48.svg"
+    },
+    {
+      "id": "aws:aws-batch",
+      "subject": "Compute product or service",
+      "productName": "AWS Batch",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Batch_48.svg"
+    },
+    {
+      "id": "aws:aws-billing-conductor",
+      "subject": "Cloud Financial Management product or service",
+      "productName": "AWS Billing Conductor",
+      "recommendedNodeKind": "storage",
+      "category": "Cloud Financial Management",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Cloud-Financial-Management/48/Arch_AWS-Billing-Conductor_48.svg"
+    },
+    {
+      "id": "aws:aws-budgets",
+      "subject": "Cloud Financial Management product or service",
+      "productName": "AWS Budgets",
+      "recommendedNodeKind": "storage",
+      "category": "Cloud Financial Management",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Cloud-Financial-Management/48/Arch_AWS-Budgets_48.svg"
+    },
+    {
+      "id": "aws:aws-certificate-manager",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Certificate Manager",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Certificate-Manager_48.svg"
+    },
+    {
+      "id": "aws:aws-chatbot",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Chatbot",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Chatbot_48.svg"
+    },
+    {
+      "id": "aws:aws-clean-rooms",
+      "subject": "Analytics product or service",
+      "productName": "AWS Clean Rooms",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_AWS-Clean-Rooms_48.svg"
+    },
+    {
+      "id": "aws:aws-client-vpn",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Client VPN",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Client-VPN_48.svg"
+    },
+    {
+      "id": "aws:aws-cloud-control-api",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS Cloud Control API",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-Cloud-Control-API_48.svg"
+    },
+    {
+      "id": "aws:aws-cloud-development-kit",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS Cloud Development Kit",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-Cloud-Development-Kit_48.svg"
+    },
+    {
+      "id": "aws:aws-cloud-map",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Cloud Map",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Cloud-Map_48.svg"
+    },
+    {
+      "id": "aws:aws-cloud-wan",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Cloud WAN",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Cloud-WAN_48.svg"
+    },
+    {
+      "id": "aws:aws-cloud9",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS Cloud9",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-Cloud9_48.svg"
+    },
+    {
+      "id": "aws:aws-cloudformation",
+      "subject": "Management Tools product or service",
+      "productName": "AWS CloudFormation",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-CloudFormation_48.svg"
+    },
+    {
+      "id": "aws:aws-cloudhsm",
+      "subject": "Security Identity product or service",
+      "productName": "AWS CloudHSM",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-CloudHSM_48.svg"
+    },
+    {
+      "id": "aws:aws-cloudshell",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS CloudShell",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-CloudShell_48.svg"
+    },
+    {
+      "id": "aws:aws-cloudtrail",
+      "subject": "Management Tools product or service",
+      "productName": "AWS CloudTrail",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-CloudTrail_48.svg"
+    },
+    {
+      "id": "aws:aws-codeartifact",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS CodeArtifact",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-CodeArtifact_48.svg"
+    },
+    {
+      "id": "aws:aws-codebuild",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS CodeBuild",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-CodeBuild_48.svg"
+    },
+    {
+      "id": "aws:aws-codecommit",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS CodeCommit",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-CodeCommit_48.svg"
+    },
+    {
+      "id": "aws:aws-codedeploy",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS CodeDeploy",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-CodeDeploy_48.svg"
+    },
+    {
+      "id": "aws:aws-codepipeline",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS CodePipeline",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-CodePipeline_48.svg"
+    },
+    {
+      "id": "aws:aws-command-line-interface",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS Command Line Interface",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-Command-Line-Interface_48.svg"
+    },
+    {
+      "id": "aws:aws-compute-optimizer",
+      "subject": "Compute product or service",
+      "productName": "AWS Compute Optimizer",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Compute-Optimizer_48.svg"
+    },
+    {
+      "id": "aws:aws-compute-optimizer-management-tools",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Compute Optimizer",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Compute-Optimizer_48.svg"
+    },
+    {
+      "id": "aws:aws-config",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Config",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Config_48.svg"
+    },
+    {
+      "id": "aws:aws-console-mobile-application",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Console Mobile Application",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Console-Mobile-Application_48.svg"
+    },
+    {
+      "id": "aws:aws-control-tower",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Control Tower",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Control-Tower_48.svg"
+    },
+    {
+      "id": "aws:aws-cost-and-usage-report",
+      "subject": "Cloud Financial Management product or service",
+      "productName": "AWS Cost and Usage Report",
+      "recommendedNodeKind": "storage",
+      "category": "Cloud Financial Management",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Cloud-Financial-Management/48/Arch_AWS-Cost-and-Usage-Report_48.svg"
+    },
+    {
+      "id": "aws:aws-cost-explorer",
+      "subject": "Cloud Financial Management product or service",
+      "productName": "AWS Cost Explorer",
+      "recommendedNodeKind": "storage",
+      "category": "Cloud Financial Management",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Cloud-Financial-Management/48/Arch_AWS-Cost-Explorer_48.svg"
+    },
+    {
+      "id": "aws:aws-data-exchange",
+      "subject": "Analytics product or service",
+      "productName": "AWS Data Exchange",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_AWS-Data-Exchange_48.svg"
+    },
+    {
+      "id": "aws:aws-data-transfer-terminal",
+      "subject": "Migration Modernization product or service",
+      "productName": "AWS Data Transfer Terminal",
+      "recommendedNodeKind": "service",
+      "category": "Migration Modernization",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Migration-Modernization/48/Arch_AWS-Data-Transfer-Terminal_48.svg"
+    },
+    {
+      "id": "aws:aws-database-migration-service",
+      "subject": "Databases product or service",
+      "productName": "AWS Database Migration Service",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_AWS-Database-Migration-Service_48.svg"
+    },
+    {
+      "id": "aws:aws-datasync",
+      "subject": "Migration Modernization product or service",
+      "productName": "AWS DataSync",
+      "recommendedNodeKind": "service",
+      "category": "Migration Modernization",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Migration-Modernization/48/Arch_AWS-DataSync_48.svg"
+    },
+    {
+      "id": "aws:aws-deadline-cloud",
+      "subject": "Media Services product or service",
+      "productName": "AWS Deadline Cloud",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Deadline-Cloud_48.svg"
+    },
+    {
+      "id": "aws:aws-deep-learning-amis",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS Deep Learning AMIs",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-Deep-Learning-AMIs_48.svg"
+    },
+    {
+      "id": "aws:aws-deep-learning-containers",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS Deep Learning Containers",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-Deep-Learning-Containers_48.svg"
+    },
+    {
+      "id": "aws:aws-deepracer",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS DeepRacer",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-DeepRacer_48.svg"
+    },
+    {
+      "id": "aws:aws-device-farm",
+      "subject": "Front End Web Mobile product or service",
+      "productName": "AWS Device Farm",
+      "recommendedNodeKind": "service",
+      "category": "Front End Web Mobile",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Front-End-Web-Mobile/48/Arch_AWS-Device-Farm_48.svg"
+    },
+    {
+      "id": "aws:aws-devops-agent",
+      "subject": "Management Tools product or service",
+      "productName": "AWS DevOps Agent",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-DevOps-Agent_48.svg"
+    },
+    {
+      "id": "aws:aws-direct-connect",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Direct Connect",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Direct-Connect_48.svg"
+    },
+    {
+      "id": "aws:aws-directory-service",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Directory Service",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Directory-Service_48.svg"
+    },
+    {
+      "id": "aws:aws-distro-for-opentelemetry",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Distro for OpenTelemetry",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Distro-for-OpenTelemetry_48.svg"
+    },
+    {
+      "id": "aws:aws-elastic-beanstalk",
+      "subject": "Compute product or service",
+      "productName": "AWS Elastic Beanstalk",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Elastic-Beanstalk_48.svg"
+    },
+    {
+      "id": "aws:aws-elastic-disaster-recovery",
+      "subject": "Storage product or service",
+      "productName": "AWS Elastic Disaster Recovery",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_AWS-Elastic-Disaster-Recovery_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-appliances-and-software",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental Appliances & Software",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-Appliances-&-Software_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-conductor",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental Conductor",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-Conductor_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-delta",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental Delta",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-Delta_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-inference",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS Elemental Inference",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-Elemental-Inference_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-link",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental Link",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-Link_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-live",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental Live",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-Live_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-mediaconnect",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental MediaConnect",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-MediaConnect_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-mediaconvert",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental MediaConvert",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-MediaConvert_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-medialive",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental MediaLive",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-MediaLive_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-mediapackage",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental MediaPackage",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-MediaPackage_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-mediastore",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental MediaStore",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-MediaStore_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-mediatailor",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental MediaTailor",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-MediaTailor_48.svg"
+    },
+    {
+      "id": "aws:aws-elemental-server",
+      "subject": "Media Services product or service",
+      "productName": "AWS Elemental Server",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Elemental-Server_48.svg"
+    },
+    {
+      "id": "aws:aws-end-user-messaging",
+      "subject": "Business Applications product or service",
+      "productName": "AWS End User Messaging",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_AWS-End-User-Messaging_48.svg"
+    },
+    {
+      "id": "aws:aws-entity-resolution",
+      "subject": "Analytics product or service",
+      "productName": "AWS Entity Resolution",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_AWS-Entity-Resolution_48.svg"
+    },
+    {
+      "id": "aws:aws-express-workflows",
+      "subject": "Application Integration product or service",
+      "productName": "AWS Express Workflows",
+      "recommendedNodeKind": "service",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_AWS-Express-Workflows_48.svg"
+    },
+    {
+      "id": "aws:aws-fargate",
+      "subject": "Containers product or service",
+      "productName": "AWS Fargate",
+      "recommendedNodeKind": "service",
+      "category": "Containers",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_AWS-Fargate_48.svg"
+    },
+    {
+      "id": "aws:aws-fault-injection-service",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS Fault Injection Service",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-Fault-Injection-Service_48.svg"
+    },
+    {
+      "id": "aws:aws-finops-agent",
+      "subject": "Cloud Financial Management product or service",
+      "productName": "AWS FinOps Agent",
+      "recommendedNodeKind": "storage",
+      "category": "Cloud Financial Management",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Cloud-Financial-Management/48/Arch_AWS-FinOps-Agent_48.svg"
+    },
+    {
+      "id": "aws:aws-firewall-manager",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Firewall Manager",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Firewall-Manager_48.svg"
+    },
+    {
+      "id": "aws:aws-global-accelerator",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Global Accelerator",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Global-Accelerator_48.svg"
+    },
+    {
+      "id": "aws:aws-glue",
+      "subject": "Analytics product or service",
+      "productName": "AWS Glue",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_AWS-Glue_48.svg"
+    },
+    {
+      "id": "aws:aws-glue-databrew",
+      "subject": "Analytics product or service",
+      "productName": "AWS Glue DataBrew",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_AWS-Glue-DataBrew_48.svg"
+    },
+    {
+      "id": "aws:aws-ground-station",
+      "subject": "Satellite product or service",
+      "productName": "AWS Ground Station",
+      "recommendedNodeKind": "service",
+      "category": "Satellite",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Satellite/48/Arch_AWS-Ground-Station_48.svg"
+    },
+    {
+      "id": "aws:aws-health-dashboard",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Health Dashboard",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Health-Dashboard_48.svg"
+    },
+    {
+      "id": "aws:aws-healthimaging",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS HealthImaging",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-HealthImaging_48.svg"
+    },
+    {
+      "id": "aws:aws-healthlake",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS HealthLake",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-HealthLake_48.svg"
+    },
+    {
+      "id": "aws:aws-healthomics",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS HealthOmics",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-HealthOmics_48.svg"
+    },
+    {
+      "id": "aws:aws-healthscribe",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS HealthScribe",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-HealthScribe_48.svg"
+    },
+    {
+      "id": "aws:aws-iam-identity-center",
+      "subject": "Security Identity product or service",
+      "productName": "AWS IAM Identity Center",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-IAM-Identity-Center_48.svg"
+    },
+    {
+      "id": "aws:aws-identity-and-access-management",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Identity and Access Management",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Identity-and-Access-Management_48.svg"
+    },
+    {
+      "id": "aws:aws-infrastructure-composer",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS Infrastructure Composer",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-Infrastructure-Composer_48.svg"
+    },
+    {
+      "id": "aws:aws-interconnect",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Interconnect",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Interconnect_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-core",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT Core",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-Core_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-device-defender",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT Device Defender",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-Device-Defender_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-device-management",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT Device Management",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-Device-Management_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-events",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT Events",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-Events_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-expresslink",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT ExpressLink",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-ExpressLink_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-fleetwise",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT FleetWise",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-FleetWise_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-greengrass",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT Greengrass",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-Greengrass_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-sitewise",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT SiteWise",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-SiteWise_48.svg"
+    },
+    {
+      "id": "aws:aws-iot-twinmaker",
+      "subject": "Internet of Things product or service",
+      "productName": "AWS IoT TwinMaker",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_AWS-IoT-TwinMaker_48.svg"
+    },
+    {
+      "id": "aws:aws-iq",
+      "subject": "Customer Enablement product or service",
+      "productName": "AWS IQ",
+      "recommendedNodeKind": "service",
+      "category": "Customer Enablement",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Customer-Enablement/48/Arch_AWS-IQ_48.svg"
+    },
+    {
+      "id": "aws:aws-key-management-service",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Key Management Service",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Key-Management-Service_48.svg"
+    },
+    {
+      "id": "aws:aws-lake-formation",
+      "subject": "Analytics product or service",
+      "productName": "AWS Lake Formation",
+      "recommendedNodeKind": "service",
+      "category": "Analytics",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Analytics/48/Arch_AWS-Lake-Formation_48.svg"
+    },
+    {
+      "id": "aws:aws-launch-wizard",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Launch Wizard",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Launch-Wizard_48.svg"
+    },
+    {
+      "id": "aws:aws-license-manager",
+      "subject": "Management Tools product or service",
+      "productName": "AWS License Manager",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-License-Manager_48.svg"
+    },
+    {
+      "id": "aws:aws-local-zones",
+      "subject": "Compute product or service",
+      "productName": "AWS Local Zones",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Local-Zones_48.svg"
+    },
+    {
+      "id": "aws:aws-mainframe-modernization",
+      "subject": "Migration Modernization product or service",
+      "productName": "AWS Mainframe Modernization",
+      "recommendedNodeKind": "service",
+      "category": "Migration Modernization",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Migration-Modernization/48/Arch_AWS-Mainframe-Modernization_48.svg"
+    },
+    {
+      "id": "aws:aws-managed-services",
+      "subject": "Customer Enablement product or service",
+      "productName": "AWS Managed Services",
+      "recommendedNodeKind": "service",
+      "category": "Customer Enablement",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Customer-Enablement/48/Arch_AWS-Managed-Services_48.svg"
+    },
+    {
+      "id": "aws:aws-management-console",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Management Console",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Management-Console_48.svg"
+    },
+    {
+      "id": "aws:aws-marketplace-dark",
+      "subject": "General Icons product or service",
+      "productName": "AWS Marketplace_Dark",
+      "recommendedNodeKind": "service",
+      "category": "General Icons",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_General-Icons/48/Arch_AWS-Marketplace_Dark_48.svg"
+    },
+    {
+      "id": "aws:aws-marketplace-light",
+      "subject": "General Icons product or service",
+      "productName": "AWS Marketplace_Light",
+      "recommendedNodeKind": "service",
+      "category": "General Icons",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_General-Icons/48/Arch_AWS-Marketplace_Light_48.svg"
+    },
+    {
+      "id": "aws:aws-migration-evaluator",
+      "subject": "Migration Modernization product or service",
+      "productName": "AWS Migration Evaluator",
+      "recommendedNodeKind": "service",
+      "category": "Migration Modernization",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Migration-Modernization/48/Arch_AWS-Migration-Evaluator_48.svg"
+    },
+    {
+      "id": "aws:aws-network-firewall",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Network Firewall",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Network-Firewall_48.svg"
+    },
+    {
+      "id": "aws:aws-neuron",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS Neuron",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-Neuron_48.svg"
+    },
+    {
+      "id": "aws:aws-nitro-enclaves",
+      "subject": "Compute product or service",
+      "productName": "AWS Nitro Enclaves",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Nitro-Enclaves_48.svg"
+    },
+    {
+      "id": "aws:aws-organizations",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Organizations",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Organizations_48.svg"
+    },
+    {
+      "id": "aws:aws-outposts-family",
+      "subject": "Compute product or service",
+      "productName": "AWS Outposts family",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Outposts-family_48.svg"
+    },
+    {
+      "id": "aws:aws-outposts-rack",
+      "subject": "Compute product or service",
+      "productName": "AWS Outposts rack",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Outposts-rack_48.svg"
+    },
+    {
+      "id": "aws:aws-outposts-servers",
+      "subject": "Compute product or service",
+      "productName": "AWS Outposts servers",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Outposts-servers_48.svg"
+    },
+    {
+      "id": "aws:aws-panorama",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "AWS Panorama",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_AWS-Panorama_48.svg"
+    },
+    {
+      "id": "aws:aws-parallel-cluster",
+      "subject": "Compute product or service",
+      "productName": "AWS Parallel Cluster",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Parallel-Cluster_48.svg"
+    },
+    {
+      "id": "aws:aws-parallel-computing-service",
+      "subject": "Compute product or service",
+      "productName": "AWS Parallel Computing Service",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Parallel-Computing-Service_48.svg"
+    },
+    {
+      "id": "aws:aws-partner-central",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Partner Central",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Partner-Central_48.svg"
+    },
+    {
+      "id": "aws:aws-payment-cryptography",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Payment Cryptography",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Payment-Cryptography_48.svg"
+    },
+    {
+      "id": "aws:aws-private-certificate-authority",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Private Certificate Authority",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Private-Certificate-Authority_48.svg"
+    },
+    {
+      "id": "aws:aws-privatelink",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS PrivateLink",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-PrivateLink_48.svg"
+    },
+    {
+      "id": "aws:aws-professional-services",
+      "subject": "Customer Enablement product or service",
+      "productName": "AWS Professional Services",
+      "recommendedNodeKind": "service",
+      "category": "Customer Enablement",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Customer-Enablement/48/Arch_AWS-Professional-Services_48.svg"
+    },
+    {
+      "id": "aws:aws-proton",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Proton",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Proton_48.svg"
+    },
+    {
+      "id": "aws:aws-repost",
+      "subject": "Customer Enablement product or service",
+      "productName": "AWS rePost",
+      "recommendedNodeKind": "service",
+      "category": "Customer Enablement",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Customer-Enablement/48/Arch_AWS-rePost_48.svg"
+    },
+    {
+      "id": "aws:aws-repost-private",
+      "subject": "Customer Enablement product or service",
+      "productName": "AWS rePost Private",
+      "recommendedNodeKind": "service",
+      "category": "Customer Enablement",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Customer-Enablement/48/Arch_AWS-rePost-Private_48.svg"
+    },
+    {
+      "id": "aws:aws-resilience-hub",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Resilience Hub",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Resilience-Hub_48.svg"
+    },
+    {
+      "id": "aws:aws-resource-access-manager",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Resource Access Manager",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Resource-Access-Manager_48.svg"
+    },
+    {
+      "id": "aws:aws-resource-explorer",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Resource Explorer",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Resource-Explorer_48.svg"
+    },
+    {
+      "id": "aws:aws-rtb-fabric",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS RTB Fabric",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-RTB-Fabric_48.svg"
+    },
+    {
+      "id": "aws:aws-secrets-manager",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Secrets Manager",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Secrets-Manager_48.svg"
+    },
+    {
+      "id": "aws:aws-security-agent",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Security Agent",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Security-Agent_48.svg"
+    },
+    {
+      "id": "aws:aws-security-hub",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Security Hub",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Security-Hub_48.svg"
+    },
+    {
+      "id": "aws:aws-security-incident-response",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Security Incident Response",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Security-Incident-Response_48.svg"
+    },
+    {
+      "id": "aws:aws-serverless-application-repository",
+      "subject": "Compute product or service",
+      "productName": "AWS Serverless Application Repository",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Serverless-Application-Repository_48.svg"
+    },
+    {
+      "id": "aws:aws-service-catalog",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Service Catalog",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Service-Catalog_48.svg"
+    },
+    {
+      "id": "aws:aws-service-management-connector",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Service Management Connector",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Service-Management-Connector_48.svg"
+    },
+    {
+      "id": "aws:aws-shield",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Shield",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Shield_48.svg"
+    },
+    {
+      "id": "aws:aws-signer",
+      "subject": "Security Identity product or service",
+      "productName": "AWS Signer",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-Signer_48.svg"
+    },
+    {
+      "id": "aws:aws-simspace-weaver",
+      "subject": "Compute product or service",
+      "productName": "AWS SimSpace Weaver",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-SimSpace-Weaver_48.svg"
+    },
+    {
+      "id": "aws:aws-site-to-site-vpn",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Site to Site VPN",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Site-to-Site-VPN_48.svg"
+    },
+    {
+      "id": "aws:aws-snowball",
+      "subject": "Storage product or service",
+      "productName": "AWS Snowball",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_AWS-Snowball_48.svg"
+    },
+    {
+      "id": "aws:aws-snowball-edge",
+      "subject": "Storage product or service",
+      "productName": "AWS Snowball Edge",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_AWS-Snowball-Edge_48.svg"
+    },
+    {
+      "id": "aws:aws-step-functions",
+      "subject": "Application Integration product or service",
+      "productName": "AWS Step Functions",
+      "recommendedNodeKind": "service",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_AWS-Step-Functions_48.svg"
+    },
+    {
+      "id": "aws:aws-storage-gateway",
+      "subject": "Storage product or service",
+      "productName": "AWS Storage Gateway",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_AWS-Storage-Gateway_48.svg"
+    },
+    {
+      "id": "aws:aws-supply-chain",
+      "subject": "Business Applications product or service",
+      "productName": "AWS Supply Chain",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_AWS-Supply-Chain_48.svg"
+    },
+    {
+      "id": "aws:aws-support",
+      "subject": "Customer Enablement product or service",
+      "productName": "AWS Support",
+      "recommendedNodeKind": "service",
+      "category": "Customer Enablement",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Customer-Enablement/48/Arch_AWS-Support_48.svg"
+    },
+    {
+      "id": "aws:aws-sustainability",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Sustainability",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Sustainability_48.svg"
+    },
+    {
+      "id": "aws:aws-systems-manager",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Systems Manager",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Systems-Manager_48.svg"
+    },
+    {
+      "id": "aws:aws-telco-network-builder",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Telco Network Builder",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Telco-Network-Builder_48.svg"
+    },
+    {
+      "id": "aws:aws-thinkbox-deadline",
+      "subject": "Media Services product or service",
+      "productName": "AWS Thinkbox Deadline",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Thinkbox-Deadline_48.svg"
+    },
+    {
+      "id": "aws:aws-thinkbox-frost",
+      "subject": "Media Services product or service",
+      "productName": "AWS Thinkbox Frost",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Thinkbox-Frost_48.svg"
+    },
+    {
+      "id": "aws:aws-thinkbox-krakatoa",
+      "subject": "Media Services product or service",
+      "productName": "AWS Thinkbox Krakatoa",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Thinkbox-Krakatoa_48.svg"
+    },
+    {
+      "id": "aws:aws-thinkbox-stoke",
+      "subject": "Media Services product or service",
+      "productName": "AWS Thinkbox Stoke",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Thinkbox-Stoke_48.svg"
+    },
+    {
+      "id": "aws:aws-thinkbox-xmesh",
+      "subject": "Media Services product or service",
+      "productName": "AWS Thinkbox XMesh",
+      "recommendedNodeKind": "service",
+      "category": "Media Services",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Media-Services/48/Arch_AWS-Thinkbox-XMesh_48.svg"
+    },
+    {
+      "id": "aws:aws-tools-and-sdks",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS Tools and SDKs",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-Tools-and-SDKs_48.svg"
+    },
+    {
+      "id": "aws:aws-training-certification",
+      "subject": "Customer Enablement product or service",
+      "productName": "AWS Training Certification",
+      "recommendedNodeKind": "service",
+      "category": "Customer Enablement",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Customer-Enablement/48/Arch_AWS-Training-Certification_48.svg"
+    },
+    {
+      "id": "aws:aws-transfer-family",
+      "subject": "Migration Modernization product or service",
+      "productName": "AWS Transfer Family",
+      "recommendedNodeKind": "service",
+      "category": "Migration Modernization",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Migration-Modernization/48/Arch_AWS-Transfer-Family_48.svg"
+    },
+    {
+      "id": "aws:aws-transform",
+      "subject": "Migration Modernization product or service",
+      "productName": "AWS Transform",
+      "recommendedNodeKind": "service",
+      "category": "Migration Modernization",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Migration-Modernization/48/Arch_AWS-Transform_48.svg"
+    },
+    {
+      "id": "aws:aws-transit-gateway",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Transit Gateway",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Transit-Gateway_48.svg"
+    },
+    {
+      "id": "aws:aws-trusted-advisor",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Trusted Advisor",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Trusted-Advisor_48.svg"
+    },
+    {
+      "id": "aws:aws-user-notifications",
+      "subject": "Management Tools product or service",
+      "productName": "AWS User Notifications",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-User-Notifications_48.svg"
+    },
+    {
+      "id": "aws:aws-verified-access",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "AWS Verified Access",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_AWS-Verified-Access_48.svg"
+    },
+    {
+      "id": "aws:aws-waf",
+      "subject": "Security Identity product or service",
+      "productName": "AWS WAF",
+      "recommendedNodeKind": "service",
+      "category": "Security Identity",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Security-Identity/48/Arch_AWS-WAF_48.svg"
+    },
+    {
+      "id": "aws:aws-wavelength",
+      "subject": "Compute product or service",
+      "productName": "AWS Wavelength",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Wavelength_48.svg"
+    },
+    {
+      "id": "aws:aws-well-architected-tool",
+      "subject": "Management Tools product or service",
+      "productName": "AWS Well Architected Tool",
+      "recommendedNodeKind": "service",
+      "category": "Management Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Management-Tools/48/Arch_AWS-Well-Architected-Tool_48.svg"
+    },
+    {
+      "id": "aws:aws-wickr",
+      "subject": "Business Applications product or service",
+      "productName": "AWS Wickr",
+      "recommendedNodeKind": "service",
+      "category": "Business Applications",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Business-Applications/48/Arch_AWS-Wickr_48.svg"
+    },
+    {
+      "id": "aws:aws-x-ray",
+      "subject": "Developer Tools product or service",
+      "productName": "AWS X Ray",
+      "recommendedNodeKind": "service",
+      "category": "Developer Tools",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Developer-Tools/48/Arch_AWS-X-Ray_48.svg"
+    },
+    {
+      "id": "aws:bottlerocket",
+      "subject": "Compute product or service",
+      "productName": "Bottlerocket",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Bottlerocket_48.svg"
+    },
+    {
+      "id": "aws:dynamodb",
+      "subject": "Databases product or service",
+      "productName": "Amazon DynamoDB",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-DynamoDB_48.svg"
+    },
+    {
+      "id": "aws:ec2",
+      "subject": "Compute product or service",
+      "productName": "Amazon Elastic Compute Cloud (Amazon EC2)",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Amazon-EC2_48.svg"
+    },
+    {
+      "id": "aws:eks",
+      "subject": "Containers product or service",
+      "productName": "Amazon Elastic Kubernetes Service (Amazon EKS)",
+      "recommendedNodeKind": "service",
+      "category": "Containers",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_Amazon-Elastic-Kubernetes-Service_48.svg"
+    },
+    {
+      "id": "aws:elastic-fabric-adapter",
+      "subject": "Compute product or service",
+      "productName": "Elastic Fabric Adapter",
+      "recommendedNodeKind": "service",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Elastic-Fabric-Adapter_48.svg"
+    },
+    {
+      "id": "aws:elastic-load-balancing",
+      "subject": "Networking Content Delivery product or service",
+      "productName": "Elastic Load Balancing",
+      "recommendedNodeKind": "service",
+      "category": "Networking Content Delivery",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Networking-Content-Delivery/48/Arch_Elastic-Load-Balancing_48.svg"
+    },
+    {
+      "id": "aws:freertos",
+      "subject": "Internet of Things product or service",
+      "productName": "FreeRTOS",
+      "recommendedNodeKind": "service",
+      "category": "Internet of Things",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Internet-of-Things/48/Arch_FreeRTOS_48.svg"
+    },
+    {
+      "id": "aws:lambda",
+      "subject": "Compute product or service",
+      "productName": "AWS Lambda",
+      "recommendedNodeKind": "function",
+      "category": "Compute",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Lambda_48.svg"
+    },
+    {
+      "id": "aws:open-3d-engine",
+      "subject": "Games product or service",
+      "productName": "Open 3D Engine",
+      "recommendedNodeKind": "service",
+      "category": "Games",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Games/48/Arch_Open-3D-Engine_48.svg"
+    },
+    {
+      "id": "aws:oracle-database-at-aws",
+      "subject": "Databases product or service",
+      "productName": "Oracle Database at AWS",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Oracle-Database-at-AWS_48.svg"
+    },
+    {
+      "id": "aws:pytorch-on-aws",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "PyTorch on AWS",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_PyTorch-on-AWS_48.svg"
+    },
+    {
+      "id": "aws:rds",
+      "subject": "Databases product or service",
+      "productName": "Amazon Relational Database Service (Amazon RDS)",
+      "recommendedNodeKind": "database",
+      "category": "Databases",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-RDS_48.svg"
+    },
+    {
+      "id": "aws:red-hat-openshift-service-on-aws",
+      "subject": "Containers product or service",
+      "productName": "Red Hat OpenShift Service on AWS",
+      "recommendedNodeKind": "service",
+      "category": "Containers",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_Red-Hat-OpenShift-Service-on-AWS_48.svg"
+    },
+    {
+      "id": "aws:reserved-instance-reporting",
+      "subject": "Cloud Financial Management product or service",
+      "productName": "Reserved Instance Reporting",
+      "recommendedNodeKind": "storage",
+      "category": "Cloud Financial Management",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Cloud-Financial-Management/48/Arch_Reserved-Instance-Reporting_48.svg"
+    },
+    {
+      "id": "aws:s3",
+      "subject": "Storage product or service",
+      "productName": "Amazon Simple Storage Service (Amazon S3)",
+      "recommendedNodeKind": "storage",
+      "category": "Storage",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg"
+    },
+    {
+      "id": "aws:savings-plans",
+      "subject": "Cloud Financial Management product or service",
+      "productName": "Savings Plans",
+      "recommendedNodeKind": "storage",
+      "category": "Cloud Financial Management",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Cloud-Financial-Management/48/Arch_Savings-Plans_48.svg"
+    },
+    {
+      "id": "aws:sqs",
+      "subject": "Application Integration product or service",
+      "productName": "Amazon Simple Queue Service (Amazon SQS)",
+      "recommendedNodeKind": "queue",
+      "category": "Application Integration",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_Amazon-Simple-Queue-Service_48.svg"
+    },
+    {
+      "id": "aws:tensorflow-on-aws",
+      "subject": "Artificial Intelligence product or service",
+      "productName": "TensorFlow on AWS",
+      "recommendedNodeKind": "service",
+      "category": "Artificial Intelligence",
+      "archivePath": "Architecture-Service-Icons_07312026/Arch_Artificial-Intelligence/48/Arch_TensorFlow-on-AWS_48.svg"
+    }
+  ]
+}

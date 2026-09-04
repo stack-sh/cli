@@ -30,6 +30,8 @@ jobs:
           path: .stack-specification
       - name: Check whitespace
         run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
+      - name: Validate provider catalogs
+        run: node scripts/validate-provider-catalogs.mjs
       - name: Install latest stable Rust toolchain
         run: rustup toolchain install stable --profile minimal --component clippy,rustfmt,llvm-tools-preview
       - name: Check formatting
@@ -67,6 +69,8 @@ jobs:
           ./target/release/stack fmt --help
           ./target/release/stack render --help
           ./target/release/stack icons --help
+          ./target/release/stack icons list
+          ./target/release/stack icons list aws s3
           ./target/release/stack icons import --help
       - name: Verify repository files
         run: |
@@ -83,6 +87,13 @@ jobs:
           test -s Cargo.lock
           test -s src/main.rs
           test -s src/provider.rs
+          test -s src/provider_catalog.rs
+          test -s catalogs/aws.json
+          test -s catalogs/gcp.json
+          test -s catalogs/azure.json
+          test -s catalogs/simple-icons.json
+          test -s scripts/generate-provider-catalogs.mjs
+          test -s scripts/validate-provider-catalogs.mjs
           test -s tests/specification-revision
           test -s tests/fixtures/render.stack
 

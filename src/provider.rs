@@ -1,7 +1,7 @@
 //! Local-only provider icon archive import.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
+use std::fmt::{self, Write as _};
 use std::fs::{self, OpenOptions};
 use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
@@ -10,25 +10,28 @@ use roxmltree::{Document, Node, NodeType};
 use sha2::{Digest, Sha256};
 use stack_theme::{
     ProviderIcon, ProviderIconAsset, ProviderNodeKind, ProviderPack, ProviderPackDistributionMode,
-    ProviderPackIdentity, ProviderPackModificationPolicy, ProviderPackNotice,
-    ProviderPackPermittedOutput, ProviderPackProcessing, ProviderPackRedistribution,
-    ProviderPackRights, ProviderPackSource, ProviderPackTransformation,
+    ProviderPackSource, ProviderPackTransformation,
 };
 use zip::ZipArchive;
+
+use crate::provider_catalog::{ProviderCatalog, provider_catalog, provider_catalogs};
 
 const PROVIDER_PACK_SCHEMA: &str =
     "https://raw.githubusercontent.com/stack-sh/theme/main/schemas/provider-pack.schema.json";
 const MAX_ARCHIVE_BYTES: u64 = 32 * 1024 * 1024;
 const MAX_ICON_BYTES: u64 = 1024 * 1024;
 const SVG_NAMESPACE: &str = "http://www.w3.org/2000/svg";
+const XLINK_NAMESPACE: &str = "http://www.w3.org/1999/xlink";
 
 const ALLOWED_ELEMENTS: &[&str] = &[
     "circle",
+    "clipPath",
     "defs",
     "ellipse",
     "g",
     "line",
     "linearGradient",
+    "mask",
     "path",
     "polygon",
     "polyline",
@@ -40,16 +43,24 @@ const ALLOWED_ELEMENTS: &[&str] = &[
 
 const ALLOWED_ATTRIBUTES: &[&str] = &[
     "aria-hidden",
+    "clip-path",
     "clip-rule",
     "cx",
     "cy",
     "d",
     "fill",
+    "fill-opacity",
     "fill-rule",
+    "fx",
+    "fy",
     "gradientTransform",
     "gradientUnits",
     "height",
+    "href",
     "id",
+    "isolation",
+    "mask",
+    "maskUnits",
     "opacity",
     "offset",
     "points",
@@ -62,6 +73,7 @@ const ALLOWED_ATTRIBUTES: &[&str] = &[
     "stroke",
     "stroke-linecap",
     "stroke-linejoin",
+    "stroke-miterlimit",
     "stroke-width",
     "transform",
     "viewBox",
@@ -73,38 +85,6 @@ const ALLOWED_ATTRIBUTES: &[&str] = &[
     "y1",
     "y2",
 ];
-
-#[derive(Clone, Copy)]
-struct IconProfile<'a> {
-    slug: &'a str,
-    subject: &'a str,
-    product_name: &'a str,
-    node_kind: ProviderNodeKind,
-    archive_path: &'a str,
-}
-
-#[derive(Clone, Copy)]
-struct ProviderProfile<'a> {
-    id: &'a str,
-    name: &'a str,
-    page_url: &'a str,
-    archive_url: &'a str,
-    archive_sha256: &'a str,
-    release: &'a str,
-    retrieved_at: &'a str,
-    terms_url: &'a str,
-    terms_reviewed_at: &'a str,
-    review_after: &'a str,
-    copyright: &'a str,
-    license_id: &'a str,
-    archive_license_included: bool,
-    permitted_outputs: &'a [ProviderPackPermittedOutput],
-    product_name_nearby: bool,
-    attribution: &'a str,
-    terms_summary: &'a str,
-    non_endorsement: &'a str,
-    icons: &'a [IconProfile<'a>],
-}
 
 /// Summary of one completed local provider-pack import.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -143,26 +123,26 @@ struct ProcessedIcon {
     transformations: Vec<ProviderPackTransformation>,
 }
 
+struct ParsedViewBox {
+    integers: [i32; 4],
+    coordinate_scale: i32,
+}
+
 /// Imports one audited official archive into a new local pack directory.
 pub(crate) fn import_provider_pack(
     provider: &str,
     archive_path: &Path,
+    additional_archive_paths: &BTreeMap<String, PathBuf>,
     output_path: &Path,
 ) -> Result<ImportSummary, ImportError> {
-    let profile = match provider_profile(provider) {
-        Some(profile) => profile,
-        None => {
-            return Err(ImportError::new(format!(
-                "unknown provider '{provider}'; expected aws, gcp, or azure"
-            )));
-        }
-    };
-    import_profile(profile, archive_path, output_path)
+    let profile = provider_catalog(provider).map_err(ImportError::new)?;
+    import_profile(profile, archive_path, additional_archive_paths, output_path)
 }
 
 fn import_profile(
-    profile: ProviderProfile<'_>,
+    profile: ProviderCatalog,
     archive_path: &Path,
+    additional_archive_paths: &BTreeMap<String, PathBuf>,
     output_path: &Path,
 ) -> Result<ImportSummary, ImportError> {
     if output_path.exists() {
@@ -171,67 +151,82 @@ fn import_profile(
             output_path.display()
         )));
     }
-    let metadata = match fs::metadata(archive_path) {
-        Ok(metadata) => metadata,
-        Err(error) => {
-            return Err(ImportError::new(format!(
-                "cannot read archive '{}': {}",
-                archive_path.display(),
-                stable_io_error(error.kind())
-            )));
-        }
-    };
-    if !metadata.is_file() {
+    let expected_additional = profile
+        .additional_sources
+        .iter()
+        .map(|source| source.id.as_str())
+        .collect::<BTreeSet<_>>();
+    if let Some(unexpected) = additional_archive_paths
+        .keys()
+        .find(|id| !expected_additional.contains(id.as_str()))
+    {
         return Err(ImportError::new(format!(
-            "archive '{}' is not a file",
-            archive_path.display()
+            "provider '{}' does not declare an additional source '{unexpected}'",
+            profile.provider.id
         )));
     }
-    if metadata.len() > MAX_ARCHIVE_BYTES {
+    if let Some(missing) = expected_additional
+        .iter()
+        .find(|id| !additional_archive_paths.contains_key(**id))
+    {
         return Err(ImportError::new(format!(
-            "archive '{}' exceeds the 32 MiB limit",
-            archive_path.display()
-        )));
-    }
-    let archive_bytes = match fs::read(archive_path) {
-        Ok(bytes) => bytes,
-        Err(error) => {
-            return Err(ImportError::new(format!(
-                "cannot read archive '{}': {}",
-                archive_path.display(),
-                stable_io_error(error.kind())
-            )));
-        }
-    };
-    let archive_digest = sha256(&archive_bytes);
-    if archive_digest != profile.archive_sha256 {
-        return Err(ImportError::new(format!(
-            "archive hash does not match the audited {} release; expected {}, received {}",
-            profile.release, profile.archive_sha256, archive_digest
+            "missing local archive for additional source '{missing}'"
         )));
     }
 
-    let mut archive = match ZipArchive::new(Cursor::new(archive_bytes)) {
-        Ok(archive) => archive,
-        Err(_) => return Err(ImportError::new("archive is not a supported ZIP file")),
-    };
+    let mut archives = BTreeMap::new();
+    archives.insert(
+        "primary".to_owned(),
+        open_archive(archive_path, &profile.source)?,
+    );
+    for additional in &profile.additional_sources {
+        let Some(path) = additional_archive_paths.get(&additional.id) else {
+            return Err(ImportError::new("missing additional provider archive"));
+        };
+        archives.insert(
+            additional.id.clone(),
+            open_archive(path, &additional.source)?,
+        );
+    }
     let mut manifest_icons = Vec::with_capacity(profile.icons.len());
     let mut processed_assets = Vec::with_capacity(profile.icons.len());
 
-    for icon in profile.icons {
-        let original = read_icon_entry(&mut archive, icon.archive_path)?;
+    for icon in &profile.icons {
+        let source_id = icon.source_id.as_deref().unwrap_or("primary");
+        let Some(archive) = archives.get_mut(source_id) else {
+            return Err(ImportError::new(format!(
+                "icon '{}' references unknown source '{source_id}'",
+                icon.id
+            )));
+        };
+        let original = read_icon_entry(archive, &icon.archive_path)?;
         let original_sha256 = sha256(&original);
-        let processed = sanitize_svg(&original, profile.id, icon.slug)?;
+        let slug = icon
+            .id
+            .split_once(':')
+            .map(|(_, slug)| slug)
+            .ok_or_else(|| {
+                ImportError::new(format!("catalog icon '{}' is not namespaced", icon.id))
+            })?;
+        let processed = sanitize_svg(&original, &profile.provider.id, slug).map_err(|error| {
+            ImportError::new(format!(
+                "cannot process catalog icon '{}': {error}",
+                icon.id
+            ))
+        })?;
         let processed_sha256 = sha256(processed.svg.as_bytes());
-        let asset_path = format!("assets/{}.svg", icon.slug);
+        let asset_path = format!("assets/{slug}.svg");
         manifest_icons.push(ProviderIcon {
-            id: format!("{}:{}", profile.id, icon.slug),
-            subject: icon.subject.to_owned(),
-            product_name: icon.product_name.to_owned(),
-            recommended_node_kind: icon.node_kind,
+            id: icon.id.clone(),
+            subject: icon.subject.clone(),
+            product_name: icon.product_name.clone(),
+            brand_source_url: icon.brand_source_url.clone(),
+            brand_guidelines_url: icon.brand_guidelines_url.clone(),
+            recommended_node_kind: icon.recommended_node_kind,
             asset: ProviderIconAsset {
+                source_id: icon.source_id.clone(),
                 path: asset_path.clone(),
-                original_path: icon.archive_path.to_owned(),
+                original_path: icon.archive_path.clone(),
                 view_box: processed.view_box,
                 original_sha256,
                 processed_sha256,
@@ -241,56 +236,26 @@ fn import_profile(
         processed_assets.push((asset_path, processed.svg));
     }
 
-    let manifest = ProviderPack {
-        schema: PROVIDER_PACK_SCHEMA.to_owned(),
-        schema_version: "1.0".to_owned(),
-        pack_version: "0.1.0".to_owned(),
-        provider: ProviderPackIdentity {
-            id: profile.id.to_owned(),
-            name: profile.name.to_owned(),
-        },
-        distribution_mode: ProviderPackDistributionMode::UserImported,
-        source: ProviderPackSource {
-            page_url: profile.page_url.to_owned(),
-            archive_url: profile.archive_url.to_owned(),
-            archive_sha256: profile.archive_sha256.to_owned(),
-            release: profile.release.to_owned(),
-            retrieved_at: profile.retrieved_at.to_owned(),
-            terms_url: profile.terms_url.to_owned(),
-            terms_reviewed_at: profile.terms_reviewed_at.to_owned(),
-            review_after: profile.review_after.to_owned(),
-            copyright: profile.copyright.to_owned(),
-            license_id: profile.license_id.to_owned(),
-            archive_license_included: profile.archive_license_included,
-        },
-        rights: ProviderPackRights {
-            terms_acceptance_required: true,
-            permitted_outputs: profile.permitted_outputs.to_vec(),
-            redistribution: ProviderPackRedistribution {
-                cargo: false,
-                npm: false,
-                wasm: false,
-                web_asset: false,
-                native_binary: false,
-                generated_output: true,
+    let manifest =
+        ProviderPack {
+            schema: PROVIDER_PACK_SCHEMA.to_owned(),
+            schema_version: if profile.additional_sources.is_empty()
+                && profile.icons.iter().all(|icon| {
+                    icon.brand_source_url.is_none() && icon.brand_guidelines_url.is_none()
+                }) {
+                "1.0".to_owned()
+            } else {
+                "1.1".to_owned()
             },
-            processing: ProviderPackProcessing {
-                local_only: true,
-                automatic_download: false,
-                server_upload: false,
-                preserve_colors: true,
-                preserve_geometry: true,
-                product_name_nearby: profile.product_name_nearby,
-            },
-            modification_policy: ProviderPackModificationPolicy::VisualPreservationOnly,
-        },
-        notice: ProviderPackNotice {
-            attribution: profile.attribution.to_owned(),
-            terms_summary: profile.terms_summary.to_owned(),
-            non_endorsement: profile.non_endorsement.to_owned(),
-        },
-        icons: manifest_icons,
-    };
+            pack_version: profile.pack_version.clone(),
+            provider: profile.provider.clone(),
+            distribution_mode: ProviderPackDistributionMode::UserImported,
+            source: profile.source.clone(),
+            additional_sources: profile.additional_sources.clone(),
+            rights: profile.rights.clone(),
+            notice: profile.notice.clone(),
+            icons: manifest_icons,
+        };
     let mut manifest_bytes = match serde_json::to_vec_pretty(&manifest) {
         Ok(bytes) => bytes,
         Err(_) => return Err(ImportError::new("cannot serialize provider manifest")),
@@ -329,11 +294,113 @@ fn import_profile(
     }
 
     Ok(ImportSummary {
-        provider_name: profile.name.to_owned(),
+        provider_name: profile.provider.name,
         icon_count: manifest.icons.len(),
         manifest_path: output_path.join("manifest.json"),
         notice_path: output_path.join("NOTICE.md"),
     })
+}
+
+fn open_archive(
+    archive_path: &Path,
+    source: &ProviderPackSource,
+) -> Result<ZipArchive<Cursor<Vec<u8>>>, ImportError> {
+    let metadata = match fs::metadata(archive_path) {
+        Ok(metadata) => metadata,
+        Err(error) => {
+            return Err(ImportError::new(format!(
+                "cannot read archive '{}': {}",
+                archive_path.display(),
+                stable_io_error(error.kind())
+            )));
+        }
+    };
+    if !metadata.is_file() {
+        return Err(ImportError::new(format!(
+            "archive '{}' is not a file",
+            archive_path.display()
+        )));
+    }
+    if metadata.len() > MAX_ARCHIVE_BYTES {
+        return Err(ImportError::new(format!(
+            "archive '{}' exceeds the 32 MiB limit",
+            archive_path.display()
+        )));
+    }
+    let archive_bytes = match fs::read(archive_path) {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            return Err(ImportError::new(format!(
+                "cannot read archive '{}': {}",
+                archive_path.display(),
+                stable_io_error(error.kind())
+            )));
+        }
+    };
+    let archive_digest = sha256(&archive_bytes);
+    if archive_digest != source.archive_sha256 {
+        return Err(ImportError::new(format!(
+            "archive hash does not match the audited {} release; expected {}, received {}",
+            source.release, source.archive_sha256, archive_digest
+        )));
+    }
+    ZipArchive::new(Cursor::new(archive_bytes))
+        .map_err(|_| ImportError::new("archive is not a supported ZIP file"))
+}
+
+pub(crate) fn render_catalog_list(
+    provider: Option<&str>,
+    query: Option<&str>,
+) -> Result<String, ImportError> {
+    if provider.is_none() {
+        let catalogs = provider_catalogs().map_err(ImportError::new)?;
+        let mut output = String::from("PROVIDER\tICONS\tRELEASE\n");
+        for catalog in catalogs {
+            let _ = writeln!(
+                output,
+                "{}\t{}\t{}",
+                catalog.provider.id,
+                catalog.icons.len(),
+                catalog.source.release
+            );
+        }
+        return Ok(output);
+    }
+
+    let catalog = provider_catalog(provider.unwrap_or_default()).map_err(ImportError::new)?;
+    let query = query.unwrap_or_default().to_lowercase();
+    let mut output = String::from("ID\tPRODUCT\tCATEGORY\tKIND\n");
+    for icon in catalog.icons.iter().filter(|icon| {
+        query.is_empty()
+            || icon.id.to_lowercase().contains(&query)
+            || icon.product_name.to_lowercase().contains(&query)
+            || icon.category.to_lowercase().contains(&query)
+    }) {
+        let _ = writeln!(
+            output,
+            "{}\t{}\t{}\t{}",
+            icon.id,
+            icon.product_name,
+            icon.category,
+            node_kind_name(icon.recommended_node_kind)
+        );
+    }
+    Ok(output)
+}
+
+fn node_kind_name(kind: ProviderNodeKind) -> &'static str {
+    match kind {
+        ProviderNodeKind::Actor => "actor",
+        ProviderNodeKind::Client => "client",
+        ProviderNodeKind::Service => "service",
+        ProviderNodeKind::Function => "function",
+        ProviderNodeKind::Worker => "worker",
+        ProviderNodeKind::Database => "database",
+        ProviderNodeKind::Cache => "cache",
+        ProviderNodeKind::Queue => "queue",
+        ProviderNodeKind::Storage => "storage",
+        ProviderNodeKind::External => "external",
+    }
 }
 
 fn read_icon_entry<R: Read + std::io::Seek>(
@@ -407,13 +474,17 @@ fn sanitize_svg(
             "provider icon root must use the canonical SVG namespace",
         ));
     }
-    let view_box_value = match root.attribute("viewBox") {
+    let view_box_value = match root
+        .attribute("viewBox")
+        .or_else(|| root.attribute("xviewBox"))
+    {
         Some(value) => value,
         None => return Err(ImportError::new("provider icon is missing viewBox")),
     };
     let view_box = parse_view_box(view_box_value)?;
     let styles = collect_styles(&document)?;
-    let (identifier_map, unused_identifiers) = identifier_map(&document, provider_id, icon_slug)?;
+    let (identifier_map, unused_identifiers) =
+        identifier_map(&document, &styles, provider_id, icon_slug)?;
     let mut removed_metadata = false;
     for node in document.descendants() {
         if matches!(node.node_type(), NodeType::Comment | NodeType::PI)
@@ -429,6 +500,8 @@ fn sanitize_svg(
         removed_metadata,
         inlined_styles: !styles.is_empty(),
         removed_unused_identifiers: unused_identifiers,
+        view_box: view_box.integers,
+        coordinate_scale: view_box.coordinate_scale,
     };
     let svg = match serialize_element(root, true, None, &mut state)? {
         Some(svg) => svg,
@@ -451,11 +524,14 @@ fn sanitize_svg(
     if !identifier_map.is_empty() {
         transformations.push(ProviderPackTransformation::NamespaceIdentifiers);
     }
+    if view_box.coordinate_scale != 1 {
+        transformations.push(ProviderPackTransformation::ScaleViewBoxToIntegers);
+    }
     transformations.push(ProviderPackTransformation::NormalizeXml);
 
     Ok(ProcessedIcon {
         svg: format!("{svg}\n"),
-        view_box,
+        view_box: view_box.integers,
         transformations,
     })
 }
@@ -479,29 +555,87 @@ fn strip_xml_declaration(source: &str) -> Result<&str, ImportError> {
     Ok(trimmed[end + 2..].trim_start())
 }
 
-fn parse_view_box(value: &str) -> Result<[i32; 4], ImportError> {
-    let mut values = Vec::with_capacity(4);
-    for component in
-        value.split(|character: char| character.is_ascii_whitespace() || character == ',')
-    {
-        if component.is_empty() {
-            continue;
-        }
-        match component.parse::<i32>() {
-            Ok(component) => values.push(component),
-            Err(_) => {
-                return Err(ImportError::new(
-                    "provider icon viewBox must contain four integers",
-                ));
-            }
-        }
-    }
-    if values.len() != 4 || values[2] <= 0 || values[3] <= 0 {
+fn parse_view_box(value: &str) -> Result<ParsedViewBox, ImportError> {
+    let components = value
+        .split(|character: char| character.is_ascii_whitespace() || character == ',')
+        .filter(|component| !component.is_empty())
+        .collect::<Vec<_>>();
+    if components.len() != 4 {
         return Err(ImportError::new(
-            "provider icon viewBox must contain four integers with positive dimensions",
+            "provider icon viewBox must contain four finite decimal numbers",
         ));
     }
-    Ok([values[0], values[1], values[2], values[3]])
+    let decimal_places = components
+        .iter()
+        .map(|component| decimal_places(component))
+        .collect::<Result<Vec<_>, _>>()?;
+    let max_decimal_places = decimal_places.iter().copied().max().unwrap_or(0);
+    debug_assert!(max_decimal_places <= 6);
+    let coordinate_scale = 10_i32.pow(max_decimal_places);
+    let mut integers = [0_i32; 4];
+    for (index, component) in components.iter().enumerate() {
+        integers[index] = scaled_decimal(component, max_decimal_places)?;
+    }
+    if integers[2] <= 0 || integers[3] <= 0 {
+        return Err(ImportError::new(
+            "provider icon viewBox must have positive dimensions",
+        ));
+    }
+    Ok(ParsedViewBox {
+        integers,
+        coordinate_scale,
+    })
+}
+
+fn decimal_places(value: &str) -> Result<u32, ImportError> {
+    let unsigned = value
+        .strip_prefix('-')
+        .or_else(|| value.strip_prefix('+'))
+        .unwrap_or(value);
+    let (integer, fraction) = unsigned.split_once('.').unwrap_or((unsigned, ""));
+    if integer.is_empty()
+        || !integer.bytes().all(|byte| byte.is_ascii_digit())
+        || !fraction.bytes().all(|byte| byte.is_ascii_digit())
+        || fraction.len() > 6
+    {
+        return Err(ImportError::new(
+            "provider icon viewBox must contain finite decimals with at most six places",
+        ));
+    }
+    debug_assert!(fraction.len() <= 6);
+    Ok(fraction.len() as u32)
+}
+
+fn scaled_decimal(value: &str, decimal_places: u32) -> Result<i32, ImportError> {
+    let negative = value.starts_with('-');
+    let unsigned = value
+        .strip_prefix('-')
+        .or_else(|| value.strip_prefix('+'))
+        .unwrap_or(value);
+    let (integer, fraction) = unsigned.split_once('.').unwrap_or((unsigned, ""));
+    let integer = integer
+        .parse::<i64>()
+        .map_err(|_| ImportError::new("provider icon viewBox is outside the supported range"))?;
+    let fraction_value = if fraction.is_empty() {
+        0_i64
+    } else {
+        fraction
+            .parse::<i64>()
+            .map_err(|_| ImportError::new("provider icon viewBox is invalid"))?
+    };
+    debug_assert!(fraction.len() <= 6);
+    let fraction_places = fraction.len() as u32;
+    debug_assert!(decimal_places <= 6);
+    debug_assert!(fraction_places <= decimal_places);
+    let scale = 10_i64.pow(decimal_places);
+    let fraction_scale = 10_i64.pow(decimal_places - fraction_places);
+    let magnitude = integer
+        .checked_mul(scale)
+        .and_then(|value| value.checked_add(fraction_value * fraction_scale))
+        .ok_or_else(|| ImportError::new("provider icon viewBox is outside the supported range"))?;
+    let signed = if negative { -magnitude } else { magnitude };
+    i32::try_from(signed)
+        .map_err(|_| ImportError::new("provider icon viewBox is outside the supported range"))
 }
 
 fn collect_styles(document: &Document<'_>) -> Result<BTreeMap<String, String>, ImportError> {
@@ -561,8 +695,11 @@ fn collect_styles(document: &Document<'_>) -> Result<BTreeMap<String, String>, I
                         "provider stylesheet may define one fill property per class",
                     ));
                 }
-                validate_safe_value(value.trim())?;
-                fill = Some(value.trim().to_owned());
+                let value = value.trim();
+                if local_url_reference(value).is_none() {
+                    validate_safe_value(value)?;
+                }
+                fill = Some(value.to_owned());
             }
             let fill = match fill {
                 Some(fill) => fill,
@@ -584,25 +721,26 @@ fn collect_styles(document: &Document<'_>) -> Result<BTreeMap<String, String>, I
 
 fn identifier_map(
     document: &Document<'_>,
+    styles: &BTreeMap<String, String>,
     provider_id: &str,
     icon_slug: &str,
 ) -> Result<(BTreeMap<String, String>, bool), ImportError> {
-    let mut declared = BTreeSet::new();
+    let mut declared = BTreeMap::new();
     let mut referenced = BTreeSet::new();
     for node in document.descendants() {
         if !node.is_element() {
             continue;
         }
         if let Some(identifier) = node.attribute("id") {
-            if !declared.insert(identifier.to_owned()) {
-                return Err(ImportError::new(
-                    "provider icon declares a duplicate identifier",
-                ));
-            }
+            *declared.entry(identifier.to_owned()).or_insert(0_usize) += 1;
         }
         for attribute in node.attributes() {
-            if let Some(identifier) = local_reference(attribute.value()) {
+            if let Some(identifier) = local_url_reference(attribute.value()) {
                 referenced.insert(identifier.to_owned());
+            } else if attribute.name() == "href" {
+                if let Some(identifier) = fragment_reference(attribute.value()) {
+                    referenced.insert(identifier.to_owned());
+                }
             } else if attribute.value().to_ascii_lowercase().contains("url(") {
                 return Err(ImportError::new(
                     "provider icon contains a non-local URL reference",
@@ -610,10 +748,15 @@ fn identifier_map(
             }
         }
     }
+    for value in styles.values() {
+        if let Some(identifier) = local_url_reference(value) {
+            referenced.insert(identifier.to_owned());
+        }
+    }
     for identifier in &referenced {
-        if !declared.contains(identifier) {
+        if declared.get(identifier) != Some(&1) {
             return Err(ImportError::new(
-                "provider icon references an undeclared identifier",
+                "provider icon references an undeclared or duplicate identifier",
             ));
         }
     }
@@ -625,7 +768,7 @@ fn identifier_map(
         );
     }
     let mut has_unused_identifier = false;
-    for identifier in &declared {
+    for identifier in declared.keys() {
         if !referenced.contains(identifier) {
             has_unused_identifier = true;
             break;
@@ -634,10 +777,14 @@ fn identifier_map(
     Ok((map, has_unused_identifier))
 }
 
-fn local_reference(value: &str) -> Option<&str> {
+fn local_url_reference(value: &str) -> Option<&str> {
     let value = value.strip_prefix("url(#")?;
     let value = value.strip_suffix(')')?;
     if value.is_empty() { None } else { Some(value) }
+}
+
+fn fragment_reference(value: &str) -> Option<&str> {
+    value.strip_prefix('#').filter(|value| !value.is_empty())
 }
 
 struct SanitizeState<'a> {
@@ -646,6 +793,8 @@ struct SanitizeState<'a> {
     removed_metadata: bool,
     inlined_styles: bool,
     removed_unused_identifiers: bool,
+    view_box: [i32; 4],
+    coordinate_scale: i32,
 }
 
 fn serialize_element(
@@ -674,7 +823,11 @@ fn serialize_element(
     if name == "defs" && parent_name != Some("svg") {
         return Err(ImportError::new("defs must be a direct child of SVG"));
     }
-    if matches!(name, "linearGradient" | "radialGradient") && parent_name != Some("defs") {
+    if matches!(
+        name,
+        "linearGradient" | "radialGradient" | "clipPath" | "mask"
+    ) && parent_name != Some("defs")
+    {
         return Err(ImportError::new(
             "gradients must be direct children of defs",
         ));
@@ -684,25 +837,55 @@ fn serialize_element(
             "gradient stops must be direct children of gradients",
         ));
     }
-    if parent_name == Some("defs") && !matches!(name, "linearGradient" | "radialGradient") {
-        return Err(ImportError::new("defs may contain only gradients"));
+    if parent_name == Some("defs")
+        && !matches!(
+            name,
+            "linearGradient" | "radialGradient" | "clipPath" | "mask"
+        )
+    {
+        return Err(ImportError::new(
+            "defs may contain only gradients, clip paths, or masks",
+        ));
     }
 
     let mut attributes = BTreeMap::new();
     for attribute in node.attributes() {
-        if attribute.namespace().is_some() {
+        let is_xlink_href = attribute.name() == "href"
+            && attribute
+                .namespace()
+                .is_some_and(|namespace| namespace == XLINK_NAMESPACE);
+        if attribute.namespace().is_some() && !is_xlink_href {
             return Err(ImportError::new(
                 "provider icon contains a namespaced attribute",
             ));
         }
-        let attribute_name = attribute.name();
+        let attribute_name = if is_xlink_href {
+            "href"
+        } else {
+            attribute.name()
+        };
         if attribute_name.starts_with("on") {
             return Err(ImportError::new(
                 "provider icon contains an event handler attribute",
             ));
         }
         match attribute_name {
-            "version" => continue,
+            "version" | "data-name" | "xviewBox" => {
+                state.removed_metadata = true;
+                continue;
+            }
+            "viewBox" if is_root => {
+                attributes.insert(
+                    "viewBox".to_owned(),
+                    state
+                        .view_box
+                        .iter()
+                        .map(i32::to_string)
+                        .collect::<Vec<_>>()
+                        .join(" "),
+                );
+                continue;
+            }
             "class" => {
                 let fill = match state.styles.get(attribute.value()) {
                     Some(fill) => fill,
@@ -712,14 +895,35 @@ fn serialize_element(
                         ));
                     }
                 };
-                attributes.insert("fill".to_owned(), fill.clone());
+                let fill = if let Some(identifier) = local_url_reference(fill) {
+                    let mapped = state.identifiers.get(identifier).ok_or_else(|| {
+                        ImportError::new("provider icon references an undeclared identifier")
+                    })?;
+                    format!("url(#{mapped})")
+                } else {
+                    fill.clone()
+                };
+                attributes.insert("fill".to_owned(), fill);
+                continue;
+            }
+            "style" => {
+                if attribute.value().trim() != "isolation: isolate" {
+                    return Err(ImportError::new(
+                        "provider icon contains an unsupported inline style",
+                    ));
+                }
+                attributes.insert("isolation".to_owned(), "isolate".to_owned());
+                state.inlined_styles = true;
                 continue;
             }
             "id" => {
                 if let Some(identifier) = state.identifiers.get(attribute.value()) {
-                    if !matches!(name, "linearGradient" | "radialGradient") {
+                    if !matches!(
+                        name,
+                        "linearGradient" | "radialGradient" | "clipPath" | "mask"
+                    ) {
                         return Err(ImportError::new(
-                            "only gradients may retain provider icon identifiers",
+                            "only local SVG resources may retain provider icon identifiers",
                         ));
                     }
                     attributes.insert("id".to_owned(), identifier.clone());
@@ -735,7 +939,7 @@ fn serialize_element(
                 "provider icon attribute '{attribute_name}' is not allowed"
             )));
         }
-        let value = if let Some(identifier) = local_reference(attribute.value()) {
+        let value = if let Some(identifier) = local_url_reference(attribute.value()) {
             let mapped = match state.identifiers.get(identifier) {
                 Some(mapped) => mapped,
                 None => {
@@ -744,12 +948,27 @@ fn serialize_element(
                     ));
                 }
             };
-            if !matches!(attribute_name, "fill" | "stroke") {
+            if !matches!(attribute_name, "fill" | "stroke" | "clip-path" | "mask") {
                 return Err(ImportError::new(
-                    "local references are allowed only for fill or stroke",
+                    "local URL references are not allowed for this attribute",
                 ));
             }
             format!("url(#{mapped})")
+        } else if attribute_name == "href" {
+            let Some(identifier) = fragment_reference(attribute.value()) else {
+                return Err(ImportError::new(
+                    "provider icon href must be a local fragment",
+                ));
+            };
+            if !matches!(name, "linearGradient" | "radialGradient") {
+                return Err(ImportError::new(
+                    "provider icon href is allowed only for gradients",
+                ));
+            }
+            let mapped = state.identifiers.get(identifier).ok_or_else(|| {
+                ImportError::new("provider icon references an undeclared identifier")
+            })?;
+            format!("#{mapped}")
         } else {
             validate_safe_value(attribute.value())?;
             attribute.value().to_owned()
@@ -763,16 +982,39 @@ fn serialize_element(
             ));
         }
     }
+    if is_root && !attributes.contains_key("viewBox") {
+        attributes.insert(
+            "viewBox".to_owned(),
+            state
+                .view_box
+                .iter()
+                .map(i32::to_string)
+                .collect::<Vec<_>>()
+                .join(" "),
+        );
+    }
 
+    let mut definitions = String::new();
     let mut children = String::new();
     for child in node.children() {
         match child.node_type() {
             NodeType::Element => {
                 if let Some(serialized) = serialize_element(child, false, Some(name), state)? {
-                    children.push_str(&serialized);
+                    if is_root && child.tag_name().name() == "defs" {
+                        definitions.push_str(&serialized);
+                    } else {
+                        children.push_str(&serialized);
+                    }
                 }
             }
-            NodeType::Text if child.text().unwrap_or_default().trim().is_empty() => {}
+            NodeType::Text if is_ignorable_text(child.text().unwrap_or_default()) => {
+                if child
+                    .text()
+                    .is_some_and(|text| text.contains('\u{200b}') || text.contains('\u{feff}'))
+                {
+                    state.removed_metadata = true;
+                }
+            }
             NodeType::Comment | NodeType::PI => state.removed_metadata = true,
             _ => {
                 return Err(ImportError::new(
@@ -783,6 +1025,14 @@ fn serialize_element(
     }
     if name == "defs" && children.is_empty() {
         return Ok(None);
+    }
+    if is_root && state.coordinate_scale != 1 && !children.is_empty() {
+        children = format!(
+            "{definitions}<g transform=\"scale({})\">{children}</g>",
+            state.coordinate_scale,
+        );
+    } else if is_root && !definitions.is_empty() {
+        children = format!("{definitions}{children}");
     }
 
     let mut output = String::new();
@@ -808,6 +1058,12 @@ fn serialize_element(
         output.push('>');
     }
     Ok(Some(output))
+}
+
+fn is_ignorable_text(value: &str) -> bool {
+    value
+        .chars()
+        .all(|character| character.is_whitespace() || matches!(character, '\u{200b}' | '\u{feff}'))
 }
 
 fn validate_safe_value(value: &str) -> Result<(), ImportError> {
@@ -888,24 +1144,48 @@ fn create_temporary_directory(parent: &Path) -> Result<PathBuf, ImportError> {
 
 fn render_notice(manifest: &ProviderPack) -> String {
     let mut notice = format!(
-        "# Stack provider icon pack notice\n\nProvider: {} (`{}`)\n\nSource: <{}>\n\nOfficial archive: <{}>\n\nRelease: {}\n\nArchive SHA-256: `{}`\n\nTerms: <{}>\n\nTerms reviewed: {} (review again after {})\n\n{}\n\n{}\n\n{}\n\nThis local pack was created from an archive selected by the user. Stack does not redistribute these asset bytes. Use and distribute generated diagrams only as permitted by the linked provider terms.\n\n## Icons\n",
+        "# Stack provider icon pack notice\n\nProvider: {} (`{}`)\n\n{}\n\n{}\n\n{}\n\nThis local pack was created from archives selected by the user. Stack does not redistribute these asset bytes. Use and distribute generated diagrams only as permitted by the linked provider and brand terms.\n\n## Sources\n",
         manifest.provider.name,
         manifest.provider.id,
-        manifest.source.page_url,
-        manifest.source.archive_url,
-        manifest.source.release,
-        manifest.source.archive_sha256,
-        manifest.source.terms_url,
-        manifest.source.terms_reviewed_at,
-        manifest.source.review_after,
         manifest.notice.attribution,
         manifest.notice.terms_summary,
         manifest.notice.non_endorsement,
     );
+    render_notice_source(&mut notice, "primary", &manifest.source);
+    for source in &manifest.additional_sources {
+        render_notice_source(&mut notice, &source.id, &source.source);
+    }
+    notice.push_str("\n## Icons\n");
     for icon in &manifest.icons {
-        notice.push_str(&format!("\n- `{}`: {}\n", icon.id, icon.product_name));
+        let source_id = icon.asset.source_id.as_deref().unwrap_or("primary");
+        let _ = write!(
+            notice,
+            "\n- `{}`: {} (source `{source_id}`)",
+            icon.id, icon.product_name
+        );
+        if let Some(url) = &icon.brand_source_url {
+            let _ = write!(notice, "; brand source <{url}>");
+        }
+        if let Some(url) = &icon.brand_guidelines_url {
+            let _ = write!(notice, "; brand guidelines <{url}>");
+        }
+        notice.push('\n');
     }
     notice
+}
+
+fn render_notice_source(notice: &mut String, id: &str, source: &ProviderPackSource) {
+    let _ = write!(
+        notice,
+        "\n### `{id}`\n\n- Source: <{}>\n- Official archive: <{}>\n- Release: {}\n- Archive SHA-256: `{}`\n- Terms: <{}>\n- Terms reviewed: {} (review again after {})\n",
+        source.page_url,
+        source.archive_url,
+        source.release,
+        source.archive_sha256,
+        source.terms_url,
+        source.terms_reviewed_at,
+        source.review_after,
+    );
 }
 
 fn sha256(bytes: &[u8]) -> String {
@@ -925,242 +1205,11 @@ fn stable_io_error(kind: std::io::ErrorKind) -> &'static str {
     }
 }
 
-fn provider_profile(provider: &str) -> Option<ProviderProfile<'static>> {
-    match provider {
-        "aws" => Some(AWS_PROFILE),
-        "gcp" => Some(GCP_PROFILE),
-        "azure" => Some(AZURE_PROFILE),
-        _ => None,
-    }
-}
-
-const AWS_OUTPUTS: &[ProviderPackPermittedOutput] = &[
-    ProviderPackPermittedOutput::ArchitectureDiagram,
-    ProviderPackPermittedOutput::Whitepaper,
-    ProviderPackPermittedOutput::Presentation,
-    ProviderPackPermittedOutput::DataSheet,
-    ProviderPackPermittedOutput::Poster,
-];
-
-const AWS_ICONS: &[IconProfile<'static>] = &[
-    IconProfile {
-        slug: "s3",
-        subject: "Object storage service",
-        product_name: "Amazon Simple Storage Service (Amazon S3)",
-        node_kind: ProviderNodeKind::Storage,
-        archive_path: "Architecture-Service-Icons_07312026/Arch_Storage/48/Arch_Amazon-Simple-Storage-Service_48.svg",
-    },
-    IconProfile {
-        slug: "sqs",
-        subject: "Managed message queue",
-        product_name: "Amazon Simple Queue Service (Amazon SQS)",
-        node_kind: ProviderNodeKind::Queue,
-        archive_path: "Architecture-Service-Icons_07312026/Arch_Application-Integration/48/Arch_Amazon-Simple-Queue-Service_48.svg",
-    },
-    IconProfile {
-        slug: "lambda",
-        subject: "Serverless function service",
-        product_name: "AWS Lambda",
-        node_kind: ProviderNodeKind::Function,
-        archive_path: "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_AWS-Lambda_48.svg",
-    },
-    IconProfile {
-        slug: "ec2",
-        subject: "Virtual compute service",
-        product_name: "Amazon Elastic Compute Cloud (Amazon EC2)",
-        node_kind: ProviderNodeKind::Service,
-        archive_path: "Architecture-Service-Icons_07312026/Arch_Compute/48/Arch_Amazon-EC2_48.svg",
-    },
-    IconProfile {
-        slug: "rds",
-        subject: "Managed relational database service",
-        product_name: "Amazon Relational Database Service (Amazon RDS)",
-        node_kind: ProviderNodeKind::Database,
-        archive_path: "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-RDS_48.svg",
-    },
-    IconProfile {
-        slug: "dynamodb",
-        subject: "Managed NoSQL database service",
-        product_name: "Amazon DynamoDB",
-        node_kind: ProviderNodeKind::Database,
-        archive_path: "Architecture-Service-Icons_07312026/Arch_Databases/48/Arch_Amazon-DynamoDB_48.svg",
-    },
-    IconProfile {
-        slug: "eks",
-        subject: "Managed Kubernetes service",
-        product_name: "Amazon Elastic Kubernetes Service (Amazon EKS)",
-        node_kind: ProviderNodeKind::Service,
-        archive_path: "Architecture-Service-Icons_07312026/Arch_Containers/48/Arch_Amazon-Elastic-Kubernetes-Service_48.svg",
-    },
-];
-
-const AWS_PROFILE: ProviderProfile<'static> = ProviderProfile {
-    id: "aws",
-    name: "Amazon Web Services",
-    page_url: "https://aws.amazon.com/architecture/icons/",
-    archive_url: "https://d1.awsstatic.com/onedam/marketing-channels/website/public/shared/architecture-icon-release/Icon-package_07312026.5846e92413caa21490223536cc97f1269e44fa92.zip",
-    archive_sha256: "sha256:d2d166c453526471749d520e0db022c459abef759d2946cf2dd1d1c992dc6526",
-    release: "Icon-package_07312026",
-    retrieved_at: "2026-09-04",
-    terms_url: "https://aws.amazon.com/trademark-guidelines/",
-    terms_reviewed_at: "2026-09-04",
-    review_after: "2026-12-03",
-    copyright: "Copyright Amazon Web Services, Inc. or its affiliates",
-    license_id: "LicenseRef-AWS-Architecture-Icons-Terms",
-    archive_license_included: false,
-    permitted_outputs: AWS_OUTPUTS,
-    product_name_nearby: true,
-    attribution: "AWS architecture icons are owned by Amazon Web Services, Inc. or its affiliates.",
-    terms_summary: "Use is limited to the architecture-diagram materials described by the official AWS Architecture Icons page and applicable AWS trademark guidelines.",
-    non_endorsement: "Amazon Web Services does not sponsor or endorse this diagram or Stack.",
-    icons: AWS_ICONS,
-};
-
-const GCP_OUTPUTS: &[ProviderPackPermittedOutput] = &[
-    ProviderPackPermittedOutput::ArchitectureDiagram,
-    ProviderPackPermittedOutput::Documentation,
-];
-
-const GCP_ICONS: &[IconProfile<'static>] = &[
-    IconProfile {
-        slug: "cloud-run",
-        subject: "Managed application runtime",
-        product_name: "Cloud Run",
-        node_kind: ProviderNodeKind::Service,
-        archive_path: "Unique Icons/Cloud Run/SVG/CloudRun-512-color-rgb.svg",
-    },
-    IconProfile {
-        slug: "cloud-storage",
-        subject: "Object storage service",
-        product_name: "Cloud Storage",
-        node_kind: ProviderNodeKind::Storage,
-        archive_path: "Unique Icons/Cloud Storage/SVG/Cloud_Storage-512-color.svg",
-    },
-    IconProfile {
-        slug: "compute-engine",
-        subject: "Virtual compute service",
-        product_name: "Compute Engine",
-        node_kind: ProviderNodeKind::Service,
-        archive_path: "Unique Icons/Compute Engine/SVG/ComputeEngine-512-color-rgb.svg",
-    },
-    IconProfile {
-        slug: "gke",
-        subject: "Managed Kubernetes service",
-        product_name: "Google Kubernetes Engine",
-        node_kind: ProviderNodeKind::Service,
-        archive_path: "Unique Icons/GKE/SVG/GKE-512-color.svg",
-    },
-    IconProfile {
-        slug: "bigquery",
-        subject: "Managed analytics data warehouse",
-        product_name: "BigQuery",
-        node_kind: ProviderNodeKind::Database,
-        archive_path: "Unique Icons/BigQuery/SVG/BigQuery-512-color.svg",
-    },
-    IconProfile {
-        slug: "cloud-sql",
-        subject: "Managed relational database service",
-        product_name: "Cloud SQL",
-        node_kind: ProviderNodeKind::Database,
-        archive_path: "Unique Icons/Cloud SQL/SVG/CloudSQL-512-color.svg",
-    },
-];
-
-const GCP_PROFILE: ProviderProfile<'static> = ProviderProfile {
-    id: "gcp",
-    name: "Google Cloud",
-    page_url: "https://cloud.google.com/icons",
-    archive_url: "https://services.google.com/fh/files/misc/core-products-icons.zip",
-    archive_sha256: "sha256:6531a10f58bc599c24d9a455d81dd757c1a03c3c43da9cddf639b859c1c1eece",
-    release: "Core product icons (May 2026 guide)",
-    retrieved_at: "2026-09-04",
-    terms_url: "https://about.google/brand-resource-center/",
-    terms_reviewed_at: "2026-09-04",
-    review_after: "2026-12-03",
-    copyright: "Copyright Google LLC",
-    license_id: "LicenseRef-Google-Cloud-Product-Icons-Terms",
-    archive_license_included: false,
-    permitted_outputs: GCP_OUTPUTS,
-    product_name_nearby: true,
-    attribution: "Google Cloud product icons are owned by Google LLC.",
-    terms_summary: "Use is limited to diagrams and technical documentation described by the official Google Cloud Icon Library and applicable Google brand terms.",
-    non_endorsement: "Google does not sponsor or endorse this diagram or Stack.",
-    icons: GCP_ICONS,
-};
-
-const AZURE_OUTPUTS: &[ProviderPackPermittedOutput] = &[
-    ProviderPackPermittedOutput::ArchitectureDiagram,
-    ProviderPackPermittedOutput::TrainingMaterial,
-    ProviderPackPermittedOutput::Documentation,
-];
-
-const AZURE_ICONS: &[IconProfile<'static>] = &[
-    IconProfile {
-        slug: "virtual-machines",
-        subject: "Virtual compute service",
-        product_name: "Azure Virtual Machines",
-        node_kind: ProviderNodeKind::Service,
-        archive_path: "Azure_Public_Service_Icons/Icons/compute/10021-icon-service-Virtual-Machine.svg",
-    },
-    IconProfile {
-        slug: "storage-accounts",
-        subject: "Cloud storage account",
-        product_name: "Azure Storage Accounts",
-        node_kind: ProviderNodeKind::Storage,
-        archive_path: "Azure_Public_Service_Icons/Icons/storage/10086-icon-service-Storage-Accounts.svg",
-    },
-    IconProfile {
-        slug: "azure-sql-database",
-        subject: "Managed relational database service",
-        product_name: "Azure SQL Database",
-        node_kind: ProviderNodeKind::Database,
-        archive_path: "Azure_Public_Service_Icons/Icons/databases/10130-icon-service-SQL-Database.svg",
-    },
-    IconProfile {
-        slug: "aks",
-        subject: "Managed Kubernetes service",
-        product_name: "Azure Kubernetes Service (AKS)",
-        node_kind: ProviderNodeKind::Service,
-        archive_path: "Azure_Public_Service_Icons/Icons/containers/10023-icon-service-Kubernetes-Services.svg",
-    },
-    IconProfile {
-        slug: "app-service",
-        subject: "Managed application platform",
-        product_name: "Azure App Service",
-        node_kind: ProviderNodeKind::Service,
-        archive_path: "Azure_Public_Service_Icons/Icons/app services/10035-icon-service-App-Services.svg",
-    },
-];
-
-const AZURE_PROFILE: ProviderProfile<'static> = ProviderProfile {
-    id: "azure",
-    name: "Microsoft Azure",
-    page_url: "https://learn.microsoft.com/azure/architecture/icons/",
-    archive_url: "https://arch-center.azureedge.net/icons/Azure_Public_Service_Icons_V24.zip",
-    archive_sha256: "sha256:921594ccd1bf3d9c0a1bd7b6d924e050551a59342f2b353bb74bdcf761c35141",
-    release: "Azure_Public_Service_Icons_V24",
-    retrieved_at: "2026-09-04",
-    terms_url: "https://learn.microsoft.com/azure/architecture/icons/",
-    terms_reviewed_at: "2026-09-04",
-    review_after: "2026-12-03",
-    copyright: "Copyright Microsoft Corporation",
-    license_id: "LicenseRef-Microsoft-Azure-Architecture-Icons-Terms",
-    archive_license_included: true,
-    permitted_outputs: AZURE_OUTPUTS,
-    product_name_nearby: true,
-    attribution: "Azure architecture icons are owned by Microsoft Corporation.",
-    terms_summary: "Use is limited to architecture diagrams, training materials, and documentation under the terms included in the official Azure icon archive.",
-    non_endorsement: "Microsoft does not sponsor or endorse this diagram or Stack.",
-    icons: AZURE_ICONS,
-};
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::provider_catalog::CatalogIcon;
     use zip::write::SimpleFileOptions;
-
-    const TEST_OUTPUTS: &[ProviderPackPermittedOutput] =
-        &[ProviderPackPermittedOutput::ArchitectureDiagram];
 
     fn temporary_root(label: &str) -> PathBuf {
         std::env::temp_dir().join(format!("stack-cli-provider-{label}-{}", std::process::id()))
@@ -1209,52 +1258,67 @@ mod tests {
         read_icon_entry(&mut archive, entry_path)
     }
 
-    fn test_profile<'a>(archive_sha256: &'a str, archive_path: &'a str) -> ProviderProfile<'a> {
-        let icons = Box::leak(Box::new([IconProfile {
-            slug: "storage",
-            subject: "Object storage service",
-            product_name: "Example Storage",
-            node_kind: ProviderNodeKind::Storage,
+    fn test_profile(archive_sha256: &str, archive_path: &str) -> Result<ProviderCatalog, String> {
+        let mut profile = provider_catalog("aws")?;
+        profile.provider.id = "example".to_owned();
+        profile.provider.name = "Example Cloud".to_owned();
+        profile.source.page_url = "https://example.com/icons".to_owned();
+        profile.source.archive_url = "https://example.com/icons.zip".to_owned();
+        profile.source.archive_sha256 = archive_sha256.to_owned();
+        profile.source.release = "fixture-1".to_owned();
+        profile.source.terms_url = "https://example.com/terms".to_owned();
+        profile.source.copyright = "Copyright Example Cloud".to_owned();
+        profile.source.license_id = "LicenseRef-Example-Icons".to_owned();
+        profile.additional_sources.clear();
+        profile.notice.attribution = "Example Cloud owns the icons.".to_owned();
+        profile.notice.terms_summary = "Architecture diagram use only.".to_owned();
+        profile.notice.non_endorsement = "Example Cloud does not endorse Stack.".to_owned();
+        profile.icons = vec![CatalogIcon {
+            id: "example:storage".to_owned(),
+            subject: "Object storage service".to_owned(),
+            product_name: "Example Storage".to_owned(),
+            brand_source_url: None,
+            brand_guidelines_url: None,
+            recommended_node_kind: ProviderNodeKind::Storage,
+            category: "Storage".to_owned(),
+            source_id: None,
+            archive_path: archive_path.to_owned(),
+        }];
+        Ok(profile)
+    }
+
+    fn import_test_profile(
+        profile: Result<ProviderCatalog, String>,
+        archive_path: &Path,
+        output_path: &Path,
+    ) -> Result<ImportSummary, ImportError> {
+        import_profile(
+            profile.map_err(ImportError::new)?,
             archive_path,
-        }]));
-        ProviderProfile {
-            id: "example",
-            name: "Example Cloud",
-            page_url: "https://example.com/icons",
-            archive_url: "https://example.com/icons.zip",
-            archive_sha256,
-            release: "fixture-1",
-            retrieved_at: "2026-09-04",
-            terms_url: "https://example.com/terms",
-            terms_reviewed_at: "2026-09-04",
-            review_after: "2026-12-03",
-            copyright: "Copyright Example Cloud",
-            license_id: "LicenseRef-Example-Icons",
-            archive_license_included: false,
-            permitted_outputs: TEST_OUTPUTS,
-            product_name_nearby: true,
-            attribution: "Example Cloud owns the icons.",
-            terms_summary: "Architecture diagram use only.",
-            non_endorsement: "Example Cloud does not endorse Stack.",
-            icons,
-        }
+            &BTreeMap::new(),
+            output_path,
+        )
     }
 
     #[test]
     fn audited_provider_profiles_have_expected_coverage() {
         assert_eq!(
-            provider_profile("aws").map(|profile| profile.icons.len()),
-            Some(7)
+            provider_catalog("aws").map(|profile| profile.icons.len()),
+            Ok(305)
         );
         assert_eq!(
-            provider_profile("gcp").map(|profile| profile.icons.len()),
-            Some(6)
+            provider_catalog("gcp").map(|profile| profile.icons.len()),
+            Ok(45)
         );
         assert_eq!(
-            provider_profile("azure").map(|profile| profile.icons.len()),
-            Some(5)
+            provider_catalog("azure").map(|profile| profile.icons.len()),
+            Ok(639)
         );
-        assert!(provider_profile("unknown").is_none());
+        assert_eq!(
+            provider_catalog("simple-icons").map(|profile| profile.icons.len()),
+            Ok(62)
+        );
+        assert!(provider_catalog("unknown").is_err());
     }
 
     #[test]
@@ -1345,7 +1409,7 @@ mod tests {
             ),
             (
                 br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 wide 24"/>"#.as_slice(),
-                "four integers",
+                "finite decimals",
             ),
             (
                 br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0,,0,24,0"/>"#.as_slice(),
@@ -1353,10 +1417,19 @@ mod tests {
             ),
             (
                 br#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24"/>"#.as_slice(),
-                "positive dimensions",
+                "four finite decimal numbers",
             ),
         ] {
             assert_svg_error(source, expected);
+        }
+
+        for value in [
+            "999999999999999999999999",
+            "9223372036854775807",
+            "2147483648",
+        ] {
+            let decimal_places = u32::from(value == "9223372036854775807");
+            assert!(scaled_decimal(value, decimal_places).is_err());
         }
     }
 
@@ -1392,12 +1465,12 @@ mod tests {
     fn sanitizer_rejects_unsafe_structure_attributes_and_identifiers() {
         for (body, expected) in [
             (
-                "<defs><linearGradient id=\"a\"/><linearGradient id=\"a\"/></defs>",
+                "<defs><linearGradient id=\"a\"/><linearGradient id=\"a\"/></defs><path fill=\"url(#a)\"/>",
                 "duplicate identifier",
             ),
             (
                 "<path fill=\"url(#missing)\" d=\"M0 0\"/>",
-                "undeclared identifier",
+                "undeclared or duplicate identifier",
             ),
             (
                 "<foreign:path xmlns:foreign=\"https://example.com/ns\"/>",
@@ -1418,7 +1491,7 @@ mod tests {
             ),
             (
                 "<path id=\"shape\" d=\"M0 0\"/><path fill=\"url(#shape)\" d=\"M0 0\"/>",
-                "only gradients may retain",
+                "only local SVG resources may retain",
             ),
             (
                 "<path unknown=\"value\" d=\"M0 0\"/>",
@@ -1426,7 +1499,7 @@ mod tests {
             ),
             (
                 "<defs><linearGradient id=\"paint\"/></defs><path d=\"url(#paint)\"/>",
-                "only for fill or stroke",
+                "not allowed for this attribute",
             ),
             ("<path>visible</path>", "unsupported visible text"),
             (
@@ -1445,6 +1518,46 @@ mod tests {
         assert_svg_error(
             &duplicate_fill.into_bytes(),
             "duplicate effective attribute",
+        );
+    }
+
+    #[test]
+    fn sanitizer_preserves_local_resources_and_scales_decimal_view_boxes() {
+        let source = [
+            r##"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-name="Layer" viewBox="0 0 52.434 44.65"><defs><style>.paint{fill:url(#derived)}</style><linearGradient id="base"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><linearGradient id="derived" xlink:href="#base"/><clipPath id="clip"><rect width="52.434" height="44.65"/></clipPath><mask id="mask" maskUnits="userSpaceOnUse"><rect width="52.434" height="44.65" fill="#fff"/></mask></defs><path class="paint" clip-path="url(#clip)" mask="url(#mask)" style="isolation: isolate" d="M0 0h52.434v44.65H0z"/>"##,
+            "\u{200b}",
+            "</svg>",
+        ]
+        .concat();
+        let processed = sanitize_svg(source.as_bytes(), "azure", "fixture");
+        assert!(processed.is_ok());
+        let Some(processed) = processed.ok() else {
+            return;
+        };
+        assert_eq!(processed.view_box, [0, 0, 52_434, 44_650]);
+        assert!(processed.svg.contains("viewBox=\"0 0 52434 44650\""));
+        assert!(processed.svg.contains("<g transform=\"scale(1000)\">"));
+        assert!(
+            processed
+                .svg
+                .contains("href=\"#stack-azure-fixture-gradient-")
+        );
+        assert!(
+            processed
+                .svg
+                .contains("clip-path=\"url(#stack-azure-fixture-gradient-")
+        );
+        assert!(
+            processed
+                .svg
+                .contains("mask=\"url(#stack-azure-fixture-gradient-")
+        );
+        assert!(processed.svg.contains("isolation=\"isolate\""));
+        assert!(!processed.svg.contains("data-name"));
+        assert!(
+            processed
+                .transformations
+                .contains(&ProviderPackTransformation::ScaleViewBoxToIntegers)
         );
     }
 
@@ -1500,17 +1613,27 @@ mod tests {
         let output_path = root.join("pack");
 
         assert!(
-            import_provider_pack("unknown", &root.join("missing.zip"), &output_path)
-                .err()
-                .is_some_and(|error| error.to_string().contains("unknown provider"))
+            import_provider_pack(
+                "unknown",
+                &root.join("missing.zip"),
+                &BTreeMap::new(),
+                &output_path,
+            )
+            .err()
+            .is_some_and(|error| error.to_string().contains("unknown provider"))
         );
         assert!(
-            import_provider_pack("aws", &root.join("missing.zip"), &output_path)
-                .err()
-                .is_some_and(|error| error.to_string().contains("file not found"))
+            import_provider_pack(
+                "aws",
+                &root.join("missing.zip"),
+                &BTreeMap::new(),
+                &output_path,
+            )
+            .err()
+            .is_some_and(|error| error.to_string().contains("file not found"))
         );
         assert!(
-            import_profile(test_profile("sha256:none", "icon.svg"), &root, &output_path)
+            import_test_profile(test_profile("sha256:none", "icon.svg"), &root, &output_path)
                 .err()
                 .is_some_and(|error| error.to_string().contains("not a file"))
         );
@@ -1522,7 +1645,7 @@ mod tests {
             assert!(large_archive.set_len(MAX_ARCHIVE_BYTES + 1).is_ok());
         }
         assert!(
-            import_profile(
+            import_test_profile(
                 test_profile("sha256:none", "icon.svg"),
                 &large_archive_path,
                 &output_path,
@@ -1536,7 +1659,7 @@ mod tests {
         assert!(fs::write(&invalid_archive_path, invalid_archive).is_ok());
         let invalid_digest = sha256(invalid_archive);
         assert!(
-            import_profile(
+            import_test_profile(
                 test_profile(&invalid_digest, "icon.svg"),
                 &invalid_archive_path,
                 &output_path,
@@ -1554,7 +1677,7 @@ mod tests {
         let parent_file = root.join("not-a-directory");
         assert!(fs::write(&parent_file, b"file").is_ok());
         assert!(
-            import_profile(
+            import_test_profile(
                 test_profile(&sha256(&valid_archive), "icon.svg"),
                 &valid_archive_path,
                 &parent_file.join("pack"),
@@ -1628,7 +1751,7 @@ mod tests {
         assert!(fs::write(&archive_path, &archive).is_ok());
         assert!(fs::create_dir(&root).is_ok());
         let digest = sha256(&archive);
-        let imported = import_profile(
+        let imported = import_test_profile(
             test_profile(&digest, "icons/storage.svg"),
             &archive_path,
             &output_path,
@@ -1662,6 +1785,86 @@ mod tests {
     }
 
     #[test]
+    fn local_import_requires_and_records_every_declared_source() {
+        let root = temporary_root("multiple-sources");
+        let _ = fs::remove_dir_all(&root);
+        assert!(fs::create_dir(&root).is_ok());
+        let primary_path = root.join("primary.zip");
+        let categories_path = root.join("categories.zip");
+        let primary = zip_with_entry(
+            "icons/storage.svg",
+            format!("<svg xmlns=\"{SVG_NAMESPACE}\" viewBox=\"0 0 24 24\"/>").as_bytes(),
+        );
+        let categories = zip_with_entry(
+            "icons/category.svg",
+            format!("<svg xmlns=\"{SVG_NAMESPACE}\" viewBox=\"0 0 24 24\"/>").as_bytes(),
+        );
+        assert!(fs::write(&primary_path, &primary).is_ok());
+        assert!(fs::write(&categories_path, &categories).is_ok());
+
+        let Ok(mut profile) = test_profile(&sha256(&primary), "icons/storage.svg") else {
+            let _ = fs::remove_dir_all(&root);
+            return;
+        };
+        let Ok(gcp) = provider_catalog("gcp") else {
+            let _ = fs::remove_dir_all(&root);
+            return;
+        };
+        let Some(mut additional) = gcp.additional_sources.first().cloned() else {
+            let _ = fs::remove_dir_all(&root);
+            return;
+        };
+        additional.source.archive_sha256 = sha256(&categories);
+        additional.source.archive_url = "https://example.com/categories.zip".to_owned();
+        profile.additional_sources = vec![additional];
+        profile.icons.push(CatalogIcon {
+            id: "example:category".to_owned(),
+            subject: "Example category".to_owned(),
+            product_name: "Example Category".to_owned(),
+            brand_source_url: None,
+            brand_guidelines_url: None,
+            recommended_node_kind: ProviderNodeKind::Service,
+            category: "Category".to_owned(),
+            source_id: Some("categories".to_owned()),
+            archive_path: "icons/category.svg".to_owned(),
+        });
+
+        assert!(
+            import_profile(
+                profile.clone(),
+                &primary_path,
+                &BTreeMap::new(),
+                &root.join("missing"),
+            )
+            .err()
+            .is_some_and(|error| error.to_string().contains("missing local archive"))
+        );
+        let unexpected = BTreeMap::from([("other".to_owned(), categories_path.clone())]);
+        assert!(
+            import_profile(
+                profile.clone(),
+                &primary_path,
+                &unexpected,
+                &root.join("unexpected"),
+            )
+            .err()
+            .is_some_and(|error| error.to_string().contains("does not declare"))
+        );
+
+        let sources = BTreeMap::from([("categories".to_owned(), categories_path)]);
+        let imported = import_profile(profile, &primary_path, &sources, &root.join("pack"));
+        assert!(imported.is_ok());
+        let manifest = fs::read_to_string(root.join("pack/manifest.json")).unwrap_or_default();
+        assert!(manifest.contains("\"schemaVersion\": \"1.1\""));
+        assert!(manifest.contains("\"sourceId\": \"categories\""));
+        let notice = fs::read_to_string(root.join("pack/NOTICE.md")).unwrap_or_default();
+        assert!(notice.contains("### `primary`"));
+        assert!(notice.contains("### `categories`"));
+        assert!(notice.contains("source `categories`"));
+        assert!(fs::remove_dir_all(&root).is_ok());
+    }
+
+    #[test]
     fn local_import_rejects_hash_mismatch_existing_output_and_unsafe_paths() {
         let root = temporary_root("failures");
         let archive_path = root.with_extension("zip");
@@ -1670,7 +1873,7 @@ mod tests {
         assert!(fs::write(&archive_path, &archive).is_ok());
         assert!(fs::create_dir(&root).is_ok());
 
-        let mismatch = import_profile(
+        let mismatch = import_test_profile(
             test_profile(
                 "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "../unsafe.svg",
@@ -1685,7 +1888,7 @@ mod tests {
         );
 
         let digest = sha256(&archive);
-        let unsafe_path = import_profile(
+        let unsafe_path = import_test_profile(
             test_profile(&digest, "../unsafe.svg"),
             &archive_path,
             &output_path,
@@ -1697,7 +1900,7 @@ mod tests {
         );
 
         assert!(fs::create_dir(&output_path).is_ok());
-        let existing = import_profile(
+        let existing = import_test_profile(
             test_profile(&digest, "../unsafe.svg"),
             &archive_path,
             &output_path,

@@ -2,6 +2,7 @@
 
 #![forbid(unsafe_code)]
 
+use std::collections::BTreeMap;
 use std::ffi::{OsStr, OsString};
 use std::fmt::Write as _;
 use std::fs::{self, File, OpenOptions};
@@ -14,6 +15,7 @@ use stack_engine::{
 };
 
 mod provider;
+mod provider_catalog;
 
 /// Exit status used when a command completes without Stack error diagnostics.
 pub const EXIT_SUCCESS: u8 = 0;
@@ -22,13 +24,14 @@ pub const EXIT_STACK_ERROR: u8 = 1;
 /// Exit status used for argument, host I/O, or engine operational failures.
 pub const EXIT_USAGE_OR_IO: u8 = 2;
 
-const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [--provider-pack <DIRECTORY>]... [-o <OUTPUT>] [--notice <NOTICE>]\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n  icons     Import local provider icon archives\n";
+const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [--provider-pack <DIRECTORY>]... [-o <OUTPUT>] [--notice <NOTICE>]\n  stack icons list [PROVIDER] [QUERY]\n  stack icons import <PROVIDER> <ARCHIVE> [--source <ID>=<ARCHIVE>]... --accept-terms -o <DIRECTORY>\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n  icons     List catalogs and import local provider icon archives\n";
 const CHECK_HELP: &str =
     "Validate a Stack source file without modifying it\n\nUsage:\n  stack check <FILE>\n";
 const FORMAT_HELP: &str = "Format Stack source canonically\n\nUsage:\n  stack fmt <FILE>\n  stack fmt --check <FILE>\n  stack fmt -\n\nArguments:\n  <FILE>    Format the file atomically in place\n  -         Read from standard input and write to standard output\n\nOptions:\n  --check   Report whether formatting is required without writing output\n";
 const RENDER_HELP: &str = "Render Stack source as standalone SVG\n\nUsage:\n  stack render <FILE> [--provider-pack <DIRECTORY>]... [-o <OUTPUT>] [--notice <NOTICE>]\n\nArguments:\n  <FILE>                     Read Stack source bytes from this file\n\nOptions:\n  --provider-pack <DIRECTORY> Load one local imported provider pack; repeatable\n  -o <OUTPUT>                 Write SVG atomically instead of using standard output\n  --notice <NOTICE>           Write exact used-provider notices atomically\n";
-const ICONS_HELP: &str = "Manage local provider icon packs\n\nUsage:\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n\nProviders:\n  aws       AWS Architecture Icons release 2026-07-31\n  gcp       Google Cloud core product icons from the May 2026 guide\n  azure     Azure Public Service Icons V24\n";
-const ICONS_IMPORT_HELP: &str = "Import an audited official provider icon archive locally\n\nUsage:\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n\nArguments:\n  <PROVIDER>   aws, gcp, or azure\n  <ARCHIVE>    Local official ZIP archive; Stack performs no download or upload\n\nOptions:\n  --accept-terms  Confirm that you reviewed and accept the provider terms\n  -o <DIRECTORY> Create a new local pack directory atomically\n";
+const ICONS_HELP: &str = "Manage local provider icon packs\n\nUsage:\n  stack icons list [PROVIDER] [QUERY]\n  stack icons import <PROVIDER> <ARCHIVE> [--source <ID>=<ARCHIVE>]... --accept-terms -o <DIRECTORY>\n\nProviders:\n  aws            305 AWS Architecture Icons\n  gcp             45 Google Cloud product and category icons\n  azure          639 Azure Public Service Icons\n  simple-icons    62 curated developer and collaboration tools\n";
+const ICONS_LIST_HELP: &str = "List searchable asset-free provider catalog metadata\n\nUsage:\n  stack icons list\n  stack icons list <PROVIDER> [QUERY]\n\nArguments:\n  <PROVIDER>  aws, gcp, azure, or simple-icons\n  [QUERY]     Case-insensitive ID, product, or category substring\n";
+const ICONS_IMPORT_HELP: &str = "Import audited provider icon archives locally\n\nUsage:\n  stack icons import <PROVIDER> <ARCHIVE> [--source <ID>=<ARCHIVE>]... --accept-terms -o <DIRECTORY>\n\nArguments:\n  <PROVIDER>   aws, gcp, azure, or simple-icons\n  <ARCHIVE>    Local primary ZIP archive; Stack performs no download or upload\n\nOptions:\n  --source <ID>=<ARCHIVE>  Supply a required additional local archive; repeatable\n  --accept-terms           Confirm that you reviewed all provider and brand terms\n  -o <DIRECTORY>          Create a new local pack directory atomically\n";
 const MAX_PROVIDER_MANIFEST_BYTES: usize = 1024 * 1024;
 const MAX_PROVIDER_ASSET_BYTES: usize = 1024 * 1024;
 const MAX_PROVIDER_PACKS: usize = 32;
@@ -89,7 +92,7 @@ pub fn run(
         return run_render(arguments, stdout, stderr);
     }
     if command == OsStr::new("icons") {
-        return run_icons(arguments, stdout, stderr);
+        return run_icons(&mut arguments, stdout, stderr);
     }
 
     argument_error(
@@ -99,7 +102,7 @@ pub fn run(
 }
 
 fn run_icons(
-    mut arguments: impl Iterator<Item = OsString>,
+    arguments: &mut dyn Iterator<Item = OsString>,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
@@ -115,6 +118,9 @@ fn run_icons(
         }
         return write_stdout(ICONS_HELP, stdout, stderr);
     }
+    if command == OsStr::new("list") {
+        return run_icons_list(arguments, stdout, stderr);
+    }
     if command != OsStr::new("import") {
         return argument_error(
             &format!(
@@ -127,8 +133,41 @@ fn run_icons(
     run_icons_import(arguments, stdout, stderr)
 }
 
+fn run_icons_list(
+    arguments: &mut dyn Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let first = arguments.next();
+    if first
+        .as_ref()
+        .is_some_and(|value| value == OsStr::new("--help") || value == OsStr::new("-h"))
+    {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(ICONS_LIST_HELP, stdout, stderr);
+    }
+    let query = arguments.next();
+    if let Some(extra) = arguments.next() {
+        return argument_error(
+            &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stderr,
+        );
+    }
+    let provider = first.as_ref().map(|value| value.to_string_lossy());
+    let query = query.as_ref().map(|value| value.to_string_lossy());
+    match provider::render_catalog_list(provider.as_deref(), query.as_deref()) {
+        Ok(output) => write_stdout(&output, stdout, stderr),
+        Err(error) => write_stderr_error(&format!("cannot list provider icons: {error}"), stderr),
+    }
+}
+
 fn run_icons_import(
-    mut arguments: impl Iterator<Item = OsString>,
+    arguments: &mut dyn Iterator<Item = OsString>,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
@@ -162,6 +201,7 @@ fn run_icons_import(
 
     let mut accepted_terms = false;
     let mut output = None;
+    let mut additional_sources = BTreeMap::new();
     while let Some(option) = arguments.next() {
         if option == OsStr::new("--accept-terms") {
             if accepted_terms {
@@ -176,6 +216,25 @@ fn run_icons_import(
                 return argument_error("missing output directory after '-o'", stderr);
             };
             output = Some(PathBuf::from(path));
+        } else if option == OsStr::new("--source") {
+            let Some(value) = arguments.next() else {
+                return argument_error("missing <ID>=<ARCHIVE> after '--source'", stderr);
+            };
+            let Some(value) = value.to_str() else {
+                return argument_error("source ID and archive must be valid UTF-8", stderr);
+            };
+            let Some((id, path)) = value.split_once('=') else {
+                return argument_error("source must use <ID>=<ARCHIVE>", stderr);
+            };
+            if id.is_empty() || path.is_empty() {
+                return argument_error("source must use non-empty <ID>=<ARCHIVE>", stderr);
+            }
+            if additional_sources
+                .insert(id.to_owned(), PathBuf::from(path))
+                .is_some()
+            {
+                return argument_error(&format!("duplicate source ID '{id}'"), stderr);
+            }
         } else {
             return argument_error(
                 &format!("unexpected argument '{}'", option.to_string_lossy()),
@@ -195,8 +254,19 @@ fn run_icons_import(
     if output == Path::new(&archive) {
         return argument_error("archive and output directory must be different", stderr);
     }
+    if additional_sources.values().any(|path| path == &output) {
+        return argument_error(
+            "source archive and output directory must be different",
+            stderr,
+        );
+    }
     let provider_name = provider.to_string_lossy();
-    match provider::import_provider_pack(&provider_name, Path::new(&archive), &output) {
+    match provider::import_provider_pack(
+        &provider_name,
+        Path::new(&archive),
+        &additional_sources,
+        &output,
+    ) {
         Ok(summary) => write_stdout(
             &format!(
                 "Imported {} {} icons to '{}'.\nManifest: {}\nNotice: {}\n",
@@ -613,25 +683,41 @@ fn render_provider_notices(notices: &[ProviderNotice]) -> String {
     for notice in notices {
         let _ = write!(
             output,
-            "\n## {} (`{}`)\n\n- Pack version: {}\n- Pack revision: `{}`\n- Source release: {}\n- Archive SHA-256: `{}`\n- Terms URL: {}\n\n{}\n\n{}\n\n{}\n\nUsed icons:\n",
+            "\n## {} (`{}`)\n\n- Pack version: {}\n- Pack revision: `{}`\n\n{}\n\n{}\n\n{}\n\nSources:\n",
             notice_text(&notice.provider_name),
             notice.provider_id,
             notice_text(&notice.pack_version),
             notice.pack_revision,
-            notice_text(&notice.source_release),
-            notice.archive_sha256,
-            notice_text(&notice.terms_url),
             notice_text(&notice.attribution),
             notice_text(&notice.terms_summary),
             notice_text(&notice.non_endorsement),
         );
-        for icon in &notice.icons {
+        for source in &notice.sources {
             let _ = writeln!(
                 output,
-                "- `{}`: {}",
-                icon.id,
-                notice_text(&icon.product_name)
+                "- `{}`: release {}; archive `{}`; terms {}",
+                source.id,
+                notice_text(&source.release),
+                source.archive_sha256,
+                notice_text(&source.terms_url),
             );
+        }
+        output.push_str("\nUsed icons:\n");
+        for icon in &notice.icons {
+            let _ = write!(
+                output,
+                "- `{}`: {} (source `{}`)",
+                icon.id,
+                notice_text(&icon.product_name),
+                notice_text(&icon.source_id),
+            );
+            if let Some(url) = &icon.brand_source_url {
+                let _ = write!(output, "; brand source {}", notice_text(url));
+            }
+            if let Some(url) = &icon.brand_guidelines_url {
+                let _ = write!(output, "; brand guidelines {}", notice_text(url));
+            }
+            output.push('\n');
         }
     }
     output
@@ -961,7 +1047,7 @@ mod tests {
             run_without_input([OsString::from("--version")], &mut stdout, &mut stderr),
             EXIT_SUCCESS
         );
-        assert_eq!(stdout, b"stack 0.1.0\n");
+        assert_eq!(stdout, b"stack 0.2.0\n");
         assert!(stderr.is_empty());
 
         stdout.clear();
@@ -1090,6 +1176,13 @@ mod tests {
             vec![OsString::from("icons"), OsString::from("unknown")],
             vec![
                 OsString::from("icons"),
+                OsString::from("list"),
+                OsString::from("aws"),
+                OsString::from("s3"),
+                OsString::from("extra"),
+            ],
+            vec![
+                OsString::from("icons"),
                 OsString::from("--help"),
                 OsString::from("extra"),
             ],
@@ -1119,6 +1212,17 @@ mod tests {
                 OsString::from("icons"),
                 OsString::from("import"),
                 OsString::from("--unknown"),
+            ],
+            vec![
+                OsString::from("icons"),
+                OsString::from("import"),
+                OsString::from("gcp"),
+                OsString::from("core.zip"),
+                OsString::from("--source"),
+                OsString::from("invalid"),
+                OsString::from("--accept-terms"),
+                OsString::from("-o"),
+                OsString::from("pack"),
             ],
             vec![
                 OsString::from("check"),
@@ -1209,6 +1313,58 @@ mod tests {
             EXIT_SUCCESS
         );
         assert_eq!(stdout, ICONS_IMPORT_HELP.as_bytes());
+
+        stdout.clear();
+        assert_eq!(
+            run_without_input(
+                [
+                    OsString::from("icons"),
+                    OsString::from("list"),
+                    OsString::from("--help"),
+                ],
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_SUCCESS
+        );
+        assert_eq!(stdout, ICONS_LIST_HELP.as_bytes());
+    }
+
+    #[test]
+    fn provider_catalog_listing_is_searchable_without_asset_bytes() {
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        assert_eq!(
+            run_without_input(
+                [OsString::from("icons"), OsString::from("list")],
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_SUCCESS
+        );
+        let listing = String::from_utf8_lossy(&stdout);
+        assert!(listing.contains("aws\t305"));
+        assert!(listing.contains("azure\t639"));
+        assert!(listing.contains("simple-icons\t62"));
+
+        stdout.clear();
+        assert_eq!(
+            run_without_input(
+                [
+                    OsString::from("icons"),
+                    OsString::from("list"),
+                    OsString::from("aws"),
+                    OsString::from("s3"),
+                ],
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_SUCCESS
+        );
+        let listing = String::from_utf8_lossy(&stdout);
+        assert!(listing.contains("aws:s3\tAmazon Simple Storage Service"));
+        assert!(listing.lines().count() >= 2);
+        assert!(stderr.is_empty());
     }
 
     #[test]
