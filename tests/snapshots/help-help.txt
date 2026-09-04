@@ -1,0 +1,14 @@
+Print top-level or subcommand help
+
+Usage:
+  stack help
+  stack help <COMMAND>
+  stack help icons <COMMAND>
+
+Arguments:
+  <COMMAND>  check, fmt, render, icons, help, or version
+
+Examples:
+  stack help
+  stack help render
+  stack help icons import

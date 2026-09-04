@@ -7,6 +7,9 @@ The repository contains native validation, formatting, and rendering commands. T
 ## Commands
 
 ```text
+stack help
+stack help render
+stack version
 stack check arch.stack
 stack fmt arch.stack
 stack fmt --check arch.stack
@@ -19,6 +22,8 @@ stack icons import gcp --accept-terms
 stack icons import simple-icons --accept-terms
 stack render arch.stack -o arch.svg --notice arch.NOTICE.md
 ```
+
+`stack help`, `stack -h`, and `stack --help` print top-level help. Use `stack help <COMMAND>` or `<COMMAND> -h` / `<COMMAND> --help` for command-specific usage and examples; nested icon help is available through `stack help icons <COMMAND>`. `stack version`, `stack -v`, `stack -V`, and `stack --version` print the same Cargo package version. Help and version output use standard output and exit with status `0`. Invalid arguments and unknown commands use standard error and status `2`; close command typos include a suggested command and the relevant help invocation.
 
 `stack check` reads the file as bytes and runs the full compiler, theme, layout, and routing validation pipeline without changing the source. Diagnostics are written to standard error in source order. Standard output remains empty.
 

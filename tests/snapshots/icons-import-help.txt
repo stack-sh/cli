@@ -1,0 +1,19 @@
+Download and import audited provider icon archives
+
+Usage:
+  stack icons import <PROVIDER> --accept-terms [-o <DIRECTORY>]
+
+Arguments:
+  <PROVIDER>  aws, gcp, azure, or simple-icons
+
+Options:
+  --accept-terms  Confirm that you reviewed all provider and brand terms
+  -o <DIRECTORY>  Store packs below this icon-store root
+  -h, --help       Print help
+
+Default icon store:
+  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons
+
+Examples:
+  stack icons import gcp --accept-terms
+  stack icons import simple-icons --accept-terms -o .stack-icons

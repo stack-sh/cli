@@ -63,6 +63,13 @@ jobs:
         run: python3 scripts/validate-render.py
       - name: Smoke test command metadata
         run: |
+          ./target/release/stack help
+          ./target/release/stack help render
+          ./target/release/stack help icons list
+          ./target/release/stack version
+          ./target/release/stack -h
+          ./target/release/stack -v
+          ./target/release/stack -V
           ./target/release/stack --help
           ./target/release/stack --version
           ./target/release/stack check --help

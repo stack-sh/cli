@@ -74,6 +74,14 @@ fn assert_unchanged(path: &Path, expected: &[u8]) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
+fn assert_stdout_only(arguments: &[&str], expected: &[u8]) -> Result<(), Box<dyn Error>> {
+    let output = stack(arguments.iter().copied())?;
+    assert_eq!(output.status.code(), Some(0), "arguments: {arguments:?}");
+    assert_eq!(output.stdout, expected, "arguments: {arguments:?}");
+    assert!(output.stderr.is_empty(), "arguments: {arguments:?}");
+    Ok(())
+}
+
 #[test]
 fn valid_source_is_silent_and_unchanged() -> Result<(), Box<dyn Error>> {
     let directory = TestDirectory::new("valid")?;
@@ -145,21 +153,122 @@ fn missing_file_exits_two_with_a_stable_host_error() -> Result<(), Box<dyn Error
 }
 
 #[test]
-fn help_and_version_are_stdout_only() -> Result<(), Box<dyn Error>> {
-    let help = stack(["--help"])?;
-    assert_eq!(help.status.code(), Some(0));
-    assert!(help.stderr.is_empty());
-    assert!(String::from_utf8(help.stdout)?.contains("stack check <FILE>"));
+fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
+    let cases: &[(&[&str], &[u8])] = &[
+        (&["--help"], include_bytes!("snapshots/help.txt")),
+        (&["-h"], include_bytes!("snapshots/help.txt")),
+        (&["help"], include_bytes!("snapshots/help.txt")),
+        (
+            &["check", "--help"],
+            include_bytes!("snapshots/check-help.txt"),
+        ),
+        (
+            &["help", "check"],
+            include_bytes!("snapshots/check-help.txt"),
+        ),
+        (&["fmt", "--help"], include_bytes!("snapshots/fmt-help.txt")),
+        (&["help", "fmt"], include_bytes!("snapshots/fmt-help.txt")),
+        (
+            &["render", "--help"],
+            include_bytes!("snapshots/render-help.txt"),
+        ),
+        (
+            &["help", "render"],
+            include_bytes!("snapshots/render-help.txt"),
+        ),
+        (
+            &["icons", "--help"],
+            include_bytes!("snapshots/icons-help.txt"),
+        ),
+        (
+            &["icons", "help"],
+            include_bytes!("snapshots/icons-help.txt"),
+        ),
+        (
+            &["help", "icons"],
+            include_bytes!("snapshots/icons-help.txt"),
+        ),
+        (
+            &["icons", "list", "--help"],
+            include_bytes!("snapshots/icons-list-help.txt"),
+        ),
+        (
+            &["icons", "help", "list"],
+            include_bytes!("snapshots/icons-list-help.txt"),
+        ),
+        (
+            &["help", "icons", "list"],
+            include_bytes!("snapshots/icons-list-help.txt"),
+        ),
+        (
+            &["icons", "import", "--help"],
+            include_bytes!("snapshots/icons-import-help.txt"),
+        ),
+        (
+            &["icons", "help", "import"],
+            include_bytes!("snapshots/icons-import-help.txt"),
+        ),
+        (
+            &["help", "icons", "import"],
+            include_bytes!("snapshots/icons-import-help.txt"),
+        ),
+        (&["help", "help"], include_bytes!("snapshots/help-help.txt")),
+        (
+            &["help", "--help"],
+            include_bytes!("snapshots/help-help.txt"),
+        ),
+        (
+            &["version", "--help"],
+            include_bytes!("snapshots/version-help.txt"),
+        ),
+        (
+            &["help", "version"],
+            include_bytes!("snapshots/version-help.txt"),
+        ),
+    ];
 
-    let icons_help = stack(["icons", "--help"])?;
-    assert_eq!(icons_help.status.code(), Some(0));
-    assert!(icons_help.stderr.is_empty());
-    assert!(String::from_utf8(icons_help.stdout)?.contains("AWS Architecture Icons"));
+    for (arguments, expected) in cases {
+        assert_stdout_only(arguments, expected)?;
+    }
 
-    let version = stack(["--version"])?;
-    assert_eq!(version.status.code(), Some(0));
-    assert_eq!(version.stdout, b"stack 0.3.0\n");
-    assert!(version.stderr.is_empty());
+    let expected_version = format!("stack {}\n", env!("CARGO_PKG_VERSION"));
+    for arguments in [["version"], ["-v"], ["-V"], ["--version"]] {
+        assert_stdout_only(&arguments, expected_version.as_bytes())?;
+    }
+    Ok(())
+}
+
+#[test]
+fn command_typos_are_actionable_and_stderr_only() -> Result<(), Box<dyn Error>> {
+    let cases: &[(&[&str], &str)] = &[
+        (
+            &["chekc"],
+            "error: unknown command 'chekc'\n\nDid you mean 'check'?\n\nFor more information, try 'stack help'.\n",
+        ),
+        (
+            &["icons", "lst"],
+            "error: unknown command for 'stack icons': 'lst'\n\nDid you mean 'list'?\n\nFor more information, try 'stack help icons'.\n",
+        ),
+        (
+            &["help", "rennder"],
+            "error: unknown command for 'stack help': 'rennder'\n\nDid you mean 'render'?\n\nFor more information, try 'stack help'.\n",
+        ),
+        (
+            &["definitely-unknown"],
+            "error: unknown command 'definitely-unknown'\n\nFor more information, try 'stack help'.\n",
+        ),
+    ];
+
+    for (arguments, expected) in cases {
+        let output = stack(arguments.iter().copied())?;
+        assert_eq!(output.status.code(), Some(2), "arguments: {arguments:?}");
+        assert!(output.stdout.is_empty(), "arguments: {arguments:?}");
+        assert_eq!(
+            output.stderr,
+            expected.as_bytes(),
+            "arguments: {arguments:?}"
+        );
+    }
     Ok(())
 }
 
