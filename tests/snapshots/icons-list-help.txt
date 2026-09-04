@@ -1,0 +1,16 @@
+List searchable asset-free provider catalog metadata
+
+Usage:
+  stack icons list
+  stack icons list <PROVIDER> [QUERY]
+
+Arguments:
+  <PROVIDER>  aws, gcp, azure, or simple-icons
+  [QUERY]     Case-insensitive ID, product, or category substring
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack icons list
+  stack icons list aws s3

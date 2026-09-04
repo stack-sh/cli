@@ -25,14 +25,182 @@ pub const EXIT_STACK_ERROR: u8 = 1;
 /// Exit status used for argument, host I/O, or engine operational failures.
 pub const EXIT_USAGE_OR_IO: u8 = 2;
 
-const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>]\n  stack icons list [PROVIDER] [QUERY]\n  stack icons import <PROVIDER> --accept-terms [-o <DIRECTORY>]\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n  icons     List catalogs and import audited provider icon archives\n";
-const CHECK_HELP: &str =
-    "Validate a Stack source file without modifying it\n\nUsage:\n  stack check <FILE>\n";
-const FORMAT_HELP: &str = "Format Stack source canonically\n\nUsage:\n  stack fmt <FILE>\n  stack fmt --check <FILE>\n  stack fmt -\n\nArguments:\n  <FILE>    Format the file atomically in place\n  -         Read from standard input and write to standard output\n\nOptions:\n  --check   Report whether formatting is required without writing output\n";
-const RENDER_HELP: &str = "Render Stack source as standalone SVG\n\nUsage:\n  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>]\n\nArguments:\n  <FILE>                      Read Stack source bytes from this file\n\nOptions:\n  --provider-pack <DIRECTORY> Read known provider packs from this icon-store root\n  -o <OUTPUT>                 Write SVG atomically instead of using standard output\n  --notice <NOTICE>           Write exact used-provider notices atomically\n\nDefault icon store:\n  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons\n";
-const ICONS_HELP: &str = "Manage local provider icon packs\n\nUsage:\n  stack icons list [PROVIDER] [QUERY]\n  stack icons import <PROVIDER> --accept-terms [-o <DIRECTORY>]\n\nProviders:\n  aws            305 AWS Architecture Icons\n  gcp             45 Google Cloud product and category icons\n  azure          639 Azure Public Service Icons\n  simple-icons    62 curated developer and collaboration tools\n";
-const ICONS_LIST_HELP: &str = "List searchable asset-free provider catalog metadata\n\nUsage:\n  stack icons list\n  stack icons list <PROVIDER> [QUERY]\n\nArguments:\n  <PROVIDER>  aws, gcp, azure, or simple-icons\n  [QUERY]     Case-insensitive ID, product, or category substring\n";
-const ICONS_IMPORT_HELP: &str = "Download and import audited provider icon archives\n\nUsage:\n  stack icons import <PROVIDER> --accept-terms [-o <DIRECTORY>]\n\nArguments:\n  <PROVIDER>  aws, gcp, azure, or simple-icons\n\nOptions:\n  --accept-terms  Confirm that you reviewed all provider and brand terms\n  -o <DIRECTORY>  Store packs below this icon-store root\n\nDefault icon store:\n  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons\n";
+const GENERAL_HELP: &str = "\
+Stack diagram toolchain
+
+Usage:
+  stack <COMMAND> [OPTIONS]
+  stack help [COMMAND]
+
+Commands:
+  check      Validate a Stack source file without modifying it
+  fmt        Format a file in place or read from standard input
+  render     Render standalone SVG to standard output or a file
+  icons      List catalogs and import audited provider icon archives
+  help       Print this message or the help of a subcommand
+  version    Print version information
+
+Options:
+  -h, --help          Print help
+  -v, -V, --version   Print version
+
+Examples:
+  stack check arch.stack
+  stack fmt --check arch.stack
+  stack render arch.stack -o arch.svg
+  stack icons list aws s3
+";
+const CHECK_HELP: &str = "\
+Validate a Stack source file without modifying it
+
+Usage:
+  stack check <FILE>
+
+Arguments:
+  <FILE>  Read Stack source bytes from this file
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack check arch.stack
+";
+const FORMAT_HELP: &str = "\
+Format Stack source canonically
+
+Usage:
+  stack fmt <FILE>
+  stack fmt --check <FILE>
+  stack fmt -
+
+Arguments:
+  <FILE>  Format the file atomically in place
+  -       Read from standard input and write to standard output
+
+Options:
+  --check     Report whether formatting is required without writing output
+  -h, --help  Print help
+
+Examples:
+  stack fmt arch.stack
+  stack fmt --check arch.stack
+  stack fmt - < input.stack > output.stack
+";
+const RENDER_HELP: &str = "\
+Render Stack source as standalone SVG
+
+Usage:
+  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>]
+
+Arguments:
+  <FILE>                      Read Stack source bytes from this file
+
+Options:
+  --provider-pack <DIRECTORY> Read known provider packs from this icon-store root
+  -o <OUTPUT>                 Write SVG atomically instead of using standard output
+  --notice <NOTICE>           Write exact used-provider notices atomically
+  -h, --help                  Print help
+
+Default icon store:
+  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons
+
+Examples:
+  stack render arch.stack
+  stack render arch.stack -o arch.svg
+  stack render arch.stack --notice arch.NOTICE.md -o arch.svg
+";
+const ICONS_HELP: &str = "\
+Manage local provider icon packs
+
+Usage:
+  stack icons <COMMAND>
+
+Commands:
+  list    List searchable asset-free provider catalog metadata
+  import  Download and import an audited provider icon archive
+  help    Print this message or the help of an icons subcommand
+
+Options:
+  -h, --help  Print help
+
+Providers:
+  aws            305 AWS Architecture Icons
+  gcp             45 Google Cloud product and category icons
+  azure          639 Azure Public Service Icons
+  simple-icons    62 curated developer and collaboration tools
+
+Examples:
+  stack icons list
+  stack icons list aws s3
+  stack icons import gcp --accept-terms
+";
+const ICONS_LIST_HELP: &str = "\
+List searchable asset-free provider catalog metadata
+
+Usage:
+  stack icons list
+  stack icons list <PROVIDER> [QUERY]
+
+Arguments:
+  <PROVIDER>  aws, gcp, azure, or simple-icons
+  [QUERY]     Case-insensitive ID, product, or category substring
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack icons list
+  stack icons list aws s3
+";
+const ICONS_IMPORT_HELP: &str = "\
+Download and import audited provider icon archives
+
+Usage:
+  stack icons import <PROVIDER> --accept-terms [-o <DIRECTORY>]
+
+Arguments:
+  <PROVIDER>  aws, gcp, azure, or simple-icons
+
+Options:
+  --accept-terms  Confirm that you reviewed all provider and brand terms
+  -o <DIRECTORY>  Store packs below this icon-store root
+  -h, --help       Print help
+
+Default icon store:
+  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons
+
+Examples:
+  stack icons import gcp --accept-terms
+  stack icons import simple-icons --accept-terms -o .stack-icons
+";
+const HELP_HELP: &str = "\
+Print top-level or subcommand help
+
+Usage:
+  stack help
+  stack help <COMMAND>
+  stack help icons <COMMAND>
+
+Arguments:
+  <COMMAND>  check, fmt, render, icons, help, or version
+
+Examples:
+  stack help
+  stack help render
+  stack help icons import
+";
+const VERSION_HELP: &str = "\
+Print Stack CLI version information
+
+Usage:
+  stack version
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack version
+";
 const MAX_PROVIDER_MANIFEST_BYTES: usize = 1024 * 1024;
 const MAX_PROVIDER_ASSET_BYTES: usize = 1024 * 1024;
 
@@ -62,7 +230,7 @@ pub fn run(
         return argument_error("missing command", stderr);
     };
 
-    if command == OsStr::new("--help") || command == OsStr::new("-h") {
+    if is_help_flag(&command) {
         if let Some(extra) = arguments.next() {
             return argument_error(
                 &format!("unexpected argument '{}'", extra.to_string_lossy()),
@@ -71,18 +239,20 @@ pub fn run(
         }
         return write_stdout(GENERAL_HELP, stdout, stderr);
     }
-    if command == OsStr::new("--version") || command == OsStr::new("-V") {
+    if is_version_flag(&command) {
         if let Some(extra) = arguments.next() {
             return argument_error(
                 &format!("unexpected argument '{}'", extra.to_string_lossy()),
                 stderr,
             );
         }
-        return write_stdout(
-            concat!("stack ", env!("CARGO_PKG_VERSION"), "\n"),
-            stdout,
-            stderr,
-        );
+        return write_version(stdout, stderr);
+    }
+    if command == OsStr::new("help") {
+        return run_help(arguments, stdout, stderr);
+    }
+    if command == OsStr::new("version") {
+        return run_version(arguments, stdout, stderr);
     }
     if command == OsStr::new("check") {
         return run_check(arguments, stdout, stderr);
@@ -97,8 +267,84 @@ pub fn run(
         return run_icons(&mut arguments, stdout, stderr);
     }
 
+    unknown_command_error(
+        "stack",
+        &command,
+        &["check", "fmt", "render", "icons", "help", "version"],
+        "stack help",
+        stderr,
+    )
+}
+
+fn run_help(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(command) = arguments.next() else {
+        return write_stdout(GENERAL_HELP, stdout, stderr);
+    };
+    if is_help_flag(&command) {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(HELP_HELP, stdout, stderr);
+    }
+    if command == OsStr::new("icons") {
+        return run_icons_help(&mut arguments, stdout, stderr);
+    }
+
+    let help = if command == OsStr::new("check") {
+        CHECK_HELP
+    } else if command == OsStr::new("fmt") {
+        FORMAT_HELP
+    } else if command == OsStr::new("render") {
+        RENDER_HELP
+    } else if command == OsStr::new("help") {
+        HELP_HELP
+    } else if command == OsStr::new("version") {
+        VERSION_HELP
+    } else {
+        return unknown_command_error(
+            "stack help",
+            &command,
+            &["check", "fmt", "render", "icons", "help", "version"],
+            "stack help",
+            stderr,
+        );
+    };
+
+    if let Some(extra) = arguments.next() {
+        return argument_error(
+            &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stderr,
+        );
+    }
+    write_stdout(help, stdout, stderr)
+}
+
+fn run_version(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(argument) = arguments.next() else {
+        return write_version(stdout, stderr);
+    };
+    if is_help_flag(&argument) {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(VERSION_HELP, stdout, stderr);
+    }
     argument_error(
-        &format!("unknown command '{}'", command.to_string_lossy()),
+        &format!("unexpected argument '{}'", argument.to_string_lossy()),
         stderr,
     )
 }
@@ -111,7 +357,7 @@ fn run_icons(
     let Some(command) = arguments.next() else {
         return argument_error("missing command for 'stack icons'", stderr);
     };
-    if command == OsStr::new("--help") || command == OsStr::new("-h") {
+    if is_help_flag(&command) {
         if let Some(extra) = arguments.next() {
             return argument_error(
                 &format!("unexpected argument '{}'", extra.to_string_lossy()),
@@ -120,19 +366,70 @@ fn run_icons(
         }
         return write_stdout(ICONS_HELP, stdout, stderr);
     }
+    if command == OsStr::new("help") {
+        return run_icons_help(arguments, stdout, stderr);
+    }
     if command == OsStr::new("list") {
         return run_icons_list(arguments, stdout, stderr);
     }
     if command != OsStr::new("import") {
-        return argument_error(
-            &format!(
-                "unknown command for 'stack icons': '{}'",
-                command.to_string_lossy()
-            ),
+        return unknown_command_error(
+            "stack icons",
+            &command,
+            &["list", "import", "help"],
+            "stack help icons",
             stderr,
         );
     }
     run_icons_import(arguments, stdout, stderr)
+}
+
+fn run_icons_help(
+    arguments: &mut dyn Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(command) = arguments.next() else {
+        return write_stdout(ICONS_HELP, stdout, stderr);
+    };
+    if is_help_flag(&command) {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(ICONS_HELP, stdout, stderr);
+    }
+    if command == OsStr::new("help") {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(ICONS_HELP, stdout, stderr);
+    }
+    let help = if command == OsStr::new("list") {
+        ICONS_LIST_HELP
+    } else if command == OsStr::new("import") {
+        ICONS_IMPORT_HELP
+    } else {
+        return unknown_command_error(
+            "stack icons",
+            &command,
+            &["list", "import", "help"],
+            "stack help icons",
+            stderr,
+        );
+    };
+    if let Some(extra) = arguments.next() {
+        return argument_error(
+            &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stderr,
+        );
+    }
+    write_stdout(help, stdout, stderr)
 }
 
 fn run_icons_list(
@@ -1063,6 +1360,72 @@ fn stable_io_error(kind: io::ErrorKind) -> &'static str {
         io::ErrorKind::InvalidData => "invalid data",
         _ => "I/O error",
     }
+}
+
+fn is_help_flag(value: &OsStr) -> bool {
+    value == OsStr::new("--help") || value == OsStr::new("-h")
+}
+
+fn is_version_flag(value: &OsStr) -> bool {
+    value == OsStr::new("--version") || value == OsStr::new("-V") || value == OsStr::new("-v")
+}
+
+fn write_version(stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8 {
+    write_stdout(
+        concat!("stack ", env!("CARGO_PKG_VERSION"), "\n"),
+        stdout,
+        stderr,
+    )
+}
+
+fn unknown_command_error(
+    scope: &str,
+    command: &OsStr,
+    candidates: &[&str],
+    help_command: &str,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let command = command.to_string_lossy();
+    if scope == "stack" {
+        let _ = writeln!(stderr, "error: unknown command '{command}'");
+    } else {
+        let _ = writeln!(stderr, "error: unknown command for '{scope}': '{command}'");
+    }
+    if let Some(suggestion) = command_suggestion(&command, candidates) {
+        let _ = writeln!(stderr, "\nDid you mean '{suggestion}'?");
+    }
+    let _ = writeln!(stderr, "\nFor more information, try '{help_command}'.");
+    EXIT_USAGE_OR_IO
+}
+
+fn command_suggestion<'a>(input: &str, candidates: &[&'a str]) -> Option<&'a str> {
+    let input_length = input.chars().count();
+    candidates
+        .iter()
+        .map(|candidate| (*candidate, edit_distance(input, candidate)))
+        .filter(|(candidate, distance)| {
+            *distance <= 2 && *distance * 2 <= input_length.max(candidate.chars().count())
+        })
+        .min_by_key(|(_, distance)| *distance)
+        .map(|(candidate, _)| candidate)
+}
+
+fn edit_distance(left: &str, right: &str) -> usize {
+    let right = right.chars().collect::<Vec<_>>();
+    let mut previous = (0..=right.len()).collect::<Vec<_>>();
+    for (left_index, left_character) in left.chars().enumerate() {
+        let mut current = Vec::with_capacity(right.len() + 1);
+        current.push(left_index + 1);
+        for (right_index, right_character) in right.iter().enumerate() {
+            let substitution =
+                previous[right_index] + usize::from(left_character != *right_character);
+            let insertion = current[right_index] + 1;
+            let deletion = previous[right_index + 1] + 1;
+            current.push(substitution.min(insertion).min(deletion));
+        }
+        previous = current;
+    }
+    previous[right.len()]
 }
 
 fn argument_error(message: &str, stderr: &mut dyn Write) -> u8 {

@@ -1,0 +1,10 @@
+Print Stack CLI version information
+
+Usage:
+  stack version
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack version

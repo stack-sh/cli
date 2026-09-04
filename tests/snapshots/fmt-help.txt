@@ -1,0 +1,19 @@
+Format Stack source canonically
+
+Usage:
+  stack fmt <FILE>
+  stack fmt --check <FILE>
+  stack fmt -
+
+Arguments:
+  <FILE>  Format the file atomically in place
+  -       Read from standard input and write to standard output
+
+Options:
+  --check     Report whether formatting is required without writing output
+  -h, --help  Print help
+
+Examples:
+  stack fmt arch.stack
+  stack fmt --check arch.stack
+  stack fmt - < input.stack > output.stack

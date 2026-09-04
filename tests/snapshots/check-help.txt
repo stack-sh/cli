@@ -1,0 +1,13 @@
+Validate a Stack source file without modifying it
+
+Usage:
+  stack check <FILE>
+
+Arguments:
+  <FILE>  Read Stack source bytes from this file
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack check arch.stack

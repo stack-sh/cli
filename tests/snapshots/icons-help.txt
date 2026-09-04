@@ -1,0 +1,23 @@
+Manage local provider icon packs
+
+Usage:
+  stack icons <COMMAND>
+
+Commands:
+  list    List searchable asset-free provider catalog metadata
+  import  Download and import an audited provider icon archive
+  help    Print this message or the help of an icons subcommand
+
+Options:
+  -h, --help  Print help
+
+Providers:
+  aws            305 AWS Architecture Icons
+  gcp             45 Google Cloud product and category icons
+  azure          639 Azure Public Service Icons
+  simple-icons    62 curated developer and collaboration tools
+
+Examples:
+  stack icons list
+  stack icons list aws s3
+  stack icons import gcp --accept-terms
