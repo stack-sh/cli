@@ -111,7 +111,7 @@ fn invalid_utf8_exits_one_and_writes_only_stderr() -> Result<(), Box<dyn Error>>
 
     let output = stack([OsStr::new("check"), path.as_os_str()])?;
     let expected = format!(
-        "{}:1:1: error[STK1001]: Input is not valid UTF-8.\n",
+        "{}:1:1: error[STK1001]: Input is not valid UTF-8.\n  help: Save the source as UTF-8 and replace the invalid byte sequence.\n",
         path.display()
     );
 
