@@ -12,6 +12,8 @@ use stack_engine::{
     CheckOutput, Diagnostic, Engine, FormatOutput, OperationalError, RenderOutput, Severity,
 };
 
+mod provider;
+
 /// Exit status used when a command completes without Stack error diagnostics.
 pub const EXIT_SUCCESS: u8 = 0;
 /// Exit status used when Stack source contains at least one error diagnostic.
@@ -19,11 +21,13 @@ pub const EXIT_STACK_ERROR: u8 = 1;
 /// Exit status used for argument, host I/O, or engine operational failures.
 pub const EXIT_USAGE_OR_IO: u8 = 2;
 
-const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [-o <OUTPUT>]\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n";
+const GENERAL_HELP: &str = "Stack diagram toolchain\n\nUsage:\n  stack check <FILE>\n  stack fmt [--check] <FILE|->\n  stack render <FILE> [-o <OUTPUT>]\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n  stack --help\n  stack --version\n\nCommands:\n  check     Validate a Stack source file without modifying it\n  fmt       Format a file in place or read from standard input\n  render    Render standalone SVG to standard output or a file\n  icons     Import local provider icon archives\n";
 const CHECK_HELP: &str =
     "Validate a Stack source file without modifying it\n\nUsage:\n  stack check <FILE>\n";
 const FORMAT_HELP: &str = "Format Stack source canonically\n\nUsage:\n  stack fmt <FILE>\n  stack fmt --check <FILE>\n  stack fmt -\n\nArguments:\n  <FILE>    Format the file atomically in place\n  -         Read from standard input and write to standard output\n\nOptions:\n  --check   Report whether formatting is required without writing output\n";
 const RENDER_HELP: &str = "Render Stack source as standalone SVG\n\nUsage:\n  stack render <FILE>\n  stack render <FILE> -o <OUTPUT>\n\nArguments:\n  <FILE>      Read Stack source bytes from this file\n\nOptions:\n  -o <OUTPUT> Write SVG atomically instead of using standard output\n";
+const ICONS_HELP: &str = "Manage local provider icon packs\n\nUsage:\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n\nProviders:\n  aws       AWS Architecture Icons release 2026-07-31\n  gcp       Google Cloud core product icons from the May 2026 guide\n  azure     Azure Public Service Icons V24\n";
+const ICONS_IMPORT_HELP: &str = "Import an audited official provider icon archive locally\n\nUsage:\n  stack icons import <PROVIDER> <ARCHIVE> --accept-terms -o <DIRECTORY>\n\nArguments:\n  <PROVIDER>   aws, gcp, or azure\n  <ARCHIVE>    Local official ZIP archive; Stack performs no download or upload\n\nOptions:\n  --accept-terms  Confirm that you reviewed and accept the provider terms\n  -o <DIRECTORY> Create a new local pack directory atomically\n";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum FormatMode {
@@ -80,11 +84,129 @@ pub fn run(
     if command == OsStr::new("render") {
         return run_render(arguments, stdout, stderr);
     }
+    if command == OsStr::new("icons") {
+        return run_icons(arguments, stdout, stderr);
+    }
 
     argument_error(
         &format!("unknown command '{}'", command.to_string_lossy()),
         stderr,
     )
+}
+
+fn run_icons(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(command) = arguments.next() else {
+        return argument_error("missing command for 'stack icons'", stderr);
+    };
+    if command == OsStr::new("--help") || command == OsStr::new("-h") {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(ICONS_HELP, stdout, stderr);
+    }
+    if command != OsStr::new("import") {
+        return argument_error(
+            &format!(
+                "unknown command for 'stack icons': '{}'",
+                command.to_string_lossy()
+            ),
+            stderr,
+        );
+    }
+    run_icons_import(arguments, stdout, stderr)
+}
+
+fn run_icons_import(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(provider) = arguments.next() else {
+        return argument_error("missing provider for 'stack icons import'", stderr);
+    };
+    if provider == OsStr::new("--help") || provider == OsStr::new("-h") {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(ICONS_IMPORT_HELP, stdout, stderr);
+    }
+    if provider.to_string_lossy().starts_with('-') {
+        return argument_error(
+            &format!("unknown option '{}'", provider.to_string_lossy()),
+            stderr,
+        );
+    }
+    let Some(archive) = arguments.next() else {
+        return argument_error("missing archive for 'stack icons import'", stderr);
+    };
+    if archive.to_string_lossy().starts_with('-') {
+        return argument_error(
+            &format!("unknown option '{}'", archive.to_string_lossy()),
+            stderr,
+        );
+    }
+
+    let mut accepted_terms = false;
+    let mut output = None;
+    while let Some(option) = arguments.next() {
+        if option == OsStr::new("--accept-terms") {
+            if accepted_terms {
+                return argument_error("duplicate '--accept-terms' option", stderr);
+            }
+            accepted_terms = true;
+        } else if option == OsStr::new("-o") {
+            if output.is_some() {
+                return argument_error("duplicate '-o' option", stderr);
+            }
+            let Some(path) = arguments.next() else {
+                return argument_error("missing output directory after '-o'", stderr);
+            };
+            output = Some(PathBuf::from(path));
+        } else {
+            return argument_error(
+                &format!("unexpected argument '{}'", option.to_string_lossy()),
+                stderr,
+            );
+        }
+    }
+    if !accepted_terms {
+        return argument_error(
+            "provider terms must be reviewed and accepted with '--accept-terms'",
+            stderr,
+        );
+    }
+    let Some(output) = output else {
+        return argument_error("missing output directory after '-o'", stderr);
+    };
+    if output == Path::new(&archive) {
+        return argument_error("archive and output directory must be different", stderr);
+    }
+    let provider_name = provider.to_string_lossy();
+    match provider::import_provider_pack(&provider_name, Path::new(&archive), &output) {
+        Ok(summary) => write_stdout(
+            &format!(
+                "Imported {} {} icons to '{}'.\nManifest: {}\nNotice: {}\n",
+                summary.icon_count,
+                summary.provider_name,
+                output.display(),
+                summary.manifest_path.display(),
+                summary.notice_path.display()
+            ),
+            stdout,
+            stderr,
+        ),
+        Err(error) => write_stderr_error(&format!("cannot import provider icons: {error}"), stderr),
+    }
 }
 
 fn run_render(
@@ -735,6 +857,40 @@ mod tests {
                 OsString::from("-o"),
                 OsString::from("file.stack"),
             ],
+            vec![OsString::from("icons")],
+            vec![OsString::from("icons"), OsString::from("unknown")],
+            vec![
+                OsString::from("icons"),
+                OsString::from("--help"),
+                OsString::from("extra"),
+            ],
+            vec![OsString::from("icons"), OsString::from("import")],
+            vec![
+                OsString::from("icons"),
+                OsString::from("import"),
+                OsString::from("aws"),
+            ],
+            vec![
+                OsString::from("icons"),
+                OsString::from("import"),
+                OsString::from("aws"),
+                OsString::from("icons.zip"),
+                OsString::from("-o"),
+                OsString::from("pack"),
+            ],
+            vec![
+                OsString::from("icons"),
+                OsString::from("import"),
+                OsString::from("aws"),
+                OsString::from("icons.zip"),
+                OsString::from("--accept-terms"),
+                OsString::from("-o"),
+            ],
+            vec![
+                OsString::from("icons"),
+                OsString::from("import"),
+                OsString::from("--unknown"),
+            ],
             vec![
                 OsString::from("check"),
                 OsString::from("file.stack"),
@@ -785,6 +941,32 @@ mod tests {
             EXIT_SUCCESS
         );
         assert_eq!(stdout, RENDER_HELP.as_bytes());
+
+        stdout.clear();
+        assert_eq!(
+            run_without_input(
+                [OsString::from("icons"), OsString::from("--help")],
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_SUCCESS
+        );
+        assert_eq!(stdout, ICONS_HELP.as_bytes());
+
+        stdout.clear();
+        assert_eq!(
+            run_without_input(
+                [
+                    OsString::from("icons"),
+                    OsString::from("import"),
+                    OsString::from("--help"),
+                ],
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_SUCCESS
+        );
+        assert_eq!(stdout, ICONS_IMPORT_HELP.as_bytes());
     }
 
     #[test]

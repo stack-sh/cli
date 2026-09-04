@@ -14,7 +14,12 @@ name = "stack"
 path = "src/main.rs"
 
 [dependencies]
-stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "e1240661b6d8cebd95ef24207618a62fadb15b48" }
+roxmltree = "=0.21.1"
+serde_json = "=1.0.151"
+sha2 = "=0.11.0"
+stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "66a1d183a9b743990a4e0b7139fbe25b8bf5eb08" }
+stack-theme = { git = "https://github.com/stack-sh/theme.git", rev = "5dbe41326370260cfc6b72d4aab4470318d66dab" }
+zip = { version = "=6.0.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [features]
 conformance = []

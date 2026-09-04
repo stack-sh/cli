@@ -13,6 +13,7 @@ stack fmt --check arch.stack
 stack fmt -
 stack render arch.stack
 stack render arch.stack -o arch.svg
+stack icons import aws ~/Downloads/aws-icons.zip --accept-terms -o .stack-icons/aws
 ```
 
 `stack check` reads the file as bytes and runs the full compiler, theme, layout, and routing validation pipeline without changing the source. Diagnostics are written to standard error in source order. Standard output remains empty.
@@ -20,6 +21,8 @@ stack render arch.stack -o arch.svg
 `stack fmt` uses the engine formatter and preserves comments. File mode replaces changed source atomically through a temporary file in the same directory; unchanged files are not replaced. Syntax, encoding, and host I/O failures leave the original file untouched. `stack fmt -` reads bytes from standard input and writes only canonical source to standard output. `--check` never writes source and exits with status `1` when formatting is required.
 
 `stack render` uses the same engine pipeline to produce deterministic standalone SVG. Without `-o`, standard output contains only SVG. With `-o`, the output is written atomically in the destination directory. Diagnostics remain on standard error, warnings preserve SVG, and Stack errors never create or replace output.
+
+`stack icons import` creates a local provider pack from an official ZIP archive that the user selected. It performs no network request or upload, requires explicit terms acceptance, verifies the complete archive against an audited SHA-256, reads only allowlisted SVG entries with fixed size limits, removes active or external content, preserves the official colors and geometry, and writes the manifest, notice, and processed SVGs atomically to a new directory. The initial audited profiles import 7 AWS, 6 Google Cloud, or 5 Azure icons. See [the provider icon import guide](./docs/provider-icon-import.md) for exact sources, hashes, IDs, and terms.
 
 | Result | Exit status |
 | --- | ---: |
@@ -29,7 +32,7 @@ stack render arch.stack -o arch.svg
 
 The CLI links `stack-engine` as a native Rust dependency. It owns filesystem and standard-stream behavior, process exit codes, configuration discovery, provider-pack import, notice output, and command presentation. It must not duplicate compiler, formatter, layout, or SVG-rendering logic.
 
-The bundled engine resolves the provider-neutral core icons `api`, `web`, `mobile`, `desktop`, `server`, `container`, `cluster`, `cloud`, `scheduler`, `webhook`, `identity`, and `observability`. Vendor assets are not bundled unless their exact terms permit software redistribution. Future provider-pack support will preserve upstream artwork and attach source and terms metadata.
+The bundled engine resolves the provider-neutral core icons `api`, `web`, `mobile`, `desktop`, `server`, `container`, `cluster`, `cloud`, `scheduler`, `webhook`, `identity`, and `observability`. Vendor assets are not bundled. Local provider-pack import preserves upstream artwork and attaches source, archive hash, transformation, terms, and notice metadata; Engine rendering of those packs is a separate compatibility step.
 
 ## Development
 

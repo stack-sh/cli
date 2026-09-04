@@ -143,6 +143,11 @@ fn help_and_version_are_stdout_only() -> Result<(), Box<dyn Error>> {
     assert!(help.stderr.is_empty());
     assert!(String::from_utf8(help.stdout)?.contains("stack check <FILE>"));
 
+    let icons_help = stack(["icons", "--help"])?;
+    assert_eq!(icons_help.status.code(), Some(0));
+    assert!(icons_help.stderr.is_empty());
+    assert!(String::from_utf8(icons_help.stdout)?.contains("AWS Architecture Icons"));
+
     let version = stack(["--version"])?;
     assert_eq!(version.status.code(), Some(0));
     assert_eq!(version.stdout, b"stack 0.1.0\n");

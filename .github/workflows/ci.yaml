@@ -66,6 +66,8 @@ jobs:
           ./target/release/stack check --help
           ./target/release/stack fmt --help
           ./target/release/stack render --help
+          ./target/release/stack icons --help
+          ./target/release/stack icons import --help
       - name: Verify repository files
         run: |
           test -s README.md
@@ -76,9 +78,11 @@ jobs:
           test -s CONTRIBUTING.md
           test -s SECURITY.md
           test -s docs/publication-audit.md
+          test -s docs/provider-icon-import.md
           test -s Cargo.toml
           test -s Cargo.lock
           test -s src/main.rs
+          test -s src/provider.rs
           test -s tests/specification-revision
           test -s tests/fixtures/render.stack
 
