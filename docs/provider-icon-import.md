@@ -8,6 +8,49 @@ The command rejects a changed archive rather than guessing new paths or terms. A
 
 This guide records technical safeguards and provenance; it is not legal advice. Users remain responsible for applying the provider terms to their generated diagrams.
 
+## Download the audited archives
+
+These commands download the exact official archives audited by the current CLI catalog. `curl` only retrieves the files; `stack icons import` independently verifies the complete SHA-256 before processing them. If a provider publishes a newer archive, use the official source page to review it, but do not substitute it here until the Stack catalog has been updated.
+
+### AWS
+
+Source: [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/)
+
+```sh
+$ curl -fL "https://d1.awsstatic.com/onedam/marketing-channels/website/public/shared/architecture-icon-release/Icon-package_07312026.5846e92413caa21490223536cc97f1269e44fa92.zip" -o aws-icons.zip
+$ stack icons import aws ./aws-icons.zip --accept-terms -o .stack-icons/aws
+```
+
+### Google Cloud
+
+Source: [Google Cloud Icon Library](https://cloud.google.com/icons). Google publishes the required core-product and category icons separately.
+
+```sh
+$ curl -fL "https://services.google.com/fh/files/misc/core-products-icons.zip" -o gcp-core-products-icons.zip
+$ curl -fL "https://services.google.com/fh/files/misc/category-icons.zip" -o gcp-category-icons.zip
+$ stack icons import gcp ./gcp-core-products-icons.zip \
+  --source categories=./gcp-category-icons.zip \
+  --accept-terms -o .stack-icons/gcp
+```
+
+### Azure
+
+Source: [Azure Architecture Icons](https://learn.microsoft.com/azure/architecture/icons/)
+
+```sh
+$ curl -fL "https://arch-center.azureedge.net/icons/Azure_Public_Service_Icons_V24.zip" -o azure-icons.zip
+$ stack icons import azure ./azure-icons.zip --accept-terms -o .stack-icons/azure
+```
+
+### Simple Icons
+
+Source: [Simple Icons 16.29.0](https://github.com/simple-icons/simple-icons/releases/tag/16.29.0). This curated pack includes GitHub and other common developer and collaboration tools.
+
+```sh
+$ curl -fL "https://github.com/simple-icons/simple-icons/archive/refs/tags/16.29.0.zip" -o simple-icons-16.29.0.zip
+$ stack icons import simple-icons ./simple-icons-16.29.0.zip --accept-terms -o .stack-icons/simple-icons
+```
+
 ## Usage
 
 ```sh
@@ -58,13 +101,14 @@ stack icons list simple-icons collaboration
 
 The tab-separated output has stable `ID`, `PRODUCT`, `CATEGORY`, and recommended `KIND` columns, so it can also be filtered or imported into another tool. Existing documented IDs remain stable when catalogs grow.
 
-## Rendering with a local pack
+## Rendering with local packs
 
-Use the imported directory explicitly when a diagram contains a namespaced provider icon:
+Use every imported directory explicitly when a diagram contains namespaced provider icons. For example, a diagram that uses `gcp:cloud-run` and `simple-icons:github` needs both packs:
 
 ```sh
-stack render architecture.stack \
-  --provider-pack .stack-icons/aws \
+$ stack render architecture.stack \
+  --provider-pack .stack-icons/gcp \
+  --provider-pack .stack-icons/simple-icons \
   -o architecture.svg \
   --notice architecture.NOTICE.md
 ```
