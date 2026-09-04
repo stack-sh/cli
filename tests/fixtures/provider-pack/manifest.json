@@ -1,0 +1,72 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stack-sh/theme/main/schemas/provider-pack.schema.json",
+  "schemaVersion": "1.0",
+  "packVersion": "0.1.0",
+  "provider": {
+    "id": "example",
+    "name": "Example Cloud"
+  },
+  "distributionMode": "user-imported",
+  "source": {
+    "pageUrl": "https://example.com/icons",
+    "archiveUrl": "https://example.com/icons.zip",
+    "archiveSha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "release": "fixture-1",
+    "retrievedAt": "2026-09-04",
+    "termsUrl": "https://example.com/terms",
+    "termsReviewedAt": "2026-09-04",
+    "reviewAfter": "2026-12-03",
+    "copyright": "Copyright Example Cloud",
+    "licenseId": "LicenseRef-Example-Icons",
+    "archiveLicenseIncluded": false
+  },
+  "rights": {
+    "termsAcceptanceRequired": true,
+    "permittedOutputs": [
+      "architecture-diagram"
+    ],
+    "redistribution": {
+      "cargo": false,
+      "npm": false,
+      "wasm": false,
+      "webAsset": false,
+      "nativeBinary": false,
+      "generatedOutput": true
+    },
+    "processing": {
+      "localOnly": true,
+      "automaticDownload": false,
+      "serverUpload": false,
+      "preserveColors": true,
+      "preserveGeometry": true,
+      "productNameNearby": true
+    },
+    "modificationPolicy": "visual-preservation-only"
+  },
+  "notice": {
+    "attribution": "Example Cloud owns the fixture icon.",
+    "termsSummary": "Architecture diagram use only.",
+    "nonEndorsement": "Example Cloud does not endorse Stack."
+  },
+  "icons": [
+    {
+      "id": "example:storage",
+      "subject": "Object storage service",
+      "productName": "Example Storage",
+      "recommendedNodeKind": "storage",
+      "asset": {
+        "path": "assets/storage.svg",
+        "originalPath": "icons/storage.svg",
+        "viewBox": [
+          0,
+          0,
+          24,
+          24
+        ],
+        "originalSha256": "sha256:836062321764dff3fa57b77f24c5ea13a9cec8833bc3c1796c21a7af21f5d4ad",
+        "processedSha256": "sha256:836062321764dff3fa57b77f24c5ea13a9cec8833bc3c1796c21a7af21f5d4ad",
+        "transformations": []
+      }
+    }
+  ]
+}

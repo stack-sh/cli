@@ -52,6 +52,44 @@ fn engine_svg(source: &[u8]) -> Result<String, Box<dyn Error>> {
 }
 
 #[test]
+fn local_provider_pack_renders_namespaced_icon_and_exact_notice() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("provider-pack")?;
+    let source = b"stack 1.0 diagram \"Provider\" { node item \"Example Storage\" { kind queue icon \"example:storage\" } }";
+    let input = directory.file("provider.stack", source)?;
+    let output_path = directory.path.join("provider.svg");
+    let notice_path = directory.path.join("provider.NOTICE.md");
+    let provider_pack = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("provider-pack");
+
+    let output = stack([
+        OsStr::new("render"),
+        input.as_os_str(),
+        OsStr::new("--provider-pack"),
+        provider_pack.as_os_str(),
+        OsStr::new("--notice"),
+        notice_path.as_os_str(),
+        OsStr::new("-o"),
+        output_path.as_os_str(),
+    ])?;
+
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stdout.is_empty());
+    assert!(output.stderr.is_empty());
+    let svg = fs::read_to_string(output_path)?;
+    assert!(svg.contains("data-node-kind=\"queue\""));
+    assert!(svg.contains("data-icon-id=\"example:storage\""));
+    assert!(svg.contains("fill=\"#4285f4\""));
+    let notice = fs::read_to_string(notice_path)?;
+    assert!(notice.contains("## Example Cloud (`example`)"));
+    assert!(notice.contains("https://example.com/terms"));
+    assert!(notice.contains("`example:storage`: Example Storage"));
+    assert!(notice.contains("Pack revision: `sha256:"));
+    Ok(())
+}
+
+#[test]
 fn stdout_is_exactly_the_engine_svg() -> Result<(), Box<dyn Error>> {
     let directory = TestDirectory::new("stdout")?;
     let source = b"stack 1.0 diagram \"API\" { node web \"Web\" edge web -> api \"HTTPS\" node api \"API\" }";

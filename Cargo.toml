@@ -17,7 +17,7 @@ path = "src/main.rs"
 roxmltree = "=0.21.1"
 serde_json = "=1.0.151"
 sha2 = "=0.11.0"
-stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "66a1d183a9b743990a4e0b7139fbe25b8bf5eb08" }
+stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "8b62b0ef77c12b1b88981ea569379d3d9737a824" }
 stack-theme = { git = "https://github.com/stack-sh/theme.git", rev = "5dbe41326370260cfc6b72d4aab4470318d66dab" }
 zip = { version = "=6.0.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
