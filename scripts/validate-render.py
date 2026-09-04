@@ -25,5 +25,7 @@ if root.tag != "{http://www.w3.org/2000/svg}svg":
     raise SystemExit("render output is not an SVG root element")
 if not root.attrib.get("viewBox"):
     raise SystemExit("render output has no viewBox")
+if 'data-icon-id="gateway"' not in completed.stdout.decode("utf-8"):
+    raise SystemExit("render output does not contain the gateway core icon")
 
 print("validated CLI standalone SVG")
