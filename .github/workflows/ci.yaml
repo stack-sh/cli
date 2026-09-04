@@ -32,6 +32,10 @@ jobs:
         run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
       - name: Validate provider catalogs
         run: node scripts/validate-provider-catalogs.mjs
+      - name: Validate distribution contract
+        run: |
+          node scripts/validate-distribution-contract.mjs
+          node --test scripts/distribution-contract.test.mjs
       - name: Validate pinned example templates
         env:
           STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
@@ -99,6 +103,9 @@ jobs:
           test -s SECURITY.md
           test -s docs/publication-audit.md
           test -s docs/provider-icon-import.md
+          test -s docs/distribution.md
+          test -s distribution/distribution-contract.json
+          test -s distribution/distribution-contract.schema.json
           test -s Cargo.toml
           test -s Cargo.lock
           test -s src/config.rs
@@ -113,6 +120,8 @@ jobs:
           test -s scripts/generate-provider-catalogs.mjs
           test -s scripts/sync-example-templates.mjs
           test -s scripts/validate-provider-catalogs.mjs
+          test -s scripts/validate-distribution-contract.mjs
+          test -s scripts/distribution-contract.test.mjs
           test -s templates/catalog.json
           test -s templates/sources/01-minimal.stack
           test -s tests/specification-revision

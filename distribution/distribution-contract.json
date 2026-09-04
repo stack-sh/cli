@@ -1,0 +1,182 @@
+{
+  "$schema": "./distribution-contract.schema.json",
+  "schemaVersion": 1,
+  "product": {
+    "binary": "stack",
+    "sourceCargoPackage": "stack-cli",
+    "publishedCargoPackage": null,
+    "sourceVersionFile": "Cargo.toml",
+    "currentSourceVersion": "0.3.0",
+    "minimumRustVersion": "1.85"
+  },
+  "availability": {
+    "state": "planned",
+    "message": "No supported binary or package-manager release is currently published. A channel becomes available only after its required verification passes for a stable release."
+  },
+  "versioning": {
+    "scheme": "Semantic Versioning",
+    "tagTemplate": "v{version}",
+    "stableVersionRequirement": "MAJOR.MINOR.PATCH without a prerelease suffix",
+    "prereleaseVersionRequirement": "MAJOR.MINOR.PATCH-rc.N",
+    "prereleasePolicy": "GitHub prerelease only; never selected by default by package managers or self-update",
+    "minimumSupportedVersionSource": "The minimumSupportedCliVersion field in the stable release manifest",
+    "preOneSupportWindow": "latest stable release only",
+    "stableSupportWindow": "latest two minor lines after 1.0.0"
+  },
+  "artifacts": {
+    "archiveNameTemplate": "stack-v{version}-{target}.tar.gz",
+    "archiveRootTemplate": "stack-v{version}-{target}",
+    "requiredEntries": [
+      "stack",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_LICENSES.md"
+    ],
+    "releaseManifestNameTemplate": "stack-v{version}-release-manifest.json",
+    "checksumNameTemplate": "stack-v{version}-checksums.txt",
+    "signatureBundleNameTemplate": "stack-v{version}-checksums.txt.sigstore.json",
+    "sbomNameTemplate": "stack-v{version}-{target}.spdx.json",
+    "provenanceNameTemplate": "stack-v{version}-{target}.intoto.jsonl",
+    "checksumAlgorithm": "sha256",
+    "reproducibility": {
+      "archiveOrder": "bytewise path order",
+      "uid": 0,
+      "gid": 0,
+      "mtime": "SOURCE_DATE_EPOCH",
+      "gzipHeader": "no original filename or wall-clock timestamp"
+    }
+  },
+  "targets": [
+    {
+      "target": "aarch64-apple-darwin",
+      "os": "macos",
+      "architecture": "arm64",
+      "libc": "system",
+      "minimumRuntime": "macOS 13",
+      "supportTier": "tier-1",
+      "state": "planned"
+    },
+    {
+      "target": "x86_64-apple-darwin",
+      "os": "macos",
+      "architecture": "x86_64",
+      "libc": "system",
+      "minimumRuntime": "macOS 13",
+      "supportTier": "tier-1",
+      "state": "planned"
+    },
+    {
+      "target": "aarch64-unknown-linux-gnu",
+      "os": "linux",
+      "architecture": "arm64",
+      "libc": "glibc",
+      "minimumRuntime": "glibc 2.31",
+      "supportTier": "tier-1",
+      "state": "planned"
+    },
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "architecture": "x86_64",
+      "libc": "glibc",
+      "minimumRuntime": "glibc 2.31",
+      "supportTier": "tier-1",
+      "state": "planned"
+    }
+  ],
+  "unsupported": [
+    {
+      "platform": "Windows",
+      "reason": "No release build or smoke-test lane is defined."
+    },
+    {
+      "platform": "Linux with musl libc, including Alpine Linux",
+      "reason": "No musl artifact or runtime smoke-test lane is defined."
+    },
+    {
+      "platform": "BSD",
+      "reason": "No release build or smoke-test lane is defined."
+    },
+    {
+      "platform": "32-bit architectures",
+      "reason": "Only arm64 and x86_64 artifacts are in the supported matrix."
+    }
+  ],
+  "channels": [
+    {
+      "id": "github-release",
+      "state": "planned",
+      "targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu"
+      ],
+      "owns": "canonical immutable binary archives, release manifest, checksums, signature bundle, SBOMs, and provenance",
+      "source": "tagged stack-sh/cli source",
+      "updatePolicy": "stable releases only unless the user requests an exact prerelease"
+    },
+    {
+      "id": "homebrew",
+      "state": "planned",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu"
+      ],
+      "owns": "formula metadata, GitHub archive URL and SHA-256 mapping, install, upgrade, and uninstall lifecycle on current Homebrew tier-1 hosts",
+      "source": "github-release",
+      "updatePolicy": "Homebrew owns upgrades; stack self-update must refuse replacement"
+    },
+    {
+      "id": "cargo",
+      "state": "planned",
+      "targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu"
+      ],
+      "owns": "a future unambiguous crates.io source package and dependency graph; installs the stack binary with Rust 1.85 or newer",
+      "source": "crates.io",
+      "updatePolicy": "Cargo owns upgrades; stack self-update must refuse replacement"
+    },
+    {
+      "id": "aqua",
+      "state": "planned",
+      "targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu"
+      ],
+      "owns": "registry metadata and version pinning mapped to GitHub archives and SHA-256 values",
+      "source": "github-release",
+      "updatePolicy": "Aqua owns upgrades; stack self-update must refuse replacement"
+    },
+    {
+      "id": "self-update",
+      "state": "planned",
+      "targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu"
+      ],
+      "owns": "verified atomic replacement for direct GitHub installations carrying a Stack installation receipt",
+      "source": "github-release",
+      "updatePolicy": "refuse without a direct-install receipt and print the owning package manager command"
+    }
+  ],
+  "verification": {
+    "releaseActivation": [
+      "tag equals v plus the Cargo package version",
+      "all tier-1 archives build from the tagged commit",
+      "all archive contents and metadata names match this contract",
+      "all checksums, Sigstore bundles, SBOMs, and provenance verify",
+      "stack --version, help, init, check, and render pass on each target",
+      "the release manifest records minimumSupportedCliVersion and each verified channel"
+    ],
+    "rollback": "Never replace a tag or asset. Mark a broken release as withdrawn, remove it from default update resolution, restore package-manager metadata to the last verified release, and publish a new patch version."
+  }
+}
