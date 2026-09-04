@@ -5,6 +5,7 @@ Usage:
   stack help [COMMAND]
 
 Commands:
+  init       Create a Stack file from a versioned starter template
   check      Validate a Stack source file without modifying it
   fmt        Format a file in place or read from standard input
   render     Render standalone SVG to standard output or a file
@@ -17,6 +18,8 @@ Options:
   -v, -V, --version   Print version
 
 Examples:
+  stack init
+  stack init --template application-and-data -o architecture.stack
   stack check arch.stack
   stack fmt --check arch.stack
   stack render arch.stack -o arch.svg

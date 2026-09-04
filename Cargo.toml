@@ -32,6 +32,11 @@ name = "formatter-conformance"
 path = "tests/formatter_conformance.rs"
 required-features = ["conformance"]
 
+[[test]]
+name = "template-conformance"
+path = "tests/template_conformance.rs"
+required-features = ["conformance"]
+
 [lints.clippy]
 expect_used = "deny"
 panic = "deny"

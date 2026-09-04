@@ -1,0 +1,58 @@
+stack 1.0
+
+diagram "GCP data service" {
+  theme light
+
+  layout {
+    direction right
+  }
+
+  node client "Web client" {
+    kind client
+    icon "web"
+  }
+
+  group application "Application" {
+    node api "Cloud Run API" {
+      kind service
+      icon "gcp:cloud-run"
+    }
+
+    node database "Cloud SQL" {
+      kind database
+      icon "gcp:cloud-sql"
+    }
+
+    node objects "Cloud Storage" {
+      kind storage
+      icon "gcp:cloud-storage"
+    }
+  }
+
+  group analytics "Analytics" {
+    node warehouse "BigQuery" {
+      kind database
+      icon "gcp:bigquery"
+    }
+
+    node analyst "Analyst" {
+      kind actor
+    }
+  }
+
+  edge client -> api "HTTPS" {
+    kind request
+  }
+  edge api -> database "SQL" {
+    kind data
+  }
+  edge api -> objects "Uploads" {
+    kind data
+  }
+  edge api -> warehouse "Events" {
+    kind event
+  }
+  edge analyst -> warehouse "Queries" {
+    kind request
+  }
+}

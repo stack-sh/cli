@@ -1,0 +1,7 @@
+stack 1.0
+
+diagram "Hello Stack" {
+  node web "Web app"
+  node api "API"
+  edge web -> api
+}

@@ -1,0 +1,127 @@
+stack 1.0
+
+diagram "Commerce platform" {
+  layout {
+    direction right
+  }
+
+  node customer "Customer" {
+    kind actor
+  }
+
+  group storefront "Storefront" {
+    node web "Web storefront" {
+      kind client
+      icon "web"
+      detail "Next.js"
+    }
+
+    node gateway "Edge gateway" {
+      icon "gateway"
+    }
+  }
+
+  group commerce "Commerce services" {
+    layout {
+      direction down
+      rank same [catalog, checkout]
+      order [catalog, checkout]
+    }
+
+    node catalog "Catalog API" {
+      detail "Products and pricing"
+    }
+
+    node checkout "Checkout API" {
+      detail "Order orchestration"
+    }
+  }
+
+  group asynchronous "Asynchronous processing" {
+    node events "Event bus" {
+      kind queue
+    }
+
+    node fulfillment "Fulfillment worker" {
+      kind worker
+    }
+
+    node notifications "Notification worker" {
+      kind worker
+    }
+  }
+
+  group data "Data" {
+    node products "Product database" {
+      kind database
+      icon "kind-database"
+    }
+
+    node orders "Order database" {
+      kind database
+      icon "kind-database"
+    }
+
+    node assets "Product media" {
+      kind storage
+    }
+  }
+
+  group partners "External systems" {
+    node payment "Payment provider" {
+      kind external
+    }
+
+    node email "Email provider" {
+      kind external
+    }
+  }
+
+  edge customer -> web "Browse and buy" {
+    kind request
+  }
+
+  edge web -> gateway "HTTPS" {
+    kind request
+  }
+
+  edge gateway -> catalog "Catalog requests" {
+    kind request
+  }
+
+  edge gateway -> checkout "Checkout requests" {
+    kind request
+  }
+
+  edge catalog -> products "SQL" {
+    kind data
+  }
+
+  edge catalog -> assets "Media URLs" {
+    kind data
+  }
+
+  edge checkout -> orders "Transactions" {
+    kind data
+  }
+
+  edge checkout -> payment "Payment API" {
+    kind request
+  }
+
+  edge checkout -> events "OrderPlaced" {
+    kind event
+  }
+
+  edge events -> fulfillment "OrderPlaced" {
+    kind event
+  }
+
+  edge events -> notifications "OrderPlaced" {
+    kind event
+  }
+
+  edge notifications -> email "Send receipt" {
+    kind request
+  }
+}

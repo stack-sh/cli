@@ -17,6 +17,7 @@ use stack_engine::{
 mod config;
 mod provider;
 mod provider_catalog;
+mod templates;
 
 /// Exit status used when a command completes without Stack error diagnostics.
 pub const EXIT_SUCCESS: u8 = 0;
@@ -33,6 +34,7 @@ Usage:
   stack help [COMMAND]
 
 Commands:
+  init       Create a Stack file from a versioned starter template
   check      Validate a Stack source file without modifying it
   fmt        Format a file in place or read from standard input
   render     Render standalone SVG to standard output or a file
@@ -45,10 +47,45 @@ Options:
   -v, -V, --version   Print version
 
 Examples:
+  stack init
+  stack init --template application-and-data -o architecture.stack
   stack check arch.stack
   stack fmt --check arch.stack
   stack render arch.stack -o arch.svg
   stack icons list aws s3
+";
+const INIT_HELP: &str = "\
+Create a Stack file from a versioned starter template
+
+Usage:
+  stack init [--template <TEMPLATE>] [-o <FILE>] [--force]
+
+Options:
+  --template <TEMPLATE>  Select a curated template; defaults to hello-stack
+  -o, --output <FILE>    Write to this path; defaults to diagram.stack
+  --force                Replace an existing output file atomically
+  -h, --help             Print help
+
+Templates:
+  hello-stack                Smallest directed diagram using built-in icons
+  application-and-data       Application, database, details, and edge labels
+  groups-and-layout          Groups, ordering, rank, and layout direction
+  commerce-platform         Production-like built-in architecture
+  aws-serverless-checkout    AWS serverless architecture
+  gcp-data-service           Google Cloud data service
+  azure-event-platform       Azure event-driven platform
+  github-delivery-workflow   GitHub delivery workflow
+  mixed-provider-platform    AWS, GCP, Azure, and SaaS architecture
+
+Provider templates remain valid without imported icon packs and render with
+deterministic fallback icons. Use 'stack icons import <PROVIDER> --accept-terms'
+before rendering when branded icons are required.
+
+Examples:
+  stack init
+  stack init --template groups-and-layout
+  stack init --template aws-serverless-checkout -o checkout.stack
+  stack init --force
 ";
 const CHECK_HELP: &str = "\
 Validate a Stack source file without modifying it
@@ -182,7 +219,7 @@ Usage:
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  check, fmt, render, icons, help, or version
+  <COMMAND>  init, check, fmt, render, icons, help, or version
 
 Examples:
   stack help
@@ -254,6 +291,9 @@ pub fn run(
     if command == OsStr::new("version") {
         return run_version(arguments, stdout, stderr);
     }
+    if command == OsStr::new("init") {
+        return run_init(arguments, stdout, stderr);
+    }
     if command == OsStr::new("check") {
         return run_check(arguments, stdout, stderr);
     }
@@ -270,7 +310,7 @@ pub fn run(
     unknown_command_error(
         "stack",
         &command,
-        &["check", "fmt", "render", "icons", "help", "version"],
+        &["init", "check", "fmt", "render", "icons", "help", "version"],
         "stack help",
         stderr,
     )
@@ -297,7 +337,9 @@ fn run_help(
         return run_icons_help(&mut arguments, stdout, stderr);
     }
 
-    let help = if command == OsStr::new("check") {
+    let help = if command == OsStr::new("init") {
+        INIT_HELP
+    } else if command == OsStr::new("check") {
         CHECK_HELP
     } else if command == OsStr::new("fmt") {
         FORMAT_HELP
@@ -311,7 +353,7 @@ fn run_help(
         return unknown_command_error(
             "stack help",
             &command,
-            &["check", "fmt", "render", "icons", "help", "version"],
+            &["init", "check", "fmt", "render", "icons", "help", "version"],
             "stack help",
             stderr,
         );
@@ -324,6 +366,141 @@ fn run_help(
         );
     }
     write_stdout(help, stdout, stderr)
+}
+
+fn run_init(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let first = arguments.next();
+    if first
+        .as_ref()
+        .is_some_and(|argument| is_help_flag(argument))
+    {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(INIT_HELP, stdout, stderr);
+    }
+
+    let mut template_id = None;
+    let mut destination = None;
+    let mut force = false;
+    let mut remaining = first.into_iter().chain(arguments);
+    while let Some(option) = remaining.next() {
+        if option == OsStr::new("--template") {
+            if template_id.is_some() {
+                return argument_error("duplicate '--template' option", stderr);
+            }
+            let Some(value) = remaining.next() else {
+                return argument_error("missing template ID after '--template'", stderr);
+            };
+            if value.to_string_lossy().starts_with('-') {
+                return argument_error("missing template ID after '--template'", stderr);
+            }
+            template_id = Some(value);
+        } else if option == OsStr::new("-o") || option == OsStr::new("--output") {
+            if destination.is_some() {
+                return argument_error("duplicate output option", stderr);
+            }
+            let Some(value) = remaining.next() else {
+                return argument_error("missing output file after output option", stderr);
+            };
+            if value.to_string_lossy().starts_with('-') {
+                return argument_error("missing output file after output option", stderr);
+            }
+            destination = Some(PathBuf::from(value));
+        } else if option == OsStr::new("--force") {
+            if force {
+                return argument_error("duplicate '--force' option", stderr);
+            }
+            force = true;
+        } else if option.to_string_lossy().starts_with('-') {
+            return argument_error(
+                &format!("unknown option '{}'", option.to_string_lossy()),
+                stderr,
+            );
+        } else {
+            return argument_error(
+                &format!("unexpected argument '{}'", option.to_string_lossy()),
+                stderr,
+            );
+        }
+    }
+
+    let template_id = template_id.unwrap_or_else(|| OsString::from(templates::DEFAULT_ID));
+    let Some(template) = templates::find(&template_id) else {
+        let rendered_id = template_id.to_string_lossy();
+        let available = templates::ALL
+            .iter()
+            .map(|template| template.id)
+            .collect::<Vec<_>>()
+            .join(", ");
+        return argument_error(
+            &format!("unknown template '{rendered_id}'; available templates: {available}"),
+            stderr,
+        );
+    };
+    let destination = destination.unwrap_or_else(|| PathBuf::from("diagram.stack"));
+    initialize_file(&destination, force, stdout, stderr, template)
+}
+
+fn initialize_file(
+    destination: &Path,
+    force: bool,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+    template: templates::Template,
+) -> u8 {
+    let result = if force {
+        atomic_write_output(destination, template.source)
+    } else {
+        create_new_file(destination, template.source)
+    };
+    if let Err(error) = result {
+        if !force && error.kind() == io::ErrorKind::AlreadyExists {
+            return write_stderr_error(
+                &format!(
+                    "cannot create '{}': already exists; pass '--force' to replace it",
+                    destination.display()
+                ),
+                stderr,
+            );
+        }
+        return write_stderr_error(
+            &format!(
+                "cannot {} '{}': {}",
+                if force { "write" } else { "create" },
+                destination.display(),
+                stable_io_error(error.kind())
+            ),
+            stderr,
+        );
+    }
+
+    let mut message = format!(
+        "Created '{}' from template '{}'.\n\nNext:\n  stack check {}\n  stack render {} -o diagram.svg\n",
+        destination.display(),
+        template.id,
+        destination.display(),
+        destination.display()
+    );
+    if !template.providers.is_empty() {
+        let _ = writeln!(
+            message,
+            "\nProvider icons: {}",
+            template.providers.join(", ")
+        );
+        for provider in template.providers {
+            let _ = writeln!(message, "  stack icons import {provider} --accept-terms");
+        }
+        message.push_str("Without imported packs, render uses deterministic fallback icons.\n");
+    }
+    write_stdout(&message, stdout, stderr)
 }
 
 fn run_version(
@@ -1248,6 +1425,16 @@ fn atomic_replace(path: &Path, contents: &[u8]) -> io::Result<()> {
     atomic_write(path, contents, Some(permissions))
 }
 
+fn create_new_file(path: &Path, contents: &[u8]) -> io::Result<()> {
+    let mut file = OpenOptions::new().write(true).create_new(true).open(path)?;
+    if let Err(error) = file.write_all(contents).and_then(|()| file.sync_all()) {
+        drop(file);
+        let _ = fs::remove_file(path);
+        return Err(error);
+    }
+    Ok(())
+}
+
 fn atomic_write_output(path: &Path, contents: &[u8]) -> io::Result<()> {
     let permissions = match fs::metadata(path) {
         Ok(metadata) => Some(metadata.permissions()),
@@ -1522,6 +1709,49 @@ mod tests {
             vec![OsString::from("unknown")],
             vec![OsString::from("--help"), OsString::from("extra")],
             vec![OsString::from("--version"), OsString::from("extra")],
+            vec![
+                OsString::from("init"),
+                OsString::from("--help"),
+                OsString::from("extra"),
+            ],
+            vec![OsString::from("init"), OsString::from("--template")],
+            vec![
+                OsString::from("init"),
+                OsString::from("--template"),
+                OsString::from("--force"),
+            ],
+            vec![
+                OsString::from("init"),
+                OsString::from("--template"),
+                OsString::from("hello-stack"),
+                OsString::from("--template"),
+                OsString::from("application-and-data"),
+            ],
+            vec![OsString::from("init"), OsString::from("-o")],
+            vec![
+                OsString::from("init"),
+                OsString::from("--output"),
+                OsString::from("--force"),
+            ],
+            vec![
+                OsString::from("init"),
+                OsString::from("-o"),
+                OsString::from("one.stack"),
+                OsString::from("--output"),
+                OsString::from("two.stack"),
+            ],
+            vec![
+                OsString::from("init"),
+                OsString::from("--force"),
+                OsString::from("--force"),
+            ],
+            vec![OsString::from("init"), OsString::from("--unknown")],
+            vec![OsString::from("init"), OsString::from("unexpected")],
+            vec![
+                OsString::from("init"),
+                OsString::from("--template"),
+                OsString::from("unknown"),
+            ],
             vec![OsString::from("check")],
             vec![
                 OsString::from("check"),

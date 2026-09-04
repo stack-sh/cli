@@ -1,0 +1,76 @@
+stack 1.0
+
+diagram "AWS serverless checkout" {
+  theme light
+
+  layout {
+    direction right
+  }
+
+  node customer "Customer" {
+    kind actor
+  }
+
+  group edge "Edge" {
+    node cdn "CloudFront" {
+      kind service
+      icon "aws:amazon-cloudfront"
+    }
+
+    node gateway "API Gateway" {
+      kind service
+      icon "aws:amazon-api-gateway"
+    }
+  }
+
+  group compute "Serverless compute" {
+    node checkout "Checkout" {
+      kind function
+      icon "aws:lambda"
+    }
+
+    node events "Order events" {
+      kind queue
+      icon "aws:amazon-eventbridge"
+    }
+
+    node fulfillment "Fulfillment" {
+      kind worker
+      icon "aws:lambda"
+    }
+  }
+
+  group data "Data" {
+    node orders "Orders" {
+      kind database
+      icon "aws:dynamodb"
+    }
+
+    node receipts "Receipts" {
+      kind storage
+      icon "aws:s3"
+    }
+  }
+
+  edge customer -> cdn "HTTPS" {
+    kind request
+  }
+  edge cdn -> gateway "API request" {
+    kind request
+  }
+  edge gateway -> checkout "Invoke" {
+    kind request
+  }
+  edge checkout -> orders "Write order" {
+    kind data
+  }
+  edge checkout -> events "OrderPlaced" {
+    kind event
+  }
+  edge events -> fulfillment "Dispatch" {
+    kind event
+  }
+  edge fulfillment -> receipts "Archive" {
+    kind data
+  }
+}

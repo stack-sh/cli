@@ -47,6 +47,17 @@ fn stack(arguments: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Result<Outpu
         .output()?)
 }
 
+fn stack_in(
+    directory: &Path,
+    arguments: impl IntoIterator<Item = impl AsRef<OsStr>>,
+) -> Result<Output, Box<dyn Error>> {
+    Ok(Command::new(env!("CARGO_BIN_EXE_stack"))
+        .args(arguments)
+        .current_dir(directory)
+        .env("XDG_CONFIG_HOME", directory.join(".config"))
+        .output()?)
+}
+
 fn stack_with_input(
     arguments: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: &[u8],
@@ -159,6 +170,11 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
         (&["-h"], include_bytes!("snapshots/help.txt")),
         (&["help"], include_bytes!("snapshots/help.txt")),
         (
+            &["init", "--help"],
+            include_bytes!("snapshots/init-help.txt"),
+        ),
+        (&["help", "init"], include_bytes!("snapshots/init-help.txt")),
+        (
             &["check", "--help"],
             include_bytes!("snapshots/check-help.txt"),
         ),
@@ -242,6 +258,10 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
 fn command_typos_are_actionable_and_stderr_only() -> Result<(), Box<dyn Error>> {
     let cases: &[(&[&str], &str)] = &[
         (
+            &["inti"],
+            "error: unknown command 'inti'\n\nDid you mean 'init'?\n\nFor more information, try 'stack help'.\n",
+        ),
+        (
             &["chekc"],
             "error: unknown command 'chekc'\n\nDid you mean 'check'?\n\nFor more information, try 'stack help'.\n",
         ),
@@ -302,6 +322,119 @@ fn provider_catalog_commands_are_available_from_the_binary() -> Result<(), Box<d
     assert!(unknown_import.stdout.is_empty());
     assert!(String::from_utf8(unknown_import.stderr)?.contains("unknown provider 'unknown'"));
     assert!(!output.exists());
+    Ok(())
+}
+
+#[test]
+fn init_creates_a_valid_renderable_default_project() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("init-default")?;
+    let initialized = stack_in(&directory.path, ["init"])?;
+    let source_path = directory.path.join("diagram.stack");
+
+    assert_eq!(initialized.status.code(), Some(0));
+    assert!(initialized.stderr.is_empty());
+    assert!(String::from_utf8(initialized.stdout)?.contains("template 'hello-stack'"));
+    assert_eq!(
+        fs::read(&source_path)?,
+        include_bytes!("../templates/sources/01-minimal.stack")
+    );
+
+    let checked = stack_in(&directory.path, ["check", "diagram.stack"])?;
+    assert_eq!(checked.status.code(), Some(0));
+    assert!(checked.stdout.is_empty());
+    assert!(checked.stderr.is_empty());
+
+    let rendered = stack_in(
+        &directory.path,
+        ["render", "diagram.stack", "-o", "diagram.svg"],
+    )?;
+    assert_eq!(rendered.status.code(), Some(0));
+    assert!(rendered.stdout.is_empty());
+    assert!(rendered.stderr.is_empty());
+    assert!(fs::read_to_string(directory.path.join("diagram.svg"))?.contains("<svg"));
+    Ok(())
+}
+
+#[test]
+fn init_selects_templates_protects_files_and_explains_provider_icons() -> Result<(), Box<dyn Error>>
+{
+    let directory = TestDirectory::new("init-options")?;
+    let source_path = directory.path.join("architecture.stack");
+    let initialized = stack_in(
+        &directory.path,
+        [
+            "init",
+            "--template",
+            "aws-serverless-checkout",
+            "--output",
+            "architecture.stack",
+        ],
+    )?;
+
+    assert_eq!(initialized.status.code(), Some(0));
+    assert!(initialized.stderr.is_empty());
+    let output = String::from_utf8(initialized.stdout)?;
+    assert!(output.contains("Provider icons: aws"));
+    assert!(output.contains("stack icons import aws --accept-terms"));
+    assert_eq!(
+        fs::read(&source_path)?,
+        include_bytes!("../templates/sources/05-aws-serverless.stack")
+    );
+
+    let protected = stack_in(
+        &directory.path,
+        [
+            "init",
+            "--template",
+            "application-and-data",
+            "-o",
+            "architecture.stack",
+        ],
+    )?;
+    assert_eq!(protected.status.code(), Some(2));
+    assert!(protected.stdout.is_empty());
+    assert!(String::from_utf8(protected.stderr)?.contains("pass '--force'"));
+    assert_eq!(
+        fs::read(&source_path)?,
+        include_bytes!("../templates/sources/05-aws-serverless.stack")
+    );
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&source_path, fs::Permissions::from_mode(0o640))?;
+    }
+    let replaced = stack_in(
+        &directory.path,
+        [
+            "init",
+            "--template",
+            "application-and-data",
+            "-o",
+            "architecture.stack",
+            "--force",
+        ],
+    )?;
+    assert_eq!(replaced.status.code(), Some(0));
+    assert!(replaced.stderr.is_empty());
+    assert_eq!(
+        fs::read(&source_path)?,
+        include_bytes!("../templates/sources/02-node-semantics.stack")
+    );
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(
+            fs::metadata(&source_path)?.permissions().mode() & 0o777,
+            0o640
+        );
+    }
+
+    let missing_parent = stack_in(&directory.path, ["init", "-o", "missing/diagram.stack"])?;
+    assert_eq!(missing_parent.status.code(), Some(2));
+    assert!(missing_parent.stdout.is_empty());
+    assert!(String::from_utf8(missing_parent.stderr)?.contains("file not found"));
+    assert!(!directory.path.join("missing").exists());
     Ok(())
 }
 

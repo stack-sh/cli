@@ -1,0 +1,80 @@
+stack 1.0
+
+diagram "Mixed-provider platform" {
+  theme light
+
+  layout {
+    direction right
+  }
+
+  node customer "Customer" {
+    kind actor
+  }
+
+  group platform "Platform" {
+    layout {
+      direction down
+    }
+
+    group experience "Experience" {
+      node web "Web application" {
+        kind client
+        icon "simple-icons:vercel"
+      }
+
+      node api "Public API" {
+        kind service
+        icon "gcp:cloud-run"
+      }
+    }
+
+    group processing "Processing" {
+      layout {
+        direction down
+        rank same [checkout, events]
+        order [checkout, events]
+      }
+
+      node checkout "Checkout" {
+        kind function
+        icon "aws:lambda"
+      }
+
+      node events "Order events" {
+        kind queue
+        icon "azure:azure-service-bus"
+      }
+    }
+
+    group operations "Operations" {
+      node database "Orders" {
+        kind database
+        icon "simple-icons:postgresql"
+      }
+
+      node monitoring "Error monitoring" {
+        kind external
+        icon "simple-icons:sentry"
+      }
+    }
+  }
+
+  edge customer -> web "HTTPS" {
+    kind request
+  }
+  edge web <-> api "Live checkout" {
+    kind flow
+  }
+  edge api -> checkout "Invoke" {
+    kind dependency
+  }
+  edge checkout -> events "OrderPlaced" {
+    kind event
+  }
+  edge checkout -> database "Transaction" {
+    kind data
+  }
+  edge api -- monitoring "Telemetry" {
+    kind data
+  }
+}
