@@ -66,9 +66,16 @@ test("the GitHub release cannot be activated with a planned target", () => {
   assert.throws(() => validateDistributionContract(candidate, cargoToml), /must be available after release verification/);
 });
 
-test("package-manager channels remain planned after direct release activation", () => {
+test("the activated Homebrew channel cannot regress to planned", () => {
   const candidate = changed((value) => {
-    value.channels.find(({ id }) => id === "homebrew").state = "available";
+    value.channels.find(({ id }) => id === "homebrew").state = "planned";
   });
-  assert.throws(() => validateDistributionContract(candidate, cargoToml), /homebrew state must be planned/);
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /homebrew state must be available/);
+});
+
+test("an unactivated package-manager channel cannot become available", () => {
+  const candidate = changed((value) => {
+    value.channels.find(({ id }) => id === "cargo").state = "available";
+  });
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /cargo state must be planned/);
 });

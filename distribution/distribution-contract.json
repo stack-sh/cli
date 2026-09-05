@@ -11,7 +11,7 @@
   },
   "availability": {
     "state": "available",
-    "message": "Stack CLI 0.3.0 is available from GitHub Releases. Homebrew, Cargo, Aqua, and self-update remain planned."
+    "message": "Stack CLI 0.3.0 is available from GitHub Releases and Homebrew. Cargo, Aqua, and self-update remain planned."
   },
   "versioning": {
     "scheme": "Semantic Versioning",
@@ -119,7 +119,7 @@
     },
     {
       "id": "homebrew",
-      "state": "planned",
+      "state": "available",
       "targets": [
         "aarch64-apple-darwin",
         "aarch64-unknown-linux-gnu",
