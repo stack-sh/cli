@@ -2,7 +2,7 @@
 
 Audit date: 2026-09-04
 
-This audit covers making the source repository public. It does not authorize or publish a binary release.
+This historical audit describes the repository state on the date above, before the first binary and Cargo releases. Its statements about release availability and package publication are not current status. See the [distribution contract](./distribution.md) for live availability. This audit only covered making the source repository public; it did not authorize or publish a binary release.
 
 ## History and private data
 

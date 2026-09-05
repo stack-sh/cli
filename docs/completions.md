@@ -26,9 +26,9 @@ The owner-maintained formula installs the archived files through Homebrew's `bas
 
 No shell startup file is modified by the formula.
 
-## Direct, Aqua, and future Cargo installs
+## Direct, Aqua, and Cargo installs
 
-Aqua's registry `files` mapping owns executable placement, not a user's shell startup or global manual database. A direct binary copy and a future Cargo install have the same boundary. Generate files into a user-owned location after installing the binary:
+Aqua's registry `files` mapping owns executable placement, not a user's shell startup or global manual database. A direct binary copy and a Cargo install have the same boundary. Generate files into a user-owned location after installing the binary:
 
 ```sh
 data_root="${XDG_DATA_HOME:-$HOME/.local/share}"

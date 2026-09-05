@@ -9,3 +9,11 @@ The initial publication creates `stack-diagram-cli` version `0.5.1`. The workflo
 5. Remove the GitHub bootstrap secret and revoke the crates.io token. Configure a crates.io trusted publisher for the ongoing release workflow before any later publication. Do not reuse this initial workflow for updates or broaden the bootstrap token.
 
 The token is supplied only to the publication step through `CARGO_REGISTRY_TOKEN`; the workflow never runs `cargo login` or writes a credentials file. It cannot configure trusted publishing on behalf of a crate owner. See the [Cargo publication reference](https://doc.rust-lang.org/cargo/commands/cargo-publish.html) for upload and timeout behavior.
+
+## Ongoing trusted publishing
+
+After initial publication, configure each crate's Settings → Trusted Publishing on crates.io with repository owner `stack-sh`, repository name `cli`, workflow filename `cargo-publish.yaml`, and no environment. The crate owner must save these settings; committing this workflow does not configure or prove registry trust. Follow the [crates.io instructions](https://crates.io/docs/trusted-publishing).
+
+Dispatch `cargo-publish.yaml` from `main` with the full successful main CI commit and the exact package version. The default `publish: false` validates identity, registry state, and packaging, then checks the OIDC exchange **without uploading a crate**. This proves workflow authentication, not a new version's publication or every crate's owner configuration. The pinned authentication action revokes its short-lived token when the job ends; no long-lived repository secret or credentials file is used.
+
+For an actual new release, merge the version change and all checks first, publish dependencies before consumers, then dispatch with `publish: true`. Existing versions, missing crates, non-main refs, version/SHA drift, and unsuccessful CI fail closed. Verify the downloaded archive checksum and source SHA after publication; a failed post-upload check does not undo an upload. Never rerun an upload without checking registry state. Keep the native release version/source identical and verify each package-manager channel separately.

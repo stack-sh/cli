@@ -1,0 +1,95 @@
+name: Cargo trusted publishing
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact main commit whose CI has succeeded
+        required: true
+        type: string
+      version:
+        description: Exact package version in the selected source
+        required: true
+        type: string
+      publish:
+        description: Publish a new version (false only verifies packaging and OIDC)
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cargo-trusted-publishing
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
+      EXPECTED_VERSION: ${{ inputs.version }}
+      PACKAGE_NAME: stack-diagram-cli
+      PUBLISH: ${{ inputs.publish }}
+    steps:
+      - name: Reject unexpected dispatch context
+        run: |
+          test "$GITHUB_REPOSITORY" = stack-sh/cli
+          test "$GITHUB_REF" = refs/heads/main
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$GITHUB_SHA" = "$EXPECTED_SHA"
+          [[ "$EXPECTED_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          case "$PACKAGE_NAME" in stack-diagram-cli) ;; *) exit 1 ;; esac
+          case "$PUBLISH" in true|false) ;; *) exit 1 ;; esac
+
+      - name: Check out exact main source without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install minimum supported Rust
+        run: rustup toolchain install 1.85.0 --profile minimal
+
+      - name: Verify package, successful CI, and immutable registry state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cargo +1.85.0 metadata --no-deps --locked --format-version 1 > "$RUNNER_TEMP/package.json"
+          gh run list --repo stack-sh/cli --workflow ci.yaml --event push --branch main --commit "$EXPECTED_SHA" --limit 1 --json status,conclusion,headSha > "$RUNNER_TEMP/ci.json"
+          node scripts/cargo-publish-context.mjs "$RUNNER_TEMP/package.json" "$RUNNER_TEMP/ci.json"
+
+      - name: Verify package without registry credentials
+        run: cargo +1.85.0 publish --package "$PACKAGE_NAME" --registry crates-io --locked --dry-run
+
+      - name: Exchange GitHub OIDC identity for a short-lived registry token
+        id: auth
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+
+      - name: Verify OIDC exchange without publishing
+        if: inputs.publish == false
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: |
+          test -n "$CARGO_REGISTRY_TOKEN"
+          echo "OIDC exchange verified; no crate was published."
+
+      - name: Publish the previously verified new version
+        if: inputs.publish == true
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: |
+          test -n "$CARGO_REGISTRY_TOKEN"
+          cargo +1.85.0 publish --package "$PACKAGE_NAME" --registry crates-io --locked

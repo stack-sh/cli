@@ -58,7 +58,7 @@ test("an unverified crates.io package name is rejected", () => {
   const candidate = changed((value) => {
     value.product.publishedCargoPackage = "stack-cli";
   });
-  assert.throws(() => validateDistributionContract(candidate, cargoToml), /must remain unset/);
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /must be stack-diagram-cli/);
 });
 
 test("an incomplete archive contract is rejected", () => {
@@ -94,11 +94,11 @@ test("the activated Aqua channel cannot regress to planned", () => {
   assert.throws(() => validateDistributionContract(candidate, cargoToml), /aqua state must be available/);
 });
 
-test("an unactivated package-manager channel cannot become available", () => {
+test("the activated Cargo channel cannot regress to planned", () => {
   const candidate = changed((value) => {
-    value.channels.find(({ id }) => id === "cargo").state = "available";
+    value.channels.find(({ id }) => id === "cargo").state = "planned";
   });
-  assert.throws(() => validateDistributionContract(candidate, cargoToml), /cargo state must be planned/);
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /cargo state must be available/);
 });
 
 test("removed self-update cannot be reintroduced", () => {
