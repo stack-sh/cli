@@ -69,7 +69,7 @@ jobs:
           smoke_directory="$RUNNER_TEMP/aqua-smoke"
           mkdir -p "$smoke_directory"
           AQUA_ROOT_DIR="$native_root" aqua install
-          expected_version=$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync("distribution/distribution-contract.json", "utf8")).product.currentSourceVersion)')
+          expected_version=$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync("distribution/distribution-contract.json", "utf8")).product.currentReleaseVersion)')
           test "$("$native_root/bin/stack" --version)" = "stack $expected_version"
           "$native_root/bin/stack" init -o "$smoke_directory/diagram.stack"
           "$native_root/bin/stack" check "$smoke_directory/diagram.stack"
@@ -182,7 +182,6 @@ jobs:
           ./target/release/stack check --help
           ./target/release/stack fmt --help
           ./target/release/stack render --help
-          ./target/release/stack update --help
           ./target/release/stack lsp --help
           ./target/release/stack doctor --help
           ./target/release/stack config --help
@@ -224,6 +223,7 @@ jobs:
           test -s aqua/registry.yaml
           test -s distribution/distribution-contract.json
           test -s distribution/distribution-contract.schema.json
+          test -s distribution/distribution-contract-v2.schema.json
           test -s distribution/install-receipt.schema.json
           test -s distribution/release-manifest.schema.json
           test -s schemas/cli-output-v1.schema.json
@@ -239,9 +239,6 @@ jobs:
           test -s src/command_docs.rs
           test -s src/lsp.rs
           test -s src/machine_output.rs
-          test -s src/update.rs
-          test -s src/update/install.rs
-          test -s src/update/tests.rs
           test -s src/main.rs
           test -s src/templates.rs
           test -s src/provider.rs
@@ -299,8 +296,6 @@ jobs:
           test -s tests/snapshots/config-help.txt
           test -s tests/snapshots/config-path-help.txt
           test -s tests/snapshots/config-get-help.txt
-          test -s tests/snapshots/update-help.txt
-          test -s tests/update.rs
 
   msrv:
     name: Minimum supported Rust

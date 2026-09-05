@@ -1,8 +1,8 @@
 # Distribution contract
 
-This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, Aqua, and `stack` self-update implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
+This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, Aqua, implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
 
-[Stack CLI 0.4.0](https://github.com/stack-sh/cli/releases/tag/v0.4.0) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. Cargo and self-update remain **planned** and have no supported install command yet.
+[Stack CLI 0.4.0](https://github.com/stack-sh/cli/releases/tag/v0.4.0) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. Cargo remains **planned**. The 0.5.0 source removes self-update; see the [upgrade guide](./self-update.md).
 
 ## Supported platform matrix
 
@@ -22,9 +22,9 @@ Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architec
 ## Version and support policy
 
 - Cargo `package.version`, CLI output, the Git tag `v{version}`, release title, archive names, and release manifest version must agree exactly.
-- Stable versions use `MAJOR.MINOR.PATCH`. Release candidates use `MAJOR.MINOR.PATCH-rc.N`, are GitHub prereleases, and are never selected by default by package managers or self-update.
+- Stable versions use `MAJOR.MINOR.PATCH`. Release candidates use `MAJOR.MINOR.PATCH-rc.N`, are GitHub prereleases, and are never selected by default by package managers.
 - Before 1.0, only the latest stable release is supported. Starting at 1.0, the latest two minor lines are supported.
-- Each stable release manifest records `minimumSupportedCliVersion`. The self-update channel owns this compatibility floor, and release generation copies it forward instead of advancing it automatically with every release. This is the only input used by update clients and documentation to describe the minimum supported updater.
+- Release-manifest schema v1 retains `minimumSupportedCliVersion` for compatibility and sets it to the release version. It does not enable self-update: new manifests never include that channel. Distribution contract v2 removes the updater channel, receipt requirement, and activation rules; the original v1 schema and receipt schema remain unchanged for historical consumers.
 - A Cargo source version alone is not a supported distribution. Support starts only when a stable GitHub Release built from that exact source passes every activation check; changing a version does not reserve or silently publish it.
 
 `.github/workflows/release.yaml` accepts a version-checked manual run from `main` without publication and an annotated `v{version}` tag for publication. A tag run is allowed only for a commit contained in `main`. The manual path must pass first for the same commit and version before a release tag is created.
@@ -130,7 +130,7 @@ aqua install
 stack --version
 ```
 
-Commit `aqua-checksums.json` with the configuration. To upgrade after a new stable Stack release, run `aqua update`, review the version change, then run `aqua update-checksum` and `aqua install`. Aqua owns the replacement; `stack` self-update must refuse to overwrite it. The registry maintainer procedure and four-target test command are in [`aqua/README.md`](../aqua/README.md).
+Commit `aqua-checksums.json` with the configuration. To upgrade after a new stable Stack release, run `aqua update`, review the version change, then run `aqua update-checksum` and `aqua install`. Aqua owns the replacement; Stack never replaces its own executable. The registry maintainer procedure and four-target test command are in [`aqua/README.md`](../aqua/README.md).
 
 Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. Stack CLI 0.4.0 includes the generators; use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
 
@@ -147,7 +147,7 @@ install -m 0755 "stack-v0.4.0-{target}/stack" "$HOME/.local/bin/stack"
 "$HOME/.local/bin/stack" --version
 ```
 
-Add `$HOME/.local/bin` to `PATH` if it is not already present. This manual installation has no self-update receipt. Although 0.4.0 contains `stack update`, its release manifest does not activate `self-update`, and an unreceipted binary cannot be claimed retroactively without risking a package-manager-owned installation. Self-update remains unavailable until a later release and verified direct installer separately activate the channel. The command and receipt contract are documented in the [self-update guide](./self-update.md).
+Add `$HOME/.local/bin` to `PATH` if it is not already present. Repeat the verified manual installation to update a directly downloaded binary; never overwrite a package-manager-owned binary. No receipt is created or required. See the [upgrade guide](./self-update.md).
 
 The 0.4.0 archive carries completion and manual assets. Either copy its verified `share/` files into the matching system prefix or use the installed binary to generate user-owned files following the [completion guide](./completions.md). Do not copy these files from a different Stack version; CI and release verification require them to match the binary's command definition.
 
@@ -159,9 +159,8 @@ The 0.4.0 archive carries completion and manual assets. Either copy its verified
 | Homebrew | Formula metadata, archive URL/digest mapping, standard completion/manual placement, install, upgrade, and uninstall | Rebuild a different binary or delegate upgrades to `stack` |
 | Cargo | A future unambiguous crates.io source package, its registry dependency graph, and installation of the `stack` binary | Claim binary-archive identity, promise the local `stack-cli` package name on crates.io, or publish while dependencies remain Git-only |
 | Aqua | Registry metadata and version pinning mapped to canonical archives and digests | Repack an archive or select prereleases by default |
-| `stack` self-update | Verified atomic replacement for direct installs with a Stack installation receipt | Replace a binary owned by Homebrew, Cargo, Aqua, or an unknown installer |
 
-The direct installer must create an installation receipt that identifies the GitHub Release channel, installed version, target, source commit, archive digest, and final binary path and digest. Its public format is [`distribution/install-receipt.schema.json`](../distribution/install-receipt.schema.json). Self-update refuses to write when that receipt is absent or names another owner and prints detected or possible package-manager upgrade commands. Paths may improve guidance, but never authorize replacement. This keeps ownership deterministic instead of guessing from an executable path.
+Stack does not provide a self-updater or a receipt-writing installer. Update through the tool that installed the binary, or verify and manually install a new GitHub archive for a direct download. Existing receipts are neither read nor deleted.
 
 The workspace currently uses `stack-cli` as its local Cargo package name, but that name is already occupied by an unrelated crates.io package. No public Cargo install command is supported yet. The Cargo channel must select and verify an unambiguous registry package name, while keeping the installed binary name `stack`, before changing its state to available.
 

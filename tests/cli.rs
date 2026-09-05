@@ -13,6 +13,39 @@ use serde_json::{Value, json};
 static CASE_ID: AtomicU64 = AtomicU64::new(0);
 
 #[test]
+fn removed_updater_is_not_executable_or_advertised() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("removed-update")?;
+    let receipt = directory.file("install-receipt.json", b"preserve user data")?;
+    for arguments in [
+        vec!["update"],
+        vec!["update", "--check"],
+        vec!["help", "update"],
+        vec!["update", "--version", "0.4.0"],
+    ] {
+        let output = stack_in(&directory.path, arguments)?;
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stdout.is_empty());
+        assert!(String::from_utf8(output.stderr)?.contains("unknown command"));
+    }
+    assert_eq!(fs::read(receipt)?, b"preserve user data");
+    assert_eq!(fs::read_dir(&directory.path)?.count(), 1);
+    for arguments in [
+        vec!["help"],
+        vec!["manpage"],
+        vec!["completions", "bash"],
+        vec!["completions", "zsh"],
+        vec!["completions", "fish"],
+    ] {
+        let output = stack(arguments)?;
+        assert!(output.status.success());
+        let text = String::from_utf8(output.stdout)?;
+        assert!(!text.contains("stack update"));
+        assert!(!text.contains("direct-install update"));
+    }
+    Ok(())
+}
+
+#[test]
 fn agent_skill_commands_validate_and_render_source() -> Result<(), Box<dyn Error>> {
     let directory = TestDirectory::new("agent-skill")?;
     directory.file(
@@ -674,14 +707,6 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
         (
             &["help", "render"],
             include_bytes!("snapshots/render-help.txt"),
-        ),
-        (
-            &["update", "--help"],
-            include_bytes!("snapshots/update-help.txt"),
-        ),
-        (
-            &["help", "update"],
-            include_bytes!("snapshots/update-help.txt"),
         ),
         (&["lsp", "--help"], include_bytes!("snapshots/lsp-help.txt")),
         (&["help", "lsp"], include_bytes!("snapshots/lsp-help.txt")),

@@ -2,7 +2,7 @@
 
 `stack-sh/cli` is the open-source native Rust `stack` command for Stack architecture diagrams.
 
-The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.4.0](https://github.com/stack-sh/cli/releases/tag/v0.4.0) is the supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. GitHub Releases, Homebrew, and the owner-maintained Aqua registry are available; Cargo and self-update are still planned. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
+The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.4.0](https://github.com/stack-sh/cli/releases/tag/v0.4.0) is the supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. GitHub Releases, Homebrew, and the owner-maintained Aqua registry are available; Cargo remains planned. Source for 0.5.0 removes self-update; use the installation owner to upgrade. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
 
 ## Install
 
@@ -73,7 +73,7 @@ stack manpage
 
 `stack config path` prints the selected `config.yaml` path without creating or reading the file. `stack config get default_icons_path` strictly reads the supported configuration and prints the effective icon-store path. `stack doctor` reports the CLI version, configuration path and source, configuration validity, effective icon-store source, and installed known-provider packs. It is read-only, emits actionable categories instead of configuration contents, exits `0` for healthy and warning-only reports, and exits `2` when it finds an operational problem. See the [configuration discovery and doctor contract](./docs/configuration.md).
 
-`stack update` is included in 0.4.0 for future receipted direct installations, with `--check`, exact-version selection, authenticated release-manifest and archive verification, and rollback-aware atomic replacement. It refuses Homebrew, Aqua, Cargo, and unknown ownership. The 0.4.0 release manifest does not activate `self-update`, and the documented manual installation creates no receipt, so the channel remains planned. See the [self-update contract](./docs/self-update.md).
+`stack update` is removed in 0.5.0. Homebrew, Aqua, and future Cargo installations are updated through their package manager; direct downloads are updated manually after verification. See the [upgrade and migration guide](./docs/self-update.md).
 
 `stack completions <bash|zsh|fish>` and `stack manpage` generate deterministic shell integration and an offline roff manual from the CLI command metadata. The 0.4.0 release archives carry the exact generated files; Homebrew installs them into its managed completion and manual paths, while direct, Aqua, and future Cargo users can generate them into user-owned locations without modifying shell startup files. See the [completion and manual guide](./docs/completions.md).
 

@@ -15,7 +15,7 @@ const distributionContract = JSON.parse(
 const checksums = JSON.parse(
   fs.readFileSync(path.join(root, "tests/aqua/aqua-checksums.json"), "utf8"),
 );
-const releaseVersion = `v${distributionContract.product.currentSourceVersion}`;
+const releaseVersion = `v${distributionContract.product.currentReleaseVersion}`;
 
 const targets = [
   "aarch64-apple-darwin",

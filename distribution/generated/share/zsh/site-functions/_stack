@@ -12,7 +12,6 @@ commands=(
       'check:Validate a Stack source file without modifying it'
       'fmt:Format a file in place or read from standard input'
       'render:Render standalone SVG to standard output or a file'
-      'update:Check for or install a verified direct-install update'
       'lsp:Run the Stack language server over standard input and output'
       'doctor:Diagnose CLI configuration and provider icon packs'
       'config:Inspect effective read-only configuration'
@@ -36,7 +35,6 @@ case "$context" in
     "check") candidates=('--json' '-h' '--help') ;;
     "fmt") candidates=('-' '--check' '--json' '-h' '--help') ;;
     "render") candidates=('--provider-pack' '-o' '--notice' '--json' '-h' '--help') ;;
-    "update") candidates=('--check' '--version' '-h' '--help') ;;
     "lsp") candidates=('-h' '--help') ;;
     "doctor") candidates=('--provider-pack' '-h' '--help') ;;
     "config") candidates=('path' 'get' 'help' '-h' '--help') ;;
@@ -47,7 +45,7 @@ case "$context" in
     "icons import") candidates=('aws' 'gcp' 'azure' 'simple-icons' '--accept-terms' '-o' '-h' '--help') ;;
     "completions") candidates=('bash' 'zsh' 'fish' '-h' '--help') ;;
     "manpage") candidates=('-h' '--help') ;;
-    "help") candidates=('init' 'check' 'fmt' 'render' 'update' 'lsp' 'doctor' 'config' 'icons' 'completions' 'manpage' 'help' 'version' '-h' '--help') ;;
+    "help") candidates=('init' 'check' 'fmt' 'render' 'lsp' 'doctor' 'config' 'icons' 'completions' 'manpage' 'help' 'version' '-h' '--help') ;;
     "version") candidates=('-h' '--help') ;;
     *) candidates=() ;;
 esac

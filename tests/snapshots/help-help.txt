@@ -7,7 +7,7 @@ Usage:
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, update, lsp, doctor, config, icons,
+  <COMMAND>  init, check, fmt, render, lsp, doctor, config, icons,
              completions, manpage, help, or version
 
 Options:
