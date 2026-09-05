@@ -100,10 +100,9 @@ def verify_commands(binary, version):
         b"stack lsp" in command([binary, "lsp", "--help"]),
         "LSP help output is missing usage",
     )
-    require(
-        b"stack update" in command([binary, "update", "--help"]),
-        "update help output is missing usage",
-    )
+    removed = subprocess.run([binary, "update"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    require(removed.returncode == 2 and not removed.stdout, "removed update command must fail without output")
+    require(b"unknown command" in removed.stderr, "removed update must be an unknown command")
     require(
         b"stack doctor" in command([binary, "doctor", "--help"]),
         "doctor help output is missing usage",

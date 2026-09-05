@@ -15,14 +15,13 @@ case "$previous" in
 esac
 if [[ -z "$words" ]]; then
 if (( COMP_CWORD == 1 )); then
-words="init check fmt render update lsp doctor config icons completions manpage help version -h --help -v -V --version"
+words="init check fmt render lsp doctor config icons completions manpage help version -h --help -v -V --version"
     else
       case "$context" in
         "init") words="--template -o --output --force -h --help" ;;
         "check") words="--json -h --help" ;;
         "fmt") words="- --check --json -h --help" ;;
         "render") words="--provider-pack -o --notice --json -h --help" ;;
-        "update") words="--check --version -h --help" ;;
         "lsp") words="-h --help" ;;
         "doctor") words="--provider-pack -h --help" ;;
         "config") words="path get help -h --help" ;;
@@ -33,7 +32,7 @@ words="init check fmt render update lsp doctor config icons completions manpage 
         "icons import") words="aws gcp azure simple-icons --accept-terms -o -h --help" ;;
         "completions") words="bash zsh fish -h --help" ;;
         "manpage") words="-h --help" ;;
-        "help") words="init check fmt render update lsp doctor config icons completions manpage help version -h --help" ;;
+        "help") words="init check fmt render lsp doctor config icons completions manpage help version -h --help" ;;
         "version") words="-h --help" ;;
         *) words="" ;;
 esac

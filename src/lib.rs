@@ -21,7 +21,6 @@ mod machine_output;
 mod provider;
 mod provider_catalog;
 mod templates;
-mod update;
 
 /// Exit status used when a command completes without Stack error diagnostics.
 pub const EXIT_SUCCESS: u8 = 0;
@@ -42,7 +41,6 @@ Commands:
   check      Validate a Stack source file without modifying it
   fmt        Format a file in place or read from standard input
   render     Render standalone SVG to standard output or a file
-  update     Check for or install a verified direct-install update
   lsp        Run the Stack language server over standard input and output
   doctor     Diagnose CLI configuration and provider icon packs
   config     Inspect effective read-only configuration
@@ -62,7 +60,6 @@ Examples:
   stack check arch.stack
   stack fmt --check arch.stack
   stack render arch.stack -o arch.svg
-  stack update --check
   stack lsp
   stack doctor
   stack config get default_icons_path
@@ -254,31 +251,6 @@ is created or changed.
 Examples:
   stack config get default_icons_path
 ";
-const UPDATE_HELP: &str = "\
-Check for or install a verified direct-install update
-
-Usage:
-  stack update
-  stack update --check
-  stack update --version <VERSION>
-
-Options:
-  --check              Resolve an update without downloading or changing files
-  --version <VERSION>  Select an exact stable or MAJOR.MINOR.PATCH-rc.N release
-  -h, --help           Print help
-
-Safety:
-  Replacement requires a matching direct-install receipt and a GitHub CLI
-  artifact-attestation check for the exact repository, workflow, tag, commit,
-  and GitHub-hosted runner. Homebrew, Aqua, Cargo, and unknown installs are
-  never replaced.
-
-Examples:
-  stack update --check
-  stack update
-  stack update --version 0.4.0
-  stack update --version 0.4.0-rc.1
-";
 const ICONS_HELP: &str = "\
 Manage local provider icon packs
 
@@ -383,7 +355,7 @@ Usage:
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, update, lsp, doctor, config, icons,
+  <COMMAND>  init, check, fmt, render, lsp, doctor, config, icons,
              completions, manpage, help, or version
 
 Options:
@@ -588,9 +560,6 @@ pub fn run(
     if command == OsStr::new("render") {
         return run_render(arguments, stdout, stderr);
     }
-    if command == OsStr::new("update") {
-        return run_update(arguments, stdout, stderr);
-    }
     if command == OsStr::new("lsp") {
         return run_lsp(arguments, stdin, stdout, stderr);
     }
@@ -651,8 +620,6 @@ fn run_help(
         FORMAT_HELP
     } else if command == OsStr::new("render") {
         RENDER_HELP
-    } else if command == OsStr::new("update") {
-        UPDATE_HELP
     } else if command == OsStr::new("lsp") {
         LSP_HELP
     } else if command == OsStr::new("doctor") {
@@ -896,66 +863,6 @@ fn run_manpage(
         );
     }
     write_stdout(&command_docs::manpage(), stdout, stderr)
-}
-
-fn run_update(
-    mut arguments: impl Iterator<Item = OsString>,
-    stdout: &mut dyn Write,
-    stderr: &mut dyn Write,
-) -> u8 {
-    let first = arguments.next();
-    if first
-        .as_ref()
-        .is_some_and(|argument| is_help_flag(argument))
-    {
-        if let Some(extra) = arguments.next() {
-            return argument_error(
-                &format!("unexpected argument '{}'", extra.to_string_lossy()),
-                stderr,
-            );
-        }
-        return write_stdout(UPDATE_HELP, stdout, stderr);
-    }
-
-    let mut check_only = false;
-    let mut requested_version = None;
-    let mut remaining = first.into_iter().chain(arguments);
-    while let Some(option) = remaining.next() {
-        if option == OsStr::new("--check") {
-            if check_only {
-                return argument_error("duplicate '--check' option", stderr);
-            }
-            check_only = true;
-        } else if option == OsStr::new("--version") {
-            if requested_version.is_some() {
-                return argument_error("duplicate '--version' option", stderr);
-            }
-            let Some(value) = remaining.next() else {
-                return argument_error("missing version after '--version'", stderr);
-            };
-            if value.to_string_lossy().starts_with('-') {
-                return argument_error("missing version after '--version'", stderr);
-            }
-            match update::parse_version(&value) {
-                Ok(version) => requested_version = Some(version),
-                Err(error) => return argument_error(&error, stderr),
-            }
-        } else {
-            return argument_error(
-                &format!("unexpected argument '{}'", option.to_string_lossy()),
-                stderr,
-            );
-        }
-    }
-
-    let options = update::Options {
-        check_only,
-        requested_version,
-    };
-    match update::run(options, &config::Environment::capture()) {
-        Ok(message) => write_stdout(&message, stdout, stderr),
-        Err(error) => write_stderr_error(&format!("cannot update Stack CLI: {error}"), stderr),
-    }
 }
 
 fn run_lsp(

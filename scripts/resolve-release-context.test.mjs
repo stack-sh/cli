@@ -20,17 +20,17 @@ test("main dispatch resolves a non-publishing verification run", () => {
       ref: "refs/heads/main",
       refName: "main",
       sha,
-      requestedVersion: "0.4.0",
+      requestedVersion: "0.5.0",
       cargoToml,
       contract,
     }),
     {
-      version: "0.4.0",
-      tag: "v0.4.0",
+      version: "0.5.0",
+      tag: "v0.5.0",
       sourceRef: "refs/heads/main",
       publish: false,
       verifiedChannels: "",
-      minimumSupportedCliVersion: "0.4.0",
+      minimumSupportedCliVersion: "0.5.0",
     },
   );
 });
@@ -39,69 +39,28 @@ test("an exact version tag resolves a publishing run", () => {
   assert.deepEqual(
     resolveReleaseContext({
       eventName: "push",
-      ref: "refs/tags/v0.4.0",
-      refName: "v0.4.0",
+      ref: "refs/tags/v0.5.0",
+      refName: "v0.5.0",
       sha,
       requestedVersion: "",
       cargoToml,
       contract,
     }),
     {
-      version: "0.4.0",
-      tag: "v0.4.0",
-      sourceRef: "refs/tags/v0.4.0",
+      version: "0.5.0",
+      tag: "v0.5.0",
+      sourceRef: "refs/tags/v0.5.0",
       publish: true,
       verifiedChannels: "github-release",
-      minimumSupportedCliVersion: "0.4.0",
+      minimumSupportedCliVersion: "0.5.0",
     },
   );
 });
 
-test("an activated self-update channel is recorded in a tagged release", () => {
+test("removed self-update cannot be activated", () => {
   const activated = structuredClone(contract);
-  const selfUpdate = activated.channels.find(({ id }) => id === "self-update");
-  selfUpdate.state = "available";
-  selfUpdate.minimumSupportedCliVersion = "0.2.1";
-  assert.deepEqual(
-    resolveReleaseContext({
-      eventName: "push",
-      ref: "refs/tags/v0.4.0",
-      refName: "v0.4.0",
-      sha,
-      requestedVersion: "",
-      cargoToml,
-      contract: activated,
-    }),
-    {
-      version: "0.4.0",
-      tag: "v0.4.0",
-      sourceRef: "refs/tags/v0.4.0",
-      publish: true,
-      verifiedChannels: "github-release,self-update",
-      minimumSupportedCliVersion: "0.2.1",
-    },
-  );
-});
-
-test("self-update activation rejects a missing or future compatibility floor", () => {
-  for (const floor of [null, "0.5.0", "invalid"]) {
-    const activated = structuredClone(contract);
-    const selfUpdate = activated.channels.find(({ id }) => id === "self-update");
-    selfUpdate.state = "available";
-    selfUpdate.minimumSupportedCliVersion = floor;
-    assert.throws(
-      () => resolveReleaseContext({
-        eventName: "push",
-        ref: "refs/tags/v0.4.0",
-        refName: "v0.4.0",
-        sha,
-        requestedVersion: "",
-        cargoToml,
-        contract: activated,
-      }),
-      /minimum supported CLI version|invalid updater compatibility version/,
-    );
-  }
+  activated.channels.push({ id: "self-update", state: "available" });
+  assert.throws(() => resolveReleaseContext({eventName: "push", ref: "refs/tags/v0.5.0", refName: "v0.5.0", sha, cargoToml, contract: activated}), /self-update has been removed/);
 });
 
 test("manual runs from another ref or version are rejected", () => {
@@ -113,17 +72,17 @@ test("manual runs from another ref or version are rejected", () => {
     contract,
   };
   assert.throws(
-    () => resolveReleaseContext({ ...common, ref: "refs/heads/topic", requestedVersion: "0.4.0" }),
+    () => resolveReleaseContext({ ...common, ref: "refs/heads/topic", requestedVersion: "0.5.0" }),
     /must run from main/,
   );
   assert.throws(
-    () => resolveReleaseContext({ ...common, ref: "refs/heads/main", requestedVersion: "0.5.0" }),
+    () => resolveReleaseContext({ ...common, ref: "refs/heads/main", requestedVersion: "0.6.0" }),
     /must match Cargo.toml/,
   );
 });
 
 test("floating and mismatched tags are rejected", () => {
-  for (const ref of ["refs/tags/latest", "refs/tags/v0.4", "refs/tags/v0.5.0"]) {
+  for (const ref of ["refs/tags/latest", "refs/tags/v0.4", "refs/tags/v0.6.0"]) {
     assert.throws(
       () => resolveReleaseContext({
         eventName: "push",
@@ -141,14 +100,14 @@ test("floating and mismatched tags are rejected", () => {
 
 test("source and contract version drift is rejected", () => {
   const drifted = structuredClone(contract);
-  drifted.product.currentSourceVersion = "0.5.0";
+  drifted.product.currentSourceVersion = "0.6.0";
   assert.throws(
     () => resolveReleaseContext({
       eventName: "workflow_dispatch",
       ref: "refs/heads/main",
       refName: "main",
       sha,
-      requestedVersion: "0.4.0",
+      requestedVersion: "0.5.0",
       cargoToml,
       contract: drifted,
     }),

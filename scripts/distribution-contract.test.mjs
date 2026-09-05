@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import Ajv2020 from "ajv/dist/2020.js";
 import { fileURLToPath } from "node:url";
 
 import { validateDistributionContract } from "./validate-distribution-contract.mjs";
@@ -21,7 +22,7 @@ function changed(change) {
 test("the checked-in distribution contract is valid", () => {
   assert.deepEqual(validateDistributionContract(contract, cargoToml), {
     targets: 4,
-    channels: 5,
+    channels: 4,
   });
 });
 
@@ -100,16 +101,16 @@ test("an unactivated package-manager channel cannot become available", () => {
   assert.throws(() => validateDistributionContract(candidate, cargoToml), /cargo state must be planned/);
 });
 
-test("self-update activation cannot omit authenticated release metadata", () => {
-  const candidate = changed((value) => {
-    value.verification.selfUpdateActivation = ["direct installer and rollback tests pass"];
-  });
-  assert.throws(() => validateDistributionContract(candidate, cargoToml), /authenticated release manifest/);
+test("removed self-update cannot be reintroduced", () => {
+  const candidate = changed(value => value.channels.push({ id: "self-update", state: "available" }));
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /channel set must be exactly/);
 });
 
-test("planned self-update cannot claim an updater compatibility floor", () => {
-  const candidate = changed((value) => {
-    value.channels.find(({ id }) => id === "self-update").minimumSupportedCliVersion = "0.3.0";
-  });
-  assert.throws(() => validateDistributionContract(candidate, cargoToml), /must not claim a minimum supported/);
+test("distribution v2 schema rejects removed updater fields", () => {
+  const schema = JSON.parse(fs.readFileSync(path.join(root, "distribution/distribution-contract-v2.schema.json"), "utf8"));
+  const validate = new Ajv2020({ strict: false }).compile(schema);
+  assert.equal(validate(contract), true, JSON.stringify(validate.errors));
+  for (const mutate of [value => value.artifacts.installReceiptSchema = "distribution/install-receipt.schema.json", value => value.verification.selfUpdateActivation = ["obsolete"], value => value.channels[0].minimumSupportedCliVersion = "0.4.0"]) {
+    assert.equal(validate(changed(mutate)), false);
+  }
 });

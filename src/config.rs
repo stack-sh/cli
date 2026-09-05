@@ -124,12 +124,6 @@ pub(crate) fn icon_store_root(
     discover(environment).map(|discovery| discovery.icon_store_root)
 }
 
-pub(crate) fn installation_receipt_path(environment: &Environment) -> Result<PathBuf, String> {
-    Ok(config_root(environment)?
-        .0
-        .join("stack/install-receipt.json"))
-}
-
 fn config_root(environment: &Environment) -> Result<(PathBuf, ConfigRootSource), String> {
     if let Some(value) = &environment.xdg_config_home {
         if !value.is_empty() {
@@ -273,14 +267,6 @@ mod tests {
         assert!(matches!(
             config_file_path(&Environment::new(None, Some(&home))),
             Ok((path, ConfigRootSource::Home)) if path == home.join(".config/stack/config.yaml")
-        ));
-        assert!(matches!(
-            installation_receipt_path(&Environment::new(Some(&xdg), Some(&home))),
-            Ok(path) if path == xdg.join("stack/install-receipt.json")
-        ));
-        assert!(matches!(
-            installation_receipt_path(&Environment::new(None, Some(&home))),
-            Ok(path) if path == home.join(".config/stack/install-receipt.json")
         ));
     }
 

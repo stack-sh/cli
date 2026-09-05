@@ -1,4 +1,4 @@
-.TH STACK 1 "" "Stack CLI 0.4.0" "Stack CLI Manual"
+.TH STACK 1 "" "Stack CLI 0.5.0" "Stack CLI Manual"
 .SH NAME
 stack \- Stack diagram toolchain
 .SH SYNOPSIS
@@ -20,7 +20,6 @@ Commands:
   check      Validate a Stack source file without modifying it
   fmt        Format a file in place or read from standard input
   render     Render standalone SVG to standard output or a file
-  update     Check for or install a verified direct\-install update
   lsp        Run the Stack language server over standard input and output
   doctor     Diagnose CLI configuration and provider icon packs
   config     Inspect effective read\-only configuration
@@ -40,7 +39,6 @@ Examples:
   stack check arch.stack
   stack fmt \-\-check arch.stack
   stack render arch.stack \-o arch.svg
-  stack update \-\-check
   stack lsp
   stack doctor
   stack config get default_icons_path
@@ -149,32 +147,6 @@ Examples:
   stack render arch.stack \-o arch.svg
   stack render arch.stack \-\-notice arch.NOTICE.md \-o arch.svg
   stack render arch.stack \-\-json
-.fi
-.SS "stack update"
-.nf
-Check for or install a verified direct\-install update
-
-Usage:
-  stack update
-  stack update \-\-check
-  stack update \-\-version <VERSION>
-
-Options:
-  \-\-check              Resolve an update without downloading or changing files
-  \-\-version <VERSION>  Select an exact stable or MAJOR.MINOR.PATCH\-rc.N release
-  \-h, \-\-help           Print help
-
-Safety:
-  Replacement requires a matching direct\-install receipt and a GitHub CLI
-  artifact\-attestation check for the exact repository, workflow, tag, commit,
-  and GitHub\-hosted runner. Homebrew, Aqua, Cargo, and unknown installs are
-  never replaced.
-
-Examples:
-  stack update \-\-check
-  stack update
-  stack update \-\-version 0.4.0
-  stack update \-\-version 0.4.0\-rc.1
 .fi
 .SS "stack lsp"
 .nf
@@ -377,7 +349,7 @@ Usage:
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, update, lsp, doctor, config, icons,
+  <COMMAND>  init, check, fmt, render, lsp, doctor, config, icons,
              completions, manpage, help, or version
 
 Options:

@@ -9,7 +9,7 @@ from scripts.package_release import create_archive, verify_archive
 
 
 class PackageReleaseTest(unittest.TestCase):
-    version = "0.4.0"
+    version = "0.5.0"
     target = "aarch64-apple-darwin"
     source_date_epoch = 1_788_566_400
 
@@ -69,7 +69,7 @@ class PackageReleaseTest(unittest.TestCase):
 
     def test_version_and_target_drift_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "match Cargo.toml"):
-            create_archive(self.binary, self.target, "0.5.0", self.source_date_epoch, self.root)
+            create_archive(self.binary, self.target, "0.6.0", self.source_date_epoch, self.root)
         with self.assertRaisesRegex(ValueError, "unsupported release target"):
             create_archive(self.binary, "x86_64-pc-windows-msvc", self.version, self.source_date_epoch, self.root)
 

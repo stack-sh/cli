@@ -5,7 +5,7 @@ use std::fmt::Write as _;
 use super::{
     CHECK_HELP, COMPLETIONS_HELP, CONFIG_GET_HELP, CONFIG_HELP, CONFIG_PATH_HELP, DOCTOR_HELP,
     FORMAT_HELP, GENERAL_HELP, HELP_HELP, ICONS_HELP, ICONS_IMPORT_HELP, ICONS_LIST_HELP,
-    INIT_HELP, LSP_HELP, MANPAGE_HELP, RENDER_HELP, UPDATE_HELP, VERSION_HELP,
+    INIT_HELP, LSP_HELP, MANPAGE_HELP, RENDER_HELP, VERSION_HELP,
 };
 
 pub(crate) const TOP_LEVEL_NAMES: &[&str] = &[
@@ -13,7 +13,6 @@ pub(crate) const TOP_LEVEL_NAMES: &[&str] = &[
     "check",
     "fmt",
     "render",
-    "update",
     "lsp",
     "doctor",
     "config",
@@ -77,12 +76,6 @@ const COMMANDS: &[CommandSpec] = &[
             "-h",
             "--help",
         ],
-        values: &[],
-    },
-    CommandSpec {
-        context: "update",
-        description: "Check for or install a verified direct-install update",
-        options: &["--check", "--version", "-h", "--help"],
         values: &[],
     },
     CommandSpec {
@@ -398,7 +391,6 @@ Stack validates, formats, renders, and develops Stack architecture diagrams.\n\
         ("stack check", CHECK_HELP),
         ("stack fmt", FORMAT_HELP),
         ("stack render", RENDER_HELP),
-        ("stack update", UPDATE_HELP),
         ("stack lsp", LSP_HELP),
         ("stack doctor", DOCTOR_HELP),
         ("stack config", CONFIG_HELP),
@@ -439,7 +431,6 @@ mod tests {
             "check" => Some(CHECK_HELP),
             "fmt" => Some(FORMAT_HELP),
             "render" => Some(RENDER_HELP),
-            "update" => Some(UPDATE_HELP),
             "lsp" => Some(LSP_HELP),
             "doctor" => Some(DOCTOR_HELP),
             "config" => Some(CONFIG_HELP),

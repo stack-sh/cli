@@ -11,7 +11,7 @@ const expectedTargets = [
   "x86_64-apple-darwin",
   "x86_64-unknown-linux-gnu",
 ];
-const expectedChannels = ["aqua", "cargo", "github-release", "homebrew", "self-update"];
+const expectedChannels = ["aqua", "cargo", "github-release", "homebrew"];
 const availableChannels = new Set(["aqua", "github-release", "homebrew"]);
 const requiredArchiveEntries = [
   "LICENSE",
@@ -60,7 +60,7 @@ function cargoValue(cargoToml, field) {
 
 export function validateDistributionContract(contract, cargoToml) {
   const cargoVersion = cargoValue(cargoToml, "version");
-  invariant(contract.schemaVersion === 1, "schemaVersion must be 1");
+  invariant(contract.schemaVersion === 2, "schemaVersion must be 2");
   invariant(contract.product?.binary === "stack", "binary must be stack");
   invariant(contract.product?.sourceCargoPackage === "stack-cli", "source Cargo package must be stack-cli");
   invariant(
@@ -123,13 +123,11 @@ export function validateDistributionContract(contract, cargoToml) {
   const githubTargets = contract.channels.find(({ id }) => id === "github-release")?.targets ?? [];
   const cargoTargets = contract.channels.find(({ id }) => id === "cargo")?.targets ?? [];
   const aquaTargets = contract.channels.find(({ id }) => id === "aqua")?.targets ?? [];
-  const updateTargets = contract.channels.find(({ id }) => id === "self-update")?.targets ?? [];
   const homebrewTargets = contract.channels.find(({ id }) => id === "homebrew")?.targets ?? [];
   const channels = new Map(contract.channels.map((channel) => [channel.id, channel]));
   sameValues(githubTargets, expectedTargets, "github-release targets");
   sameValues(cargoTargets, expectedTargets, "cargo targets");
   sameValues(aquaTargets, expectedTargets, "aqua targets");
-  sameValues(updateTargets, expectedTargets, "self-update targets");
   sameValues(
     homebrewTargets,
     ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"],
@@ -137,23 +135,15 @@ export function validateDistributionContract(contract, cargoToml) {
   );
   invariant(channels.get("github-release")?.source === "tagged stack-sh/cli source", "GitHub releases must build tagged source");
   invariant(channels.get("cargo")?.source === "crates.io", "Cargo must install from crates.io");
-  for (const id of ["homebrew", "aqua", "self-update"]) {
+  for (const id of ["homebrew", "aqua"]) {
     invariant(channels.get(id)?.source === "github-release", `${id} must consume GitHub releases`);
   }
   for (const id of ["homebrew", "cargo", "aqua"]) {
     invariant(
-      channels.get(id)?.updatePolicy.includes("self-update must refuse replacement"),
+      channels.get(id)?.updatePolicy.includes("owns upgrades; stack never replaces its own executable"),
       `${id} must own upgrades instead of self-update`,
     );
   }
-  invariant(
-    channels.get("self-update")?.updatePolicy.includes("refuse without a direct-install receipt"),
-    "self-update must require a direct-install receipt",
-  );
-  invariant(
-    channels.get("self-update")?.minimumSupportedCliVersion === null,
-    "planned self-update must not claim a minimum supported CLI version",
-  );
   for (const id of ["github-release", "homebrew", "cargo", "aqua"]) {
     invariant(
       !("minimumSupportedCliVersion" in channels.get(id)),
@@ -184,10 +174,6 @@ export function validateDistributionContract(contract, cargoToml) {
     "manual page must use the canonical archive location",
   );
   invariant(contract.artifacts?.checksumAlgorithm === "sha256", "checksum algorithm must be sha256");
-  invariant(
-    contract.artifacts?.installReceiptSchema === "distribution/install-receipt.schema.json",
-    "install receipt schema path is invalid",
-  );
   invariant(contract.artifacts?.signatureBundleNameTemplate?.endsWith(".sigstore.json"), "signature bundle must use .sigstore.json");
   invariant(contract.artifacts?.sbomNameTemplate?.endsWith(".spdx.json"), "SBOM must use .spdx.json");
   invariant(
@@ -212,10 +198,6 @@ export function validateDistributionContract(contract, cargoToml) {
   const activation = (contract.verification?.releaseActivation ?? []).join(" ");
   for (const term of [...requiredActivationTerms, "shell completion", "manual page"]) {
     invariant(activation.includes(term), `release activation must mention ${term}`);
-  }
-  const selfUpdateActivation = (contract.verification?.selfUpdateActivation ?? []).join(" ");
-  for (const term of ["authenticated release manifest", "direct installer", "tampered material", "atomic replacement", "rollback"]) {
-    invariant(selfUpdateActivation.includes(term), `self-update activation must mention ${term}`);
   }
   invariant(contract.verification?.rollback?.includes("Never replace"), "rollback must preserve immutable releases");
 
