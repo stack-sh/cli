@@ -93,3 +93,33 @@ jobs:
         run: |
           test -n "$CARGO_REGISTRY_TOKEN"
           cargo +1.85.0 publish --package "$PACKAGE_NAME" --registry crates-io --locked
+
+  cargo-install:
+    if: inputs.publish == true
+    needs: publish
+    permissions:
+      contents: read
+      attestations: read
+    uses: ./.github/workflows/distribution-smoke.yaml
+    with:
+      scope: cargo
+      version: ${{ inputs.version }}
+      source_commit: ${{ inputs.expected_sha }}
+
+  completion:
+    name: cargo publication completion
+    if: always()
+    needs: [publish, cargo-install]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Require packaging, publication intent, and all applicable Cargo installations
+        env:
+          PUBLICATION_NEEDS: ${{ toJSON(needs) }}
+          PUBLISH: ${{ inputs.publish }}
+        run: node scripts/publication-completion.mjs cargo >> "$GITHUB_STEP_SUMMARY"

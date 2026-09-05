@@ -103,6 +103,7 @@ jobs:
           python3 scripts/normalize_macos_binary.py --binary "$second_binary" --target "$target"
           cmp "$first_binary" "$second_binary"
           python3 scripts/verify_release_binary.py --binary "$first_binary" --target "$target" --version "$VERSION"
+          python3 -m scripts.smoke_installed_cli --binary "$first_binary" --target "$target" --version "$VERSION" --source-root "$GITHUB_WORKSPACE"
           first_archive=$(python3 scripts/package_release.py create \
             --binary "$first_binary" \
             --target "$target" \
@@ -192,6 +193,7 @@ jobs:
           second_binary="$second_target/$target/release/stack"
           cmp "$first_binary" "$second_binary"
           python3 scripts/verify_release_binary.py --binary "$first_binary" --target "$target" --version "$VERSION"
+          python3 -m scripts.smoke_installed_cli --binary "$first_binary" --target "$target" --version "$VERSION" --source-root "$GITHUB_WORKSPACE"
           first_archive=$(python3 scripts/package_release.py create \
             --binary "$first_binary" \
             --target "$target" \
@@ -623,3 +625,32 @@ jobs:
             gh release edit "$TAG" --draft=false --latest
           fi
           test "$(gh release view "$TAG" --json isDraft --jq '.isDraft')" = "false"
+
+  native-install:
+    if: needs.context.outputs.publish == 'true' && !contains(needs.context.outputs.version, '-rc.')
+    needs: [context, publish]
+    permissions:
+      contents: read
+      attestations: read
+    uses: ./.github/workflows/distribution-smoke.yaml
+    with:
+      scope: native
+      version: ${{ needs.context.outputs.version }}
+      source_commit: ${{ github.sha }}
+
+  completion:
+    name: release completion
+    if: always()
+    needs: [context, build-macos, build-linux, attest, assemble, publish, native-install]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Require all applicable build, publication, and installation results
+        env:
+          PUBLICATION_NEEDS: ${{ toJSON(needs) }}
+        run: node scripts/publication-completion.mjs release >> "$GITHUB_STEP_SUMMARY"

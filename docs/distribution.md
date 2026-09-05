@@ -200,12 +200,16 @@ Direct, Aqua, and Homebrew binaries must byte-match the canonical archive after 
 
 The `distribution smoke completion` job always evaluates the context and the whole requested matrix. A failure, cancellation, skip, missing artifact, wrong version, or mismatched digest prevents success. The job summary identifies the version and scope; GitHub Actions reports failure through its normal workflow notifications. Maintainers should watch **Actions** notifications for this repository and inspect the failed matrix cell before retrying; a retry is not a substitute for resolving a reproducible failure.
 
-The reusable workflow also exposes `native` (Direct + Aqua, eight cells) and `cargo` (eight cells) scopes for publication integration. Cargo-only checks require the exact published source commit and do not assume the GitHub Release already exists. A scoped success is **not** all-channel activation. Full activation requires a successful `all` run for the same stable version after the tap and registry are available. These later results supplement the immutable publication-time manifest; they never rewrite a tag, release asset, or its `verifiedChannels` field.
+The reusable workflow also exposes `native` (Direct + Aqua, eight cells) and `cargo` (eight cells) scopes for publication integration. The Release workflow calls the native scope after stable publication; Cargo trusted publishing calls the Cargo scope after an actual upload. Cargo-only checks require the exact published source commit and do not assume the GitHub Release already exists. A scoped success is **not** all-channel activation. Full activation requires a successful `all` run for the same stable version after the tap and registry are available. These later results supplement the immutable publication-time manifest; they never rewrite a tag, release asset, or its `verifiedChannels` field.
+
+Both publication workflows have an always-running completion job that rejects missing, failed, cancelled, or unexpectedly skipped required work. Native release builds exercise a real audited provider import/render before publication, including manual dry runs. A native dry run verifies newly built artifacts without requiring an unpublished version to exist in a package manager. Release candidates retain those build checks but skip stable package-manager installation; they do not activate stable channels. Cargo's no-upload OIDC verification similarly does not claim installation of a new version.
+
+After an upload, a failing installation makes the workflow fail but does not undo publication. Inspect the named failed cell and registry/release state first, fix the cause, then re-run failed verification jobs only. Never rerun a successful upload job or overwrite release assets to make the run green. If the published package itself is broken, follow the withdrawal and new-patch procedure below.
 
 Run the negative guards locally with:
 
 ```sh
-node --test scripts/distribution-smoke-context.test.mjs scripts/distribution-smoke-workflow.test.mjs
+node --test scripts/distribution-smoke-context.test.mjs scripts/distribution-smoke-workflow.test.mjs scripts/publication-completion.test.mjs
 python3 -m unittest scripts/test_smoke_installed_cli.py
 ```
 

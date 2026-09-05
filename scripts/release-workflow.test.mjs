@@ -10,7 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "release.yaml"), "utf8");
 
 test("the checked-in release workflow has the reviewed target and trust boundaries", () => {
-  assert.deepEqual(validateReleaseWorkflow(workflow), { actions: 19, jobs: 6, permissions: 11, targets: 4 });
+  assert.deepEqual(validateReleaseWorkflow(workflow), { actions: 20, jobs: 8, permissions: 14, targets: 4 });
 });
 
 test("an additional automatic trigger is rejected", () => {
