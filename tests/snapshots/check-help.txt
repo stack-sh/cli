@@ -1,13 +1,15 @@
 Validate a Stack source file without modifying it
 
 Usage:
-  stack check <FILE>
+  stack check <FILE> [--json]
 
 Arguments:
   <FILE>  Read Stack source bytes from this file
 
 Options:
+  --json      Write one versioned JSON envelope to standard output
   -h, --help  Print help
 
 Examples:
   stack check arch.stack
+  stack check arch.stack --json

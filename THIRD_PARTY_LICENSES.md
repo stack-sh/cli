@@ -18,7 +18,7 @@ Audit date: 2026-09-05
 | `indexmap` / `hashbrown` / `equivalent` | `2.14.1`, `0.17.1`, `1.0.2` | Apache-2.0 OR MIT | <https://github.com/indexmap-rs/indexmap>, <https://github.com/rust-lang/hashbrown>, <https://github.com/indexmap-rs/equivalent> | ZIP archive entry index. |
 | `cfg-if` / `cpufeatures` / `libc` | `1.0.4`, `0.3.1`, `0.2.189` | MIT OR Apache-2.0 | <https://github.com/rust-lang/cfg-if>, <https://github.com/RustCrypto/utils>, <https://github.com/rust-lang/libc> | Target selection and SHA-256 acceleration support. |
 | `serde` / `serde_core` | `1.0.229` | MIT OR Apache-2.0 | <https://github.com/serde-rs/serde> | Runtime catalog data types through `stack-theme`. |
-| `serde_json` | `1.0.151` | MIT OR Apache-2.0 | <https://github.com/serde-rs/json> | Embedded catalog decoding through `stack-theme`. |
+| `serde_json` | `1.0.151` | MIT OR Apache-2.0 | <https://github.com/serde-rs/json> | Embedded catalog decoding through `stack-theme` and versioned CLI JSON output serialization. |
 | `itoa` | `1.0.18` | MIT OR Apache-2.0 | <https://github.com/dtolnay/itoa> | Transitive runtime dependency of `serde_json`. |
 | `memchr` | `2.8.3` | Unlicense OR MIT | <https://github.com/BurntSushi/memchr> | Transitive runtime dependency of `serde_json`. |
 | `zmij` | `1.0.23` | MIT | <https://github.com/dtolnay/zmij> | Transitive runtime dependency of `serde_json`. |
@@ -43,6 +43,9 @@ Audit date: 2026-09-05
 | `syn` | `3.0.4` | MIT OR Apache-2.0 | <https://github.com/dtolnay/syn> | Procedural-macro build dependency; not linked into the release binary. |
 | `unicode-ident` | `1.0.24` | (MIT OR Apache-2.0) AND Unicode-3.0 | <https://github.com/dtolnay/unicode-ident> | Procedural-macro build dependency; not linked into the release binary. |
 | `cc` / `find-msvc-tools` / `shlex` | `1.4.5`, `0.1.12`, `2.0.1` | MIT OR Apache-2.0 | <https://github.com/rust-lang/cc-rs> | Build dependencies of `ring`; not linked into the release binary. |
+| `ajv` | `8.20.0` | MIT | <https://github.com/ajv-validator/ajv> | Lockfile-pinned JSON Schema validation for CLI output fixtures; not linked into the release binary. |
+| `fast-deep-equal` / `json-schema-traverse` / `require-from-string` | `3.1.3`, `1.0.0`, `2.0.2` | MIT | <https://github.com/epoberezkin/fast-deep-equal>, <https://github.com/epoberezkin/json-schema-traverse>, <https://github.com/floatdrop/require-from-string> | Build-only dependencies of `ajv`; not linked into the release binary. |
+| `fast-uri` | `3.1.7` | BSD-3-Clause | <https://github.com/fastify/fast-uri> | Build-only URI validation through `ajv`; not linked into the release binary. |
 
 No third-party vendor icon is bundled in the repository or binary. Provider-specific assets require a separate rights record covering source revision, copyright, trademark restrictions, modification, software redistribution, commercial diagram output, and required notices.
 

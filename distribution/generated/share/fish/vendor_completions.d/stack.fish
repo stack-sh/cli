@@ -27,15 +27,18 @@ complete -c stack -n '__fish_seen_subcommand_from init' -l 'output' -r
 complete -c stack -n '__fish_seen_subcommand_from init' -l 'force'
 complete -c stack -n '__fish_seen_subcommand_from init' -s 'h'
 complete -c stack -n '__fish_seen_subcommand_from init' -l 'help'
+complete -c stack -n '__fish_seen_subcommand_from check' -l 'json'
 complete -c stack -n '__fish_seen_subcommand_from check' -s 'h'
 complete -c stack -n '__fish_seen_subcommand_from check' -l 'help'
 complete -c stack -n '__fish_seen_subcommand_from fmt' -a '-'
 complete -c stack -n '__fish_seen_subcommand_from fmt' -l 'check'
+complete -c stack -n '__fish_seen_subcommand_from fmt' -l 'json'
 complete -c stack -n '__fish_seen_subcommand_from fmt' -s 'h'
 complete -c stack -n '__fish_seen_subcommand_from fmt' -l 'help'
 complete -c stack -n '__fish_seen_subcommand_from render' -l 'provider-pack' -r
 complete -c stack -n '__fish_seen_subcommand_from render' -s 'o'
 complete -c stack -n '__fish_seen_subcommand_from render' -l 'notice' -r
+complete -c stack -n '__fish_seen_subcommand_from render' -l 'json'
 complete -c stack -n '__fish_seen_subcommand_from render' -s 'h'
 complete -c stack -n '__fish_seen_subcommand_from render' -l 'help'
 complete -c stack -n '__fish_seen_subcommand_from update' -l 'check'

@@ -1,7 +1,7 @@
 Render Stack source as standalone SVG
 
 Usage:
-  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>]
+  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>] [--json]
 
 Arguments:
   <FILE>                      Read Stack source bytes from this file
@@ -10,6 +10,7 @@ Options:
   --provider-pack <DIRECTORY> Read known provider packs from this icon-store root
   -o <OUTPUT>                 Write SVG atomically instead of using standard output
   --notice <NOTICE>           Write exact used-provider notices atomically
+  --json                      Write one versioned JSON envelope to standard output
   -h, --help                  Print help
 
 Default icon store:
@@ -19,3 +20,4 @@ Examples:
   stack render arch.stack
   stack render arch.stack -o arch.svg
   stack render arch.stack --notice arch.NOTICE.md -o arch.svg
+  stack render arch.stack --json

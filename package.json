@@ -1,0 +1,12 @@
+{
+  "name": "stack-cli-repository-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:cli-output-schema": "node scripts/validate-cli-output-schema.mjs && node --test scripts/cli-output-schema.test.mjs",
+    "test:consumer-prototype": "node examples/consume-cli-json.mjs check tests/fixtures/render.stack"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0"
+  }
+}

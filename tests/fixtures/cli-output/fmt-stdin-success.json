@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stack-sh/cli/main/schemas/cli-output-v1.schema.json",
+  "schemaVersion": 1,
+  "command": "fmt",
+  "outcome": "success",
+  "exitStatus": 0,
+  "diagnostics": [],
+  "artifacts": [
+    {
+      "kind": "formatted-source",
+      "path": null,
+      "mediaType": "text/vnd.stack",
+      "content": "stack 1.0\n\ndiagram \"Stdin\" {\n  node api \"API\"\n}\n"
+    }
+  ],
+  "error": null
+}

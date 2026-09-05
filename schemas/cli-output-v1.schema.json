@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/stack-sh/cli/main/schemas/cli-output-v1.schema.json",
+  "title": "Stack CLI machine-readable output",
+  "description": "Version 1 output envelope for stack check, fmt, and render --json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "command",
+    "outcome",
+    "exitStatus",
+    "diagnostics",
+    "artifacts",
+    "error"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://raw.githubusercontent.com/stack-sh/cli/main/schemas/cli-output-v1.schema.json"
+    },
+    "schemaVersion": { "const": 1 },
+    "command": { "enum": ["check", "fmt", "render"] },
+    "outcome": {
+      "enum": ["success", "changes-required", "stack-error", "operational-error"]
+    },
+    "exitStatus": { "enum": [0, 1, 2] },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/diagnostic" }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "error": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/operationalError" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "outcome": { "const": "success" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "properties": {
+          "exitStatus": { "const": 0 },
+          "diagnostics": {
+            "not": {
+              "type": "array",
+              "contains": {
+                "type": "object",
+                "properties": { "severity": { "const": "error" } },
+                "required": ["severity"]
+              }
+            }
+          },
+          "error": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "outcome": { "const": "changes-required" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "properties": {
+          "command": { "const": "fmt" },
+          "exitStatus": { "const": 1 },
+          "diagnostics": {
+            "not": {
+              "type": "array",
+              "contains": {
+                "type": "object",
+                "properties": { "severity": { "const": "error" } },
+                "required": ["severity"]
+              }
+            }
+          },
+          "error": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "outcome": { "const": "stack-error" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "properties": {
+          "exitStatus": { "const": 1 },
+          "diagnostics": {
+            "type": "array",
+            "contains": {
+              "type": "object",
+              "properties": { "severity": { "const": "error" } },
+              "required": ["severity"]
+            }
+          },
+          "error": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "outcome": { "const": "operational-error" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "properties": {
+          "exitStatus": { "const": 2 },
+          "error": { "$ref": "#/$defs/operationalError" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["byteOffset", "line", "column"],
+      "properties": {
+        "byteOffset": { "type": "integer", "minimum": 0 },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "$ref": "#/$defs/position" },
+        "end": { "$ref": "#/$defs/position" }
+      }
+    },
+    "relatedInformation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["message", "path", "range"],
+      "properties": {
+        "message": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "range": { "$ref": "#/$defs/range" }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "severity",
+        "message",
+        "path",
+        "range",
+        "expected",
+        "help",
+        "related"
+      ],
+      "properties": {
+        "code": { "type": "string", "pattern": "^STK[0-9]{4}$" },
+        "severity": { "enum": ["error", "warning"] },
+        "message": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "range": { "$ref": "#/$defs/range" },
+        "expected": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "help": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1 }
+          ]
+        },
+        "related": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/relatedInformation" }
+        }
+      }
+    },
+    "artifact": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "path", "mediaType", "content"],
+          "properties": {
+            "kind": { "const": "formatted-source" },
+            "path": { "$ref": "#/$defs/nullablePath" },
+            "mediaType": { "const": "text/vnd.stack" },
+            "content": { "$ref": "#/$defs/nullableContent" }
+          },
+          "oneOf": [
+            {
+              "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "content": { "type": "null" }
+              }
+            },
+            {
+              "properties": {
+                "path": { "type": "null" },
+                "content": { "type": "string" }
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "path", "mediaType", "content"],
+          "properties": {
+            "kind": { "const": "rendered-svg" },
+            "path": { "$ref": "#/$defs/nullablePath" },
+            "mediaType": { "const": "image/svg+xml" },
+            "content": { "$ref": "#/$defs/nullableContent" }
+          },
+          "oneOf": [
+            {
+              "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "content": { "type": "null" }
+              }
+            },
+            {
+              "properties": {
+                "path": { "type": "null" },
+                "content": { "type": "string", "minLength": 1 }
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "path", "mediaType", "content"],
+          "properties": {
+            "kind": { "const": "provider-notice" },
+            "path": { "type": "string", "minLength": 1 },
+            "mediaType": { "const": "text/markdown" },
+            "content": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "nullablePath": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1 }
+      ]
+    },
+    "nullableContent": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string" }
+      ]
+    },
+    "operationalError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "enum": ["CLI1001", "CLI1002", "CLI1003", "CLI1004", "CLI1005"] },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

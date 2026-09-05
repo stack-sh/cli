@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stack-sh/cli/main/schemas/cli-output-v1.schema.json",
+  "schemaVersion": 1,
+  "command": "check",
+  "outcome": "stack-error",
+  "exitStatus": 1,
+  "diagnostics": [
+    {
+      "code": "STK2003",
+      "severity": "error",
+      "message": "Input ended before the diagram was complete.",
+      "path": "<SOURCE>",
+      "range": {
+        "start": { "byteOffset": 33, "line": 2, "column": 1 },
+        "end": { "byteOffset": 33, "line": 2, "column": 1 }
+      },
+      "expected": ["}"],
+      "help": "Add the closing '}' for this construct.",
+      "related": []
+    }
+  ],
+  "artifacts": [],
+  "error": null
+}

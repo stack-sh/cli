@@ -1,6 +1,6 @@
 use std::env;
 use std::error::Error;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -173,6 +173,23 @@ fn assert_stdout_only(arguments: &[&str], expected: &[u8]) -> Result<(), Box<dyn
     Ok(())
 }
 
+fn parse_json_output(output: &Output) -> Result<Value, Box<dyn Error>> {
+    assert!(output.stderr.is_empty());
+    let value = serde_json::from_slice::<Value>(&output.stdout)?;
+    assert_eq!(
+        value["exitStatus"].as_i64(),
+        output.status.code().map(i64::from)
+    );
+    Ok(value)
+}
+
+fn json_fixture(name: &str) -> Result<Value, Box<dyn Error>> {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/cli-output")
+        .join(name);
+    Ok(serde_json::from_slice(&fs::read(path)?)?)
+}
+
 #[test]
 fn valid_source_is_silent_and_unchanged() -> Result<(), Box<dyn Error>> {
     let directory = TestDirectory::new("valid")?;
@@ -240,6 +257,353 @@ fn missing_file_exits_two_with_a_stable_host_error() -> Result<(), Box<dyn Error
     assert!(output.stdout.is_empty());
     assert_eq!(String::from_utf8(output.stderr)?, expected);
     assert!(!path.exists());
+    Ok(())
+}
+
+#[test]
+fn json_check_results_match_the_versioned_golden_fixtures() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("json-check")?;
+    let valid_path = directory.file(
+        "valid.stack",
+        b"stack 1.0 diagram \"Valid\" { node api \"API\" }",
+    )?;
+    let valid = stack([
+        OsStr::new("check"),
+        OsStr::new("--json"),
+        valid_path.as_os_str(),
+    ])?;
+    assert_eq!(
+        parse_json_output(&valid)?,
+        json_fixture("check-success.json")?
+    );
+
+    let warning_path = directory.file("warning.stack", include_bytes!("fixtures/warning.stack"))?;
+    let warning = stack([
+        OsStr::new("check"),
+        warning_path.as_os_str(),
+        OsStr::new("--json"),
+    ])?;
+    let mut warning_json = parse_json_output(&warning)?;
+    warning_json["diagnostics"][0]["path"] = json!("<SOURCE>");
+    assert_eq!(warning_json, json_fixture("check-warning.json")?);
+
+    let invalid_path = directory.file("invalid.stack", include_bytes!("fixtures/invalid.stack"))?;
+    let invalid = stack([
+        OsStr::new("check"),
+        invalid_path.as_os_str(),
+        OsStr::new("--json"),
+    ])?;
+    let mut invalid_json = parse_json_output(&invalid)?;
+    invalid_json["diagnostics"][0]["path"] = json!("<SOURCE>");
+    assert_eq!(invalid_json, json_fixture("check-stack-error.json")?);
+
+    let missing_path = directory.path.join("missing.stack");
+    let missing = stack([
+        OsStr::new("check"),
+        missing_path.as_os_str(),
+        OsStr::new("--json"),
+    ])?;
+    let mut missing_json = parse_json_output(&missing)?;
+    missing_json["error"]["message"] = json!("cannot read '<SOURCE>': file not found");
+    assert_eq!(missing_json, json_fixture("operational-error.json")?);
+    Ok(())
+}
+
+#[test]
+fn json_format_results_preserve_check_write_and_stdin_semantics() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("json-format")?;
+    let source = b"stack 1.0 diagram \"Check\"{node api \"API\"}";
+    let expected = b"stack 1.0\n\ndiagram \"Check\" {\n  node api \"API\"\n}\n";
+    let path = directory.file("format.stack", source)?;
+
+    let checked = stack([
+        OsStr::new("fmt"),
+        OsStr::new("--check"),
+        path.as_os_str(),
+        OsStr::new("--json"),
+    ])?;
+    assert_eq!(
+        parse_json_output(&checked)?,
+        json_fixture("fmt-changes-required.json")?
+    );
+    assert_unchanged(&path, source)?;
+
+    let written = stack([OsStr::new("fmt"), OsStr::new("--json"), path.as_os_str()])?;
+    let written_json = parse_json_output(&written)?;
+    assert_eq!(written_json["outcome"], "success");
+    assert_eq!(written_json["artifacts"][0]["kind"], "formatted-source");
+    assert_eq!(
+        written_json["artifacts"][0]["path"],
+        path.to_string_lossy().as_ref()
+    );
+    assert!(written_json["artifacts"][0]["content"].is_null());
+    assert_eq!(fs::read(&path)?, expected);
+
+    let stdin = b"stack 1.0 diagram \"Stdin\"{node api \"API\"}";
+    let formatted = stack_with_input(["fmt", "--json", "-"], stdin)?;
+    assert_eq!(
+        parse_json_output(&formatted)?,
+        json_fixture("fmt-stdin-success.json")?
+    );
+    Ok(())
+}
+
+#[test]
+fn json_render_reports_inline_and_written_artifacts() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("json-render")?;
+    let source = b"stack 1.0 diagram \"Render\" { node api \"API\" }";
+    let input = directory.file("render.stack", source)?;
+    let artifact = directory.path.join("render.svg");
+
+    let written = stack([
+        OsStr::new("render"),
+        input.as_os_str(),
+        OsStr::new("-o"),
+        artifact.as_os_str(),
+        OsStr::new("--json"),
+    ])?;
+    let mut written_json = parse_json_output(&written)?;
+    written_json["artifacts"][0]["path"] = json!("<ARTIFACT>");
+    assert_eq!(written_json, json_fixture("render-file-success.json")?);
+    assert!(fs::read_to_string(&artifact)?.contains("<svg"));
+
+    let inline = stack([
+        OsStr::new("render"),
+        OsStr::new("--json"),
+        input.as_os_str(),
+    ])?;
+    let inline_json = parse_json_output(&inline)?;
+    assert_eq!(inline_json["outcome"], "success");
+    assert!(inline_json["artifacts"][0]["path"].is_null());
+    assert!(
+        inline_json["artifacts"][0]["content"]
+            .as_str()
+            .is_some_and(|content| content.contains("<svg"))
+    );
+    Ok(())
+}
+
+#[test]
+fn json_argument_errors_remain_parseable_and_exit_two() -> Result<(), Box<dyn Error>> {
+    for arguments in [
+        vec!["check", "--json"],
+        vec!["fmt", "--json", "--json", "-"],
+        vec!["render", "--json", "--unknown"],
+    ] {
+        let output = stack(arguments)?;
+        let value = parse_json_output(&output)?;
+        assert_eq!(value["outcome"], "operational-error");
+        assert_eq!(value["error"]["code"], "CLI1001");
+    }
+    Ok(())
+}
+
+#[test]
+fn invalid_argument_matrix_covers_each_command_boundary() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("argument-matrix")?;
+    let source = directory.file(
+        "source.stack",
+        b"stack 1.0 diagram \"Valid\" { node api \"API\" }",
+    )?;
+    let source = source.into_os_string();
+    let cases = vec![
+        vec!["help", "--help", "extra"],
+        vec!["help", "check", "extra"],
+        vec!["version", "--help", "extra"],
+        vec!["version", "extra"],
+        vec!["completions"],
+        vec!["completions", "--help", "extra"],
+        vec!["completions", "bash", "extra"],
+        vec!["manpage", "--help", "extra"],
+        vec!["manpage", "extra"],
+        vec!["lsp", "--help", "extra"],
+        vec!["lsp", "extra"],
+        vec!["config"],
+        vec!["config", "--help", "extra"],
+        vec!["config", "help", "path", "extra"],
+        vec!["config", "path", "--help", "extra"],
+        vec!["config", "path", "extra"],
+        vec!["config", "get"],
+        vec!["config", "get", "--help", "extra"],
+        vec!["config", "get", "default_icons_path", "extra"],
+        vec!["config", "get", "unknown"],
+        vec!["doctor", "--help", "extra"],
+        vec!["doctor", "--provider-pack"],
+        vec![
+            "doctor",
+            "--provider-pack",
+            "first",
+            "--provider-pack",
+            "second",
+        ],
+        vec!["doctor", "--unknown"],
+        vec!["icons"],
+        vec!["icons", "--help", "extra"],
+        vec!["icons", "help", "list", "extra"],
+        vec!["icons", "list", "--help", "extra"],
+        vec!["icons", "list", "aws", "s3", "extra"],
+        vec!["icons", "import"],
+        vec!["icons", "import", "--help", "extra"],
+        vec!["icons", "import", "--unknown"],
+        vec!["icons", "import", "aws", "--accept-terms", "--accept-terms"],
+        vec!["icons", "import", "aws", "-o"],
+        vec!["icons", "import", "aws", "unexpected"],
+        vec!["icons", "import", "aws"],
+    ];
+    for arguments in cases {
+        let output = stack(arguments.iter().copied())?;
+        assert_eq!(output.status.code(), Some(2), "arguments: {arguments:?}");
+        assert!(output.stdout.is_empty(), "arguments: {arguments:?}");
+        assert!(!output.stderr.is_empty(), "arguments: {arguments:?}");
+    }
+
+    let machine_cases = vec![
+        vec![
+            OsString::from("check"),
+            OsString::from("--json"),
+            OsString::from("--json"),
+            source.clone(),
+        ],
+        vec![
+            OsString::from("check"),
+            source.clone(),
+            OsString::from("extra"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("check"),
+            OsString::from("--help"),
+            OsString::from("extra"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("fmt"),
+            OsString::from("--help"),
+            OsString::from("extra"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("fmt"),
+            OsString::from("--check"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("fmt"),
+            OsString::from("--unknown"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("fmt"),
+            source.clone(),
+            OsString::from("extra"),
+            OsString::from("--json"),
+        ],
+        vec![OsString::from("render"), OsString::from("--json")],
+        vec![
+            OsString::from("render"),
+            OsString::from("--json"),
+            OsString::from("--json"),
+            source.clone(),
+        ],
+        vec![
+            OsString::from("render"),
+            OsString::from("--help"),
+            OsString::from("extra"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("-o"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("-o"),
+            OsString::from("first.svg"),
+            OsString::from("-o"),
+            OsString::from("second.svg"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("--notice"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("--notice"),
+            OsString::from("first.md"),
+            OsString::from("--notice"),
+            OsString::from("second.md"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("--provider-pack"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("--provider-pack"),
+            OsString::from("first"),
+            OsString::from("--provider-pack"),
+            OsString::from("second"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("extra"),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("-o"),
+            source.clone(),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("--notice"),
+            source.clone(),
+            OsString::from("--json"),
+        ],
+        vec![
+            OsString::from("render"),
+            source.clone(),
+            OsString::from("-o"),
+            OsString::from("same"),
+            OsString::from("--notice"),
+            OsString::from("same"),
+            OsString::from("--json"),
+        ],
+    ];
+    for arguments in machine_cases {
+        let output = stack(arguments.iter())?;
+        let value = parse_json_output(&output)?;
+        assert_eq!(value["outcome"], "operational-error");
+        assert_eq!(value["error"]["code"], "CLI1001");
+    }
+
+    let no_config = stack_with_config_environment(
+        None,
+        None,
+        [
+            OsStr::new("render"),
+            source.as_os_str(),
+            OsStr::new("--json"),
+        ],
+    )?;
+    let no_config = parse_json_output(&no_config)?;
+    assert_eq!(no_config["error"]["code"], "CLI1003");
     Ok(())
 }
 

@@ -19,9 +19,9 @@ words="init check fmt render update lsp doctor config icons completions manpage 
     else
       case "$context" in
         "init") words="--template -o --output --force -h --help" ;;
-        "check") words="-h --help" ;;
-        "fmt") words="- --check -h --help" ;;
-        "render") words="--provider-pack -o --notice -h --help" ;;
+        "check") words="--json -h --help" ;;
+        "fmt") words="- --check --json -h --help" ;;
+        "render") words="--provider-pack -o --notice --json -h --help" ;;
         "update") words="--check --version -h --help" ;;
         "lsp") words="-h --help" ;;
         "doctor") words="--provider-pack -h --help" ;;

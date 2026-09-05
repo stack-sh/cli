@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stack-sh/cli/main/schemas/cli-output-v1.schema.json",
+  "schemaVersion": 1,
+  "command": "check",
+  "outcome": "success",
+  "exitStatus": 0,
+  "diagnostics": [],
+  "artifacts": [],
+  "error": null
+}

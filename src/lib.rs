@@ -17,6 +17,7 @@ use stack_engine::{
 mod command_docs;
 mod config;
 mod lsp;
+mod machine_output;
 mod provider;
 mod provider_catalog;
 mod templates;
@@ -106,24 +107,26 @@ const CHECK_HELP: &str = "\
 Validate a Stack source file without modifying it
 
 Usage:
-  stack check <FILE>
+  stack check <FILE> [--json]
 
 Arguments:
   <FILE>  Read Stack source bytes from this file
 
 Options:
+  --json      Write one versioned JSON envelope to standard output
   -h, --help  Print help
 
 Examples:
   stack check arch.stack
+  stack check arch.stack --json
 ";
 const FORMAT_HELP: &str = "\
 Format Stack source canonically
 
 Usage:
-  stack fmt <FILE>
-  stack fmt --check <FILE>
-  stack fmt -
+  stack fmt <FILE> [--json]
+  stack fmt --check <FILE> [--json]
+  stack fmt - [--json]
 
 Arguments:
   <FILE>  Format the file atomically in place
@@ -131,18 +134,20 @@ Arguments:
 
 Options:
   --check     Report whether formatting is required without writing output
+  --json      Write one versioned JSON envelope to standard output
   -h, --help  Print help
 
 Examples:
   stack fmt arch.stack
   stack fmt --check arch.stack
   stack fmt - < input.stack > output.stack
+  stack fmt --json - < input.stack
 ";
 const RENDER_HELP: &str = "\
 Render Stack source as standalone SVG
 
 Usage:
-  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>]
+  stack render <FILE> [--provider-pack <DIRECTORY>] [-o <OUTPUT>] [--notice <NOTICE>] [--json]
 
 Arguments:
   <FILE>                      Read Stack source bytes from this file
@@ -151,6 +156,7 @@ Options:
   --provider-pack <DIRECTORY> Read known provider packs from this icon-store root
   -o <OUTPUT>                 Write SVG atomically instead of using standard output
   --notice <NOTICE>           Write exact used-provider notices atomically
+  --json                      Write one versioned JSON envelope to standard output
   -h, --help                  Print help
 
 Default icon store:
@@ -160,6 +166,7 @@ Examples:
   stack render arch.stack
   stack render arch.stack -o arch.svg
   stack render arch.stack --notice arch.NOTICE.md -o arch.svg
+  stack render arch.stack --json
 ";
 const LSP_HELP: &str = "\
 Run the Stack language server over standard input and output
@@ -407,6 +414,109 @@ const MAX_PROVIDER_ASSET_BYTES: usize = 1024 * 1024;
 enum FormatMode {
     Write,
     Check,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum OutputMode {
+    Human,
+    Json,
+}
+
+struct OutputArguments {
+    mode: OutputMode,
+    values: Vec<OsString>,
+    duplicate_json: bool,
+}
+
+fn output_arguments(arguments: impl Iterator<Item = OsString>) -> OutputArguments {
+    let mut mode = OutputMode::Human;
+    let mut values = Vec::new();
+    let mut duplicate_json = false;
+    for argument in arguments {
+        if argument == OsStr::new("--json") {
+            if mode == OutputMode::Json {
+                duplicate_json = true;
+            }
+            mode = OutputMode::Json;
+        } else {
+            values.push(argument);
+        }
+    }
+    OutputArguments {
+        mode,
+        values,
+        duplicate_json,
+    }
+}
+
+fn output_argument_error(
+    command: machine_output::Command,
+    mode: OutputMode,
+    message: &str,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    match mode {
+        OutputMode::Human => argument_error(message, stderr),
+        OutputMode::Json => output_operational_error(
+            command,
+            mode,
+            machine_output::ARGUMENT_ERROR,
+            message.to_owned(),
+            Path::new("<command-line>"),
+            &[],
+            Vec::new(),
+            stdout,
+            stderr,
+        ),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn output_operational_error(
+    command: machine_output::Command,
+    mode: OutputMode,
+    code: &'static str,
+    message: String,
+    diagnostics_path: &Path,
+    diagnostics: &[Diagnostic],
+    artifacts: Vec<machine_output::Artifact>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    match mode {
+        OutputMode::Human => write_stderr_error(&message, stderr),
+        OutputMode::Json => write_machine_output(
+            machine_output::Envelope::operational_error(
+                command,
+                code,
+                message,
+                diagnostics_path,
+                diagnostics,
+                artifacts,
+            ),
+            stdout,
+            stderr,
+        ),
+    }
+}
+
+fn write_machine_output(
+    envelope: machine_output::Envelope,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let exit_status = envelope.exit_status();
+    let mut bytes = match serde_json::to_vec(&envelope) {
+        Ok(bytes) => bytes,
+        Err(_) => return write_stderr_error("cannot serialize JSON output", stderr),
+    };
+    bytes.push(b'\n');
+    if stdout.write_all(&bytes).is_ok() {
+        exit_status
+    } else {
+        write_stderr_error("cannot write JSON output", stderr)
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -1456,25 +1566,49 @@ fn download_provider_archive(url: &str, limit: u64) -> Result<Vec<u8>, String> {
 }
 
 fn run_render(
-    mut arguments: impl Iterator<Item = OsString>,
+    arguments: impl Iterator<Item = OsString>,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
+    let parsed = output_arguments(arguments);
+    let mode = parsed.mode;
+    if parsed.duplicate_json {
+        return output_argument_error(
+            machine_output::Command::Render,
+            mode,
+            "duplicate '--json' option",
+            stdout,
+            stderr,
+        );
+    }
+    let mut arguments = parsed.values.into_iter();
     let Some(source) = arguments.next() else {
-        return argument_error("missing file for 'stack render'", stderr);
+        return output_argument_error(
+            machine_output::Command::Render,
+            mode,
+            "missing file for 'stack render'",
+            stdout,
+            stderr,
+        );
     };
     if source == OsStr::new("--help") || source == OsStr::new("-h") {
         if let Some(extra) = arguments.next() {
-            return argument_error(
+            return output_argument_error(
+                machine_output::Command::Render,
+                mode,
                 &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stdout,
                 stderr,
             );
         }
         return write_stdout(RENDER_HELP, stdout, stderr);
     }
     if source.to_string_lossy().starts_with('-') {
-        return argument_error(
+        return output_argument_error(
+            machine_output::Command::Render,
+            mode,
             &format!("unknown option '{}'", source.to_string_lossy()),
+            stdout,
             stderr,
         );
     }
@@ -1485,31 +1619,70 @@ fn run_render(
     while let Some(option) = arguments.next() {
         if option == OsStr::new("-o") {
             if destination.is_some() {
-                return argument_error("duplicate '-o' option", stderr);
+                return output_argument_error(
+                    machine_output::Command::Render,
+                    mode,
+                    "duplicate '-o' option",
+                    stdout,
+                    stderr,
+                );
             }
             let Some(output) = arguments.next() else {
-                return argument_error("missing output file after '-o'", stderr);
+                return output_argument_error(
+                    machine_output::Command::Render,
+                    mode,
+                    "missing output file after '-o'",
+                    stdout,
+                    stderr,
+                );
             };
             destination = Some(RenderDestination::File(PathBuf::from(output)));
         } else if option == OsStr::new("--notice") {
             if notice_path.is_some() {
-                return argument_error("duplicate '--notice' option", stderr);
+                return output_argument_error(
+                    machine_output::Command::Render,
+                    mode,
+                    "duplicate '--notice' option",
+                    stdout,
+                    stderr,
+                );
             }
             let Some(path) = arguments.next() else {
-                return argument_error("missing notice file after '--notice'", stderr);
+                return output_argument_error(
+                    machine_output::Command::Render,
+                    mode,
+                    "missing notice file after '--notice'",
+                    stdout,
+                    stderr,
+                );
             };
             notice_path = Some(PathBuf::from(path));
         } else if option == OsStr::new("--provider-pack") {
             if provider_pack_root.is_some() {
-                return argument_error("duplicate '--provider-pack' option", stderr);
+                return output_argument_error(
+                    machine_output::Command::Render,
+                    mode,
+                    "duplicate '--provider-pack' option",
+                    stdout,
+                    stderr,
+                );
             }
             let Some(path) = arguments.next() else {
-                return argument_error("missing provider icon-store directory", stderr);
+                return output_argument_error(
+                    machine_output::Command::Render,
+                    mode,
+                    "missing provider icon-store directory",
+                    stdout,
+                    stderr,
+                );
             };
             provider_pack_root = Some(PathBuf::from(path));
         } else {
-            return argument_error(
+            return output_argument_error(
+                machine_output::Command::Render,
+                mode,
                 &format!("unexpected argument '{}'", option.to_string_lossy()),
+                stdout,
                 stderr,
             );
         }
@@ -1517,16 +1690,34 @@ fn run_render(
 
     let destination = destination.unwrap_or(RenderDestination::Stdout);
     if matches!(&destination, RenderDestination::File(path) if path.as_os_str() == source) {
-        return argument_error("input and output files must be different", stderr);
+        return output_argument_error(
+            machine_output::Command::Render,
+            mode,
+            "input and output files must be different",
+            stdout,
+            stderr,
+        );
     }
     if notice_path
         .as_ref()
         .is_some_and(|path| path.as_os_str() == source)
     {
-        return argument_error("input and notice files must be different", stderr);
+        return output_argument_error(
+            machine_output::Command::Render,
+            mode,
+            "input and notice files must be different",
+            stdout,
+            stderr,
+        );
     }
     if matches!(&destination, RenderDestination::File(path) if notice_path.as_ref() == Some(path)) {
-        return argument_error("output and notice files must be different", stderr);
+        return output_argument_error(
+            machine_output::Command::Render,
+            mode,
+            "output and notice files must be different",
+            stdout,
+            stderr,
+        );
     }
 
     let explicit_provider_pack_root = provider_pack_root.is_some();
@@ -1534,33 +1725,77 @@ fn run_render(
     let provider_pack_root =
         match config::icon_store_root(provider_pack_root.as_deref(), &environment) {
             Ok(path) => path,
-            Err(error) => return write_stderr_error(&error, stderr),
+            Err(error) => {
+                return output_operational_error(
+                    machine_output::Command::Render,
+                    mode,
+                    machine_output::CONFIGURATION_ERROR,
+                    error,
+                    Path::new(&source),
+                    &[],
+                    Vec::new(),
+                    stdout,
+                    stderr,
+                );
+            }
         };
 
-    render_file(
-        Path::new(&source),
-        destination,
-        &provider_pack_root,
-        !explicit_provider_pack_root,
-        notice_path.as_deref(),
-        stdout,
-        stderr,
-    )
+    match mode {
+        OutputMode::Human => render_file(
+            Path::new(&source),
+            destination,
+            &provider_pack_root,
+            !explicit_provider_pack_root,
+            notice_path.as_deref(),
+            stdout,
+            stderr,
+        ),
+        OutputMode::Json => render_file_json(
+            Path::new(&source),
+            destination,
+            &provider_pack_root,
+            !explicit_provider_pack_root,
+            notice_path.as_deref(),
+            stdout,
+            stderr,
+        ),
+    }
 }
 
 fn run_format(
-    mut arguments: impl Iterator<Item = OsString>,
+    arguments: impl Iterator<Item = OsString>,
     stdin: &mut dyn Read,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
+    let parsed = output_arguments(arguments);
+    let output_mode = parsed.mode;
+    if parsed.duplicate_json {
+        return output_argument_error(
+            machine_output::Command::Fmt,
+            output_mode,
+            "duplicate '--json' option",
+            stdout,
+            stderr,
+        );
+    }
+    let mut arguments = parsed.values.into_iter();
     let Some(first) = arguments.next() else {
-        return argument_error("missing file for 'stack fmt'", stderr);
+        return output_argument_error(
+            machine_output::Command::Fmt,
+            output_mode,
+            "missing file for 'stack fmt'",
+            stdout,
+            stderr,
+        );
     };
     if first == OsStr::new("--help") || first == OsStr::new("-h") {
         if let Some(extra) = arguments.next() {
-            return argument_error(
+            return output_argument_error(
+                machine_output::Command::Fmt,
+                output_mode,
                 &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stdout,
                 stderr,
             );
         }
@@ -1569,45 +1804,79 @@ fn run_format(
 
     let (mode, input) = if first == OsStr::new("--check") {
         let Some(input) = arguments.next() else {
-            return argument_error("missing file for 'stack fmt --check'", stderr);
+            return output_argument_error(
+                machine_output::Command::Fmt,
+                output_mode,
+                "missing file for 'stack fmt --check'",
+                stdout,
+                stderr,
+            );
         };
         (FormatMode::Check, input)
     } else {
         (FormatMode::Write, first)
     };
     if input != OsStr::new("-") && input.to_string_lossy().starts_with('-') {
-        return argument_error(
+        return output_argument_error(
+            machine_output::Command::Fmt,
+            output_mode,
             &format!("unknown option '{}'", input.to_string_lossy()),
+            stdout,
             stderr,
         );
     }
     if let Some(extra) = arguments.next() {
-        return argument_error(
+        return output_argument_error(
+            machine_output::Command::Fmt,
+            output_mode,
             &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stdout,
             stderr,
         );
     }
 
-    if input == OsStr::new("-") {
-        format_stdin(mode, stdin, stdout, stderr)
-    } else {
-        format_file(mode, Path::new(&input), stderr)
+    match (output_mode, input == OsStr::new("-")) {
+        (OutputMode::Human, true) => format_stdin(mode, stdin, stdout, stderr),
+        (OutputMode::Human, false) => format_file(mode, Path::new(&input), stderr),
+        (OutputMode::Json, true) => format_stdin_json(mode, stdin, stdout, stderr),
+        (OutputMode::Json, false) => format_file_json(mode, Path::new(&input), stdout, stderr),
     }
 }
 
 fn run_check(
-    mut arguments: impl Iterator<Item = OsString>,
+    arguments: impl Iterator<Item = OsString>,
     stdout: &mut dyn Write,
     stderr: &mut dyn Write,
 ) -> u8 {
+    let parsed = output_arguments(arguments);
+    let mode = parsed.mode;
+    if parsed.duplicate_json {
+        return output_argument_error(
+            machine_output::Command::Check,
+            mode,
+            "duplicate '--json' option",
+            stdout,
+            stderr,
+        );
+    }
+    let mut arguments = parsed.values.into_iter();
     let Some(path) = arguments.next() else {
-        return argument_error("missing file for 'stack check'", stderr);
+        return output_argument_error(
+            machine_output::Command::Check,
+            mode,
+            "missing file for 'stack check'",
+            stdout,
+            stderr,
+        );
     };
 
     if path == OsStr::new("--help") || path == OsStr::new("-h") {
         if let Some(extra) = arguments.next() {
-            return argument_error(
+            return output_argument_error(
+                machine_output::Command::Check,
+                mode,
                 &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stdout,
                 stderr,
             );
         }
@@ -1615,13 +1884,19 @@ fn run_check(
     }
 
     if let Some(extra) = arguments.next() {
-        return argument_error(
+        return output_argument_error(
+            machine_output::Command::Check,
+            mode,
             &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stdout,
             stderr,
         );
     }
 
-    check_file(Path::new(&path), stderr)
+    match mode {
+        OutputMode::Human => check_file(Path::new(&path), stderr),
+        OutputMode::Json => check_file_json(Path::new(&path), stdout, stderr),
+    }
 }
 
 fn check_file(path: &Path, stderr: &mut dyn Write) -> u8 {
@@ -1668,6 +1943,77 @@ fn check_file_with(
     }
 }
 
+fn check_file_json(path: &Path, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8 {
+    check_file_json_with(path, stdout, stderr, |source| {
+        Engine::bundled().check(source)
+    })
+}
+
+fn check_file_json_with(
+    path: &Path,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+    check: impl FnOnce(&[u8]) -> Result<CheckOutput, OperationalError>,
+) -> u8 {
+    let source = match fs::read(path) {
+        Ok(source) => source,
+        Err(error) => {
+            return output_operational_error(
+                machine_output::Command::Check,
+                OutputMode::Json,
+                machine_output::IO_ERROR,
+                format!(
+                    "cannot read '{}': {}",
+                    path.display(),
+                    stable_io_error(error.kind())
+                ),
+                path,
+                &[],
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    };
+    let output = match check(&source) {
+        Ok(output) => output,
+        Err(error) => {
+            return output_operational_error(
+                machine_output::Command::Check,
+                OutputMode::Json,
+                machine_output::ENGINE_ERROR,
+                format!("cannot check '{}': {error}", path.display()),
+                path,
+                &[],
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    };
+    let has_errors = output
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.severity == Severity::Error);
+    let (outcome, exit_status) = if has_errors {
+        (machine_output::Outcome::StackError, EXIT_STACK_ERROR)
+    } else {
+        (machine_output::Outcome::Success, EXIT_SUCCESS)
+    };
+    write_machine_output(
+        machine_output::Envelope::result(
+            machine_output::Command::Check,
+            outcome,
+            exit_status,
+            path,
+            &output.diagnostics,
+            Vec::new(),
+        ),
+        stdout,
+        stderr,
+    )
+}
+
 fn render_file(
     path: &Path,
     destination: RenderDestination,
@@ -1704,6 +2050,204 @@ fn render_file(
         stderr,
         |source| engine.render(source),
         atomic_write_output,
+    )
+}
+
+fn render_file_json(
+    path: &Path,
+    destination: RenderDestination,
+    provider_pack_root: &Path,
+    allow_missing_provider_pack_root: bool,
+    notice_path: Option<&Path>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let provider_packs =
+        match load_provider_store(provider_pack_root, allow_missing_provider_pack_root) {
+            Ok(provider_packs) => provider_packs,
+            Err(reason) => {
+                return output_operational_error(
+                    machine_output::Command::Render,
+                    OutputMode::Json,
+                    machine_output::CONFIGURATION_ERROR,
+                    format!(
+                        "cannot load provider icon store '{}': {reason}",
+                        provider_pack_root.display()
+                    ),
+                    path,
+                    &[],
+                    Vec::new(),
+                    stdout,
+                    stderr,
+                );
+            }
+        };
+    let engine = match Engine::with_provider_packs(&provider_packs) {
+        Ok(engine) => engine,
+        Err(error) => {
+            return output_operational_error(
+                machine_output::Command::Render,
+                OutputMode::Json,
+                machine_output::ENGINE_ERROR,
+                format!("cannot load provider packs: {error}"),
+                path,
+                &[],
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    };
+    render_file_json_with(
+        path,
+        destination,
+        notice_path,
+        stdout,
+        stderr,
+        |source| engine.render(source),
+        atomic_write_output,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn render_file_json_with(
+    path: &Path,
+    destination: RenderDestination,
+    notice_path: Option<&Path>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+    render: impl FnOnce(&[u8]) -> Result<RenderOutput, OperationalError>,
+    mut write_output: impl FnMut(&Path, &[u8]) -> io::Result<()>,
+) -> u8 {
+    let source = match fs::read(path) {
+        Ok(source) => source,
+        Err(error) => {
+            return output_operational_error(
+                machine_output::Command::Render,
+                OutputMode::Json,
+                machine_output::IO_ERROR,
+                format!(
+                    "cannot read '{}': {}",
+                    path.display(),
+                    stable_io_error(error.kind())
+                ),
+                path,
+                &[],
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    };
+    let output = match render(&source) {
+        Ok(output) => output,
+        Err(error) => {
+            return output_operational_error(
+                machine_output::Command::Render,
+                OutputMode::Json,
+                machine_output::ENGINE_ERROR,
+                format!("cannot render '{}': {error}", path.display()),
+                path,
+                &[],
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    };
+    let has_errors = output
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.severity == Severity::Error);
+    if has_errors {
+        return write_machine_output(
+            machine_output::Envelope::result(
+                machine_output::Command::Render,
+                machine_output::Outcome::StackError,
+                EXIT_STACK_ERROR,
+                path,
+                &output.diagnostics,
+                Vec::new(),
+            ),
+            stdout,
+            stderr,
+        );
+    }
+    let Some(svg) = output.svg else {
+        return output_operational_error(
+            machine_output::Command::Render,
+            OutputMode::Json,
+            machine_output::INTERNAL_ERROR,
+            "renderer produced no SVG or error diagnostic".to_owned(),
+            path,
+            &output.diagnostics,
+            Vec::new(),
+            stdout,
+            stderr,
+        );
+    };
+
+    let mut artifacts = Vec::new();
+    match destination {
+        RenderDestination::Stdout => {
+            artifacts.push(machine_output::Artifact::rendered_svg(None, Some(svg)));
+        }
+        RenderDestination::File(output_path) => {
+            if let Err(error) = write_output(&output_path, svg.as_bytes()) {
+                return output_operational_error(
+                    machine_output::Command::Render,
+                    OutputMode::Json,
+                    machine_output::IO_ERROR,
+                    format!(
+                        "cannot write '{}': {}",
+                        output_path.display(),
+                        stable_io_error(error.kind())
+                    ),
+                    path,
+                    &output.diagnostics,
+                    artifacts,
+                    stdout,
+                    stderr,
+                );
+            }
+            artifacts.push(machine_output::Artifact::rendered_svg(
+                Some(&output_path),
+                None,
+            ));
+        }
+    }
+    if let Some(notice_path) = notice_path {
+        let notice = render_provider_notices(&output.provider_notices);
+        if let Err(error) = write_output(notice_path, notice.as_bytes()) {
+            return output_operational_error(
+                machine_output::Command::Render,
+                OutputMode::Json,
+                machine_output::IO_ERROR,
+                format!(
+                    "cannot write '{}': {}",
+                    notice_path.display(),
+                    stable_io_error(error.kind())
+                ),
+                path,
+                &output.diagnostics,
+                artifacts,
+                stdout,
+                stderr,
+            );
+        }
+        artifacts.push(machine_output::Artifact::provider_notice(notice_path));
+    }
+    write_machine_output(
+        machine_output::Envelope::result(
+            machine_output::Command::Render,
+            machine_output::Outcome::Success,
+            EXIT_SUCCESS,
+            path,
+            &output.diagnostics,
+            artifacts,
+        ),
+        stdout,
+        stderr,
     )
 }
 
@@ -2097,6 +2641,220 @@ fn format_stdin_with(
     } else {
         EXIT_SUCCESS
     }
+}
+
+fn format_file_json(
+    mode: FormatMode,
+    path: &Path,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let source = match fs::read(path) {
+        Ok(source) => source,
+        Err(error) => {
+            return output_operational_error(
+                machine_output::Command::Fmt,
+                OutputMode::Json,
+                machine_output::IO_ERROR,
+                format!(
+                    "cannot read '{}': {}",
+                    path.display(),
+                    stable_io_error(error.kind())
+                ),
+                path,
+                &[],
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    };
+    let output = match Engine::bundled().format(&source) {
+        Ok(output) => output,
+        Err(error) => {
+            return output_operational_error(
+                machine_output::Command::Fmt,
+                OutputMode::Json,
+                machine_output::ENGINE_ERROR,
+                format!("cannot format '{}': {error}", path.display()),
+                path,
+                &[],
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    };
+    write_format_json_result(
+        mode,
+        path,
+        &source,
+        output,
+        Some(path),
+        |formatted| atomic_replace(path, formatted),
+        stdout,
+        stderr,
+    )
+}
+
+fn format_stdin_json(
+    mode: FormatMode,
+    stdin: &mut dyn Read,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let diagnostics_path = Path::new("<stdin>");
+    let mut source = Vec::new();
+    if stdin.read_to_end(&mut source).is_err() {
+        return output_operational_error(
+            machine_output::Command::Fmt,
+            OutputMode::Json,
+            machine_output::IO_ERROR,
+            "cannot read standard input".to_owned(),
+            diagnostics_path,
+            &[],
+            Vec::new(),
+            stdout,
+            stderr,
+        );
+    }
+    let output = match Engine::bundled().format(&source) {
+        Ok(output) => output,
+        Err(error) => {
+            return output_operational_error(
+                machine_output::Command::Fmt,
+                OutputMode::Json,
+                machine_output::ENGINE_ERROR,
+                format!("cannot format stdin: {error}"),
+                diagnostics_path,
+                &[],
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    };
+    write_format_json_result(
+        mode,
+        diagnostics_path,
+        &source,
+        output,
+        None,
+        |_| Ok(()),
+        stdout,
+        stderr,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn write_format_json_result(
+    mode: FormatMode,
+    diagnostics_path: &Path,
+    source: &[u8],
+    output: FormatOutput,
+    artifact_path: Option<&Path>,
+    replace: impl FnOnce(&[u8]) -> io::Result<()>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let has_errors = output
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.severity == Severity::Error);
+    let Some(formatted) = output.formatted_source else {
+        if has_errors {
+            return write_machine_output(
+                machine_output::Envelope::result(
+                    machine_output::Command::Fmt,
+                    machine_output::Outcome::StackError,
+                    EXIT_STACK_ERROR,
+                    diagnostics_path,
+                    &output.diagnostics,
+                    Vec::new(),
+                ),
+                stdout,
+                stderr,
+            );
+        }
+        return output_operational_error(
+            machine_output::Command::Fmt,
+            OutputMode::Json,
+            machine_output::INTERNAL_ERROR,
+            "formatter produced no source or error diagnostic".to_owned(),
+            diagnostics_path,
+            &output.diagnostics,
+            Vec::new(),
+            stdout,
+            stderr,
+        );
+    };
+    let changed = formatted.as_bytes() != source;
+
+    if mode == FormatMode::Check {
+        let (outcome, exit_status) = if has_errors {
+            (machine_output::Outcome::StackError, EXIT_STACK_ERROR)
+        } else if changed {
+            (machine_output::Outcome::ChangesRequired, EXIT_STACK_ERROR)
+        } else {
+            (machine_output::Outcome::Success, EXIT_SUCCESS)
+        };
+        return write_machine_output(
+            machine_output::Envelope::result(
+                machine_output::Command::Fmt,
+                outcome,
+                exit_status,
+                diagnostics_path,
+                &output.diagnostics,
+                Vec::new(),
+            ),
+            stdout,
+            stderr,
+        );
+    }
+
+    if changed {
+        if let Err(error) = replace(formatted.as_bytes()) {
+            let target = artifact_path.unwrap_or(diagnostics_path);
+            return output_operational_error(
+                machine_output::Command::Fmt,
+                OutputMode::Json,
+                machine_output::IO_ERROR,
+                format!(
+                    "cannot replace '{}': {}",
+                    target.display(),
+                    stable_io_error(error.kind())
+                ),
+                diagnostics_path,
+                &output.diagnostics,
+                Vec::new(),
+                stdout,
+                stderr,
+            );
+        }
+    }
+
+    let content = artifact_path.is_none().then_some(formatted);
+    let artifacts = vec![machine_output::Artifact::formatted_source(
+        artifact_path,
+        content,
+    )];
+    let (outcome, exit_status) = if has_errors {
+        (machine_output::Outcome::StackError, EXIT_STACK_ERROR)
+    } else {
+        (machine_output::Outcome::Success, EXIT_SUCCESS)
+    };
+    write_machine_output(
+        machine_output::Envelope::result(
+            machine_output::Command::Fmt,
+            outcome,
+            exit_status,
+            diagnostics_path,
+            &output.diagnostics,
+            artifacts,
+        ),
+        stdout,
+        stderr,
+    )
 }
 
 fn atomic_replace(path: &Path, contents: &[u8]) -> io::Result<()> {
@@ -3336,5 +4094,318 @@ mod tests {
         );
         assert!(stdout.is_empty());
         assert!(fs::remove_file(path).is_ok());
+    }
+
+    #[test]
+    fn machine_output_failures_and_artifact_edges_remain_structured() {
+        let path = std::env::temp_dir().join(format!(
+            "stack-cli-machine-output-{}.stack",
+            std::process::id()
+        ));
+        let missing = path.with_extension("missing");
+        let notice_path = path.with_extension("NOTICE.md");
+        let provider_root = path.with_extension("icons");
+        let valid_source = b"stack 1.0 diagram \"Valid\" { node api \"API\" }";
+        assert!(fs::write(&path, valid_source).is_ok());
+
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        assert_eq!(
+            check_file_json_with(&path, &mut stdout, &mut stderr, |_| {
+                Err(OperationalError::InvalidIntermediateRepresentation {
+                    reason: "test failure",
+                })
+            }),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(stderr.is_empty());
+        assert!(String::from_utf8_lossy(&stdout).contains("\"code\":\"CLI1004\""));
+
+        stdout.clear();
+        assert_eq!(
+            format_file_json(FormatMode::Write, &missing, &mut stdout, &mut stderr),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"code\":\"CLI1002\""));
+
+        stdout.clear();
+        assert_eq!(
+            format_stdin_json(
+                FormatMode::Write,
+                &mut FailingReader,
+                &mut stdout,
+                &mut stderr
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("cannot read standard input"));
+
+        let valid_format = Engine::bundled().format(valid_source);
+        assert!(valid_format.is_ok());
+        let Ok(mut empty_format) = valid_format else {
+            return;
+        };
+        empty_format.formatted_source = None;
+        empty_format.diagnostics.clear();
+        stdout.clear();
+        assert_eq!(
+            write_format_json_result(
+                FormatMode::Write,
+                &path,
+                valid_source,
+                empty_format,
+                Some(&path),
+                |_| Ok(()),
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"code\":\"CLI1005\""));
+
+        let syntax = b"stack 1.0 diagram \"Incomplete\" {";
+        let syntax_format = Engine::bundled().format(syntax);
+        assert!(syntax_format.is_ok());
+        let Ok(syntax_format) = syntax_format else {
+            return;
+        };
+        stdout.clear();
+        assert_eq!(
+            write_format_json_result(
+                FormatMode::Write,
+                &path,
+                syntax,
+                syntax_format,
+                Some(&path),
+                |_| Ok(()),
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_STACK_ERROR
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"outcome\":\"stack-error\""));
+
+        let canonical = b"stack 1.0\n\ndiagram \"Valid\" {\n  node api \"API\"\n}\n";
+        let clean_format = Engine::bundled().format(canonical);
+        assert!(clean_format.is_ok());
+        let Ok(clean_format) = clean_format else {
+            return;
+        };
+        stdout.clear();
+        assert_eq!(
+            write_format_json_result(
+                FormatMode::Check,
+                &path,
+                canonical,
+                clean_format,
+                Some(&path),
+                |_| Ok(()),
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_SUCCESS
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"outcome\":\"success\""));
+
+        let unformatted = b"stack 1.0 diagram \"Valid\"{node api \"API\"}";
+        let replace_failure = Engine::bundled().format(unformatted);
+        assert!(replace_failure.is_ok());
+        let Ok(replace_failure) = replace_failure else {
+            return;
+        };
+        stdout.clear();
+        assert_eq!(
+            write_format_json_result(
+                FormatMode::Write,
+                &path,
+                unformatted,
+                replace_failure,
+                Some(&path),
+                |_| Err(io::Error::from(io::ErrorKind::PermissionDenied)),
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("permission denied"));
+
+        let semantic = b"stack 1.0 diagram \"Invalid\" { node api \"A\" node api \"B\" }";
+        let semantic_format = Engine::bundled().format(semantic);
+        assert!(semantic_format.is_ok());
+        let Ok(semantic_format) = semantic_format else {
+            return;
+        };
+        stdout.clear();
+        assert_eq!(
+            write_format_json_result(
+                FormatMode::Write,
+                &path,
+                semantic,
+                semantic_format,
+                None,
+                |_| Ok(()),
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_STACK_ERROR
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"related\":[{"));
+        assert!(String::from_utf8_lossy(&stdout).contains("\"formatted-source\""));
+
+        stdout.clear();
+        assert_eq!(
+            render_file_json_with(
+                &missing,
+                RenderDestination::Stdout,
+                None,
+                &mut stdout,
+                &mut stderr,
+                |source| Engine::bundled().render(source),
+                atomic_write_output,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"code\":\"CLI1002\""));
+
+        stdout.clear();
+        assert_eq!(
+            render_file_json_with(
+                &path,
+                RenderDestination::Stdout,
+                None,
+                &mut stdout,
+                &mut stderr,
+                |_| {
+                    Err(OperationalError::InvalidIntermediateRepresentation {
+                        reason: "test failure",
+                    })
+                },
+                atomic_write_output,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"code\":\"CLI1004\""));
+
+        let valid_render = Engine::bundled().render(valid_source);
+        assert!(valid_render.is_ok());
+        let Ok(mut empty_render) = valid_render else {
+            return;
+        };
+        empty_render.svg = None;
+        empty_render.diagnostics.clear();
+        stdout.clear();
+        assert_eq!(
+            render_file_json_with(
+                &path,
+                RenderDestination::Stdout,
+                None,
+                &mut stdout,
+                &mut stderr,
+                |_| Ok(empty_render),
+                atomic_write_output,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"code\":\"CLI1005\""));
+
+        let syntax_render = Engine::bundled().render(syntax);
+        assert!(syntax_render.is_ok());
+        let Ok(syntax_render) = syntax_render else {
+            return;
+        };
+        stdout.clear();
+        assert_eq!(
+            render_file_json_with(
+                &path,
+                RenderDestination::Stdout,
+                None,
+                &mut stdout,
+                &mut stderr,
+                |_| Ok(syntax_render),
+                atomic_write_output,
+            ),
+            EXIT_STACK_ERROR
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"outcome\":\"stack-error\""));
+
+        let output_path = path.with_extension("svg");
+        stdout.clear();
+        assert_eq!(
+            render_file_json_with(
+                &path,
+                RenderDestination::File(output_path),
+                None,
+                &mut stdout,
+                &mut stderr,
+                |source| Engine::bundled().render(source),
+                |_, _| Err(io::Error::from(io::ErrorKind::PermissionDenied)),
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("permission denied"));
+
+        stdout.clear();
+        assert_eq!(
+            render_file_json_with(
+                &path,
+                RenderDestination::Stdout,
+                Some(&notice_path),
+                &mut stdout,
+                &mut stderr,
+                |source| Engine::bundled().render(source),
+                |_, _| Ok(()),
+            ),
+            EXIT_SUCCESS
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"provider-notice\""));
+
+        stdout.clear();
+        assert_eq!(
+            render_file_json_with(
+                &path,
+                RenderDestination::Stdout,
+                Some(&notice_path),
+                &mut stdout,
+                &mut stderr,
+                |source| Engine::bundled().render(source),
+                |_, _| Err(io::Error::from(io::ErrorKind::PermissionDenied)),
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"artifacts\":[{"));
+
+        assert!(fs::write(&provider_root, b"not a directory").is_ok());
+        stdout.clear();
+        assert_eq!(
+            render_file_json(
+                &path,
+                RenderDestination::Stdout,
+                &provider_root,
+                false,
+                None,
+                &mut stdout,
+                &mut stderr,
+            ),
+            EXIT_USAGE_OR_IO
+        );
+        assert!(String::from_utf8_lossy(&stdout).contains("\"code\":\"CLI1003\""));
+
+        let envelope = machine_output::Envelope::result(
+            machine_output::Command::Check,
+            machine_output::Outcome::Success,
+            EXIT_SUCCESS,
+            &path,
+            &[],
+            Vec::new(),
+        );
+        stderr.clear();
+        assert_eq!(
+            write_machine_output(envelope, &mut FailingWriter, &mut stderr),
+            EXIT_USAGE_OR_IO
+        );
+        assert_eq!(stderr, b"error: cannot write JSON output\n");
+
+        assert!(fs::remove_file(path).is_ok());
+        assert!(fs::remove_file(provider_root).is_ok());
     }
 }

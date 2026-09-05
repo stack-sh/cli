@@ -32,6 +32,14 @@ jobs:
         run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
       - name: Validate provider catalogs
         run: node scripts/validate-provider-catalogs.mjs
+      - name: Install JSON Schema validation dependencies
+        run: npm ci --ignore-scripts --no-audit
+      - name: Validate machine-readable output schema
+        run: |
+          node --check examples/consume-cli-json.mjs
+          node --check scripts/cli-output-schema.test.mjs
+          node --check scripts/validate-cli-output-schema.mjs
+          npm run test:cli-output-schema
       - name: Validate distribution contract
         run: |
           node scripts/validate-distribution-contract.mjs
@@ -98,6 +106,10 @@ jobs:
         run: cargo +stable fmt --check
       - name: Run tests
         run: cargo +stable test --locked
+      - name: Run machine-readable consumer prototype
+        env:
+          STACK_BINARY: target/debug/stack
+        run: npm run test:consumer-prototype
       - name: Validate generated completion and manual assets
         shell: bash
         run: |
@@ -196,6 +208,7 @@ jobs:
           test -s CONTRIBUTING.md
           test -s SECURITY.md
           test -s docs/language-server.md
+          test -s docs/machine-readable-output.md
           test -s docs/configuration.md
           test -s docs/completions.md
           test -s docs/self-update.md
@@ -209,15 +222,19 @@ jobs:
           test -s distribution/distribution-contract.schema.json
           test -s distribution/install-receipt.schema.json
           test -s distribution/release-manifest.schema.json
+          test -s schemas/cli-output-v1.schema.json
           test -s distribution/generated/share/bash-completion/completions/stack
           test -s distribution/generated/share/zsh/site-functions/_stack
           test -s distribution/generated/share/fish/vendor_completions.d/stack.fish
           test -s distribution/generated/share/man/man1/stack.1
           test -s Cargo.toml
           test -s Cargo.lock
+          test -s package.json
+          test -s package-lock.json
           test -s src/config.rs
           test -s src/command_docs.rs
           test -s src/lsp.rs
+          test -s src/machine_output.rs
           test -s src/update.rs
           test -s src/update/install.rs
           test -s src/update/tests.rs
@@ -230,6 +247,8 @@ jobs:
           test -s catalogs/azure.json
           test -s catalogs/simple-icons.json
           test -s scripts/generate-provider-catalogs.mjs
+          test -s scripts/cli-output-schema.test.mjs
+          test -s scripts/validate-cli-output-schema.mjs
           test -s scripts/aqua-registry.test.mjs
           test -s scripts/sync-example-templates.mjs
           test -s scripts/validate-provider-catalogs.mjs
@@ -260,6 +279,16 @@ jobs:
           test -s templates/sources/01-minimal.stack
           test -s tests/specification-revision
           test -s tests/fixtures/render.stack
+          test -s tests/fixtures/invalid.stack
+          test -s tests/fixtures/warning.stack
+          test -s tests/fixtures/cli-output/check-success.json
+          test -s tests/fixtures/cli-output/check-warning.json
+          test -s tests/fixtures/cli-output/check-stack-error.json
+          test -s tests/fixtures/cli-output/fmt-changes-required.json
+          test -s tests/fixtures/cli-output/fmt-stdin-success.json
+          test -s tests/fixtures/cli-output/render-file-success.json
+          test -s tests/fixtures/cli-output/operational-error.json
+          test -s examples/consume-cli-json.mjs
           test -s tests/snapshots/lsp-help.txt
           test -s tests/snapshots/doctor-help.txt
           test -s tests/snapshots/doctor-report.txt

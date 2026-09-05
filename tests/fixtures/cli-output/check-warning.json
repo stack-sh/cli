@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stack-sh/cli/main/schemas/cli-output-v1.schema.json",
+  "schemaVersion": 1,
+  "command": "check",
+  "outcome": "success",
+  "exitStatus": 0,
+  "diagnostics": [
+    {
+      "code": "STK6001",
+      "severity": "warning",
+      "message": "theme 'neon' is unavailable; default theme was used",
+      "path": "<SOURCE>",
+      "range": {
+        "start": { "byteOffset": 37, "line": 1, "column": 38 },
+        "end": { "byteOffset": 41, "line": 1, "column": 42 }
+      },
+      "expected": [],
+      "help": "Install the requested theme or select an available theme.",
+      "related": []
+    }
+  ],
+  "artifacts": [],
+  "error": null
+}

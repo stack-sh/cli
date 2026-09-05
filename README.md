@@ -35,11 +35,13 @@ stack init
 stack init --template groups-and-layout
 stack init --template aws-serverless-checkout -o checkout.stack
 stack check arch.stack
+stack check arch.stack --json
 stack fmt arch.stack
 stack fmt --check arch.stack
 stack fmt -
 stack render arch.stack
 stack render arch.stack -o arch.svg
+stack render arch.stack --json
 stack update --check
 stack lsp
 stack doctor
@@ -60,6 +62,8 @@ stack manpage
 `stack init` creates `diagram.stack` from the versioned `hello-stack` template without prompting. Use `--template <ID>` to select any of the nine curated examples shared with the public Stack specification and Web gallery, and `-o` / `--output` to choose another file. Existing paths are never replaced unless `--force` is explicit; forced writes use the same atomic output behavior as rendering. Provider templates print the exact `stack icons import` commands needed for branded rendering and remain valid with deterministic fallback icons when packs are absent. The embedded catalog and source bytes are pinned by `tests/specification-revision`, and CI rejects drift from that public specification commit.
 
 `stack check` reads the file as bytes and runs the full compiler, theme, layout, and routing validation pipeline without changing the source. Diagnostics are written to standard error in source order. Standard output remains empty.
+
+`stack check`, `stack fmt`, and `stack render` accept `--json` for CI, editor, and agent consumers. JSON mode preserves exit statuses and emits one versioned envelope containing structured diagnostics, completed artifacts, and operational errors. Inline formatted source and SVG are carried as artifact content so standard output remains valid JSON. See the [machine-readable output contract](./docs/machine-readable-output.md) and its immutable [version 1 JSON Schema](./schemas/cli-output-v1.schema.json).
 
 `stack fmt` uses the engine formatter and preserves comments. File mode replaces changed source atomically through a temporary file in the same directory; unchanged files are not replaced. Syntax, encoding, and host I/O failures leave the original file untouched. `stack fmt -` reads bytes from standard input and writes only canonical source to standard output. `--check` never writes source and exits with status `1` when formatting is required.
 
