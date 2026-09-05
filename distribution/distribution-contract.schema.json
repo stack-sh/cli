@@ -76,6 +76,7 @@
         "signatureBundleNameTemplate",
         "sbomNameTemplate",
         "provenanceNameTemplate",
+        "sbomAttestationNameTemplate",
         "checksumAlgorithm",
         "reproducibility"
       ],
@@ -93,6 +94,7 @@
         "signatureBundleNameTemplate": { "$ref": "#/$defs/template" },
         "sbomNameTemplate": { "$ref": "#/$defs/template" },
         "provenanceNameTemplate": { "$ref": "#/$defs/template" },
+        "sbomAttestationNameTemplate": { "$ref": "#/$defs/template" },
         "checksumAlgorithm": { "const": "sha256" },
         "reproducibility": {
           "type": "object",

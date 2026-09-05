@@ -34,7 +34,8 @@ For every supported Rust target, publish:
 ```text
 stack-v{version}-{target}.tar.gz
 stack-v{version}-{target}.spdx.json
-stack-v{version}-{target}.intoto.jsonl
+stack-v{version}-{target}.provenance.sigstore.json
+stack-v{version}-{target}.sbom.sigstore.json
 ```
 
 Each archive contains one directory named `stack-v{version}-{target}` with `stack`, `LICENSE`, `NOTICE`, and `THIRD_PARTY_LICENSES.md`. Archives use bytewise path order, numeric uid/gid 0, `SOURCE_DATE_EPOCH` for entry times, and a gzip header without a source filename or wall-clock timestamp.
@@ -47,9 +48,9 @@ stack-v{version}-checksums.txt
 stack-v{version}-checksums.txt.sigstore.json
 ```
 
-The sorted checksum file uses SHA-256 and covers the release manifest, all archives, all SPDX SBOMs, and all SLSA-compatible provenance files. A keyless Sigstore bundle signs the checksum file; GitHub's [artifact attestation model](https://docs.github.com/actions/concepts/security/artifact-attestations) is the trust baseline. The immutable GitHub Release asset is the canonical binary byte sequence; Homebrew and Aqua must reference its URL and digest instead of rebuilding or repacking it. Aqua uses its [`github_release` package mapping](https://aquaproj.github.io/docs/reference/registry-config/github-release-package) rather than a separate binary build.
+The sorted checksum file uses SHA-256 and covers the release manifest, all archives, all SPDX SBOMs, and the per-target provenance and SBOM attestation bundles. A keyless Sigstore bundle signs the checksum file; GitHub's [artifact attestation model](https://docs.github.com/actions/concepts/security/artifact-attestations) is the trust baseline. The immutable GitHub Release asset is the canonical binary byte sequence; Homebrew and Aqua must reference its URL and digest instead of rebuilding or repacking it. Aqua uses its [`github_release` package mapping](https://aquaproj.github.io/docs/reference/registry-config/github-release-package) rather than a separate binary build.
 
-The release manifest records the tag, commit, source version, `minimumSupportedCliVersion`, each target's artifact names and SHA-256 values, the build identity, and each channel whose own install smoke test passed. The release implementation must version and validate that manifest schema before publishing.
+The release manifest records the tag, commit, source version, `minimumSupportedCliVersion`, each target's artifact names and SHA-256 values, the build identity, and each channel whose own install smoke test passed. Its schema is [`distribution/release-manifest.schema.json`](../distribution/release-manifest.schema.json). Supply-chain generation and user verification are documented in the [supply-chain guide](./supply-chain.md).
 
 ## Channel ownership
 

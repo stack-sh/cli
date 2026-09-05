@@ -2,7 +2,7 @@
 
 `stack-sh/cli` is the open-source native Rust `stack` command for Stack architecture diagrams.
 
-The repository contains native validation, formatting, and rendering commands. The interface remains pre-release and no supported binary distribution is published yet. The planned target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md).
+The repository contains native validation, formatting, and rendering commands. The interface remains pre-release and no supported binary distribution is published yet. The planned target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
 
 ## Commands
 
@@ -60,7 +60,7 @@ cargo test --locked
 cargo clippy --all-targets --all-features --locked -- -D warnings
 ```
 
-CI validates formatting, unit and process-level integration tests, at least 90% line/region coverage and 95% function coverage, Clippy, documentation, a release build, `--help`, and `--version` on stable Rust. Tests and Clippy also run on Rust 1.85.
+CI validates formatting, unit and process-level integration tests, release metadata and workflow security policies, at least 90% line/region coverage and 95% function coverage, Clippy, documentation, a release build, `--help`, and `--version` on stable Rust. Tests and Clippy also run on Rust 1.85.
 
 Canonical formatter behavior is checked against the pinned `stack-sh/specification` fixture revision recorded in `tests/specification-revision`.
 

@@ -36,6 +36,12 @@ jobs:
         run: |
           node scripts/validate-distribution-contract.mjs
           node --test scripts/distribution-contract.test.mjs
+      - name: Validate release supply chain
+        run: |
+          node --check scripts/create-supply-chain-smoke-fixture.mjs
+          node --check scripts/release-security.mjs
+          node scripts/validate-supply-chain-workflow.mjs
+          node --test scripts/release-security.test.mjs scripts/supply-chain-workflow.test.mjs
       - name: Validate pinned example templates
         env:
           STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
@@ -104,8 +110,10 @@ jobs:
           test -s docs/publication-audit.md
           test -s docs/provider-icon-import.md
           test -s docs/distribution.md
+          test -s docs/supply-chain.md
           test -s distribution/distribution-contract.json
           test -s distribution/distribution-contract.schema.json
+          test -s distribution/release-manifest.schema.json
           test -s Cargo.toml
           test -s Cargo.lock
           test -s src/config.rs
@@ -122,6 +130,12 @@ jobs:
           test -s scripts/validate-provider-catalogs.mjs
           test -s scripts/validate-distribution-contract.mjs
           test -s scripts/distribution-contract.test.mjs
+          test -s scripts/create-supply-chain-smoke-fixture.mjs
+          test -s scripts/release-security.mjs
+          test -s scripts/release-security.test.mjs
+          test -s scripts/validate-supply-chain-workflow.mjs
+          test -s scripts/supply-chain-workflow.test.mjs
+          test -s .github/workflows/supply-chain.yaml
           test -s templates/catalog.json
           test -s templates/sources/01-minimal.stack
           test -s tests/specification-revision

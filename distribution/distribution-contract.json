@@ -36,7 +36,8 @@
     "checksumNameTemplate": "stack-v{version}-checksums.txt",
     "signatureBundleNameTemplate": "stack-v{version}-checksums.txt.sigstore.json",
     "sbomNameTemplate": "stack-v{version}-{target}.spdx.json",
-    "provenanceNameTemplate": "stack-v{version}-{target}.intoto.jsonl",
+    "provenanceNameTemplate": "stack-v{version}-{target}.provenance.sigstore.json",
+    "sbomAttestationNameTemplate": "stack-v{version}-{target}.sbom.sigstore.json",
     "checksumAlgorithm": "sha256",
     "reproducibility": {
       "archiveOrder": "bytewise path order",
