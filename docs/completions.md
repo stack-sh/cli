@@ -18,7 +18,7 @@ The published release archive stores the exact same bytes at these paths:
 | fish | `share/fish/vendor_completions.d/stack.fish` |
 | manual | `share/man/man1/stack.1` |
 
-The source tree after Stack CLI 0.3.0 contains these commands and assets. The immutable 0.3.0 archives predate them; do not infer that an older installed binary can generate them.
+Stack CLI 0.4.0 is the first published release containing these commands and assets. Older installed binaries cannot generate them.
 
 ## Homebrew
 

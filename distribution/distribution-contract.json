@@ -11,7 +11,7 @@
   },
   "availability": {
     "state": "available",
-    "message": "Stack CLI 0.3.0 is available from GitHub Releases, Homebrew, and the owner-maintained Aqua registry. Cargo and self-update remain planned."
+    "message": "Stack CLI 0.4.0 is available from GitHub Releases, Homebrew, and the owner-maintained Aqua registry. Cargo and self-update remain planned."
   },
   "versioning": {
     "scheme": "Semantic Versioning",

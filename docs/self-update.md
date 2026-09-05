@@ -2,7 +2,7 @@
 
 `stack update` updates only a direct GitHub Release installation that has a matching Stack installation receipt. It never claims an unreceipted binary and never replaces an installation owned by Homebrew, Aqua, Cargo, or an unknown installer.
 
-The command is implemented in the source tree after Stack CLI 0.3.0. The published 0.3.0 binary does not contain it, and the documented 0.3.0 manual installation does not create a receipt. The self-update channel therefore remains **planned** until a later release both activates `self-update` in its authenticated release manifest and has a verified direct installer that creates the receipt. Do not describe 0.3.0 as self-updatable.
+The command is included in Stack CLI 0.4.0, but that release's authenticated manifest lists only `github-release`, and the documented manual installation does not create a receipt. The self-update channel therefore remains **planned** until a later release both activates `self-update` in its authenticated release manifest and has a verified direct installer that creates the receipt. Do not describe 0.4.0 as self-updatable.
 
 ## Commands
 

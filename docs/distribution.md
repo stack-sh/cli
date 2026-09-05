@@ -2,7 +2,7 @@
 
 This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, Aqua, and `stack` self-update implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
 
-[Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. Cargo and self-update remain **planned** and have no supported install command yet.
+[Stack CLI 0.4.0](https://github.com/stack-sh/cli/releases/tag/v0.4.0) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. Cargo and self-update remain **planned** and have no supported install command yet.
 
 ## Supported platform matrix
 
@@ -81,7 +81,7 @@ brew uninstall stack-sh/tap/stack
 
 For releases carrying the generated assets, the formula installs bash, zsh, and fish completions plus `stack.1` through Homebrew's standard path helpers. It does not edit shell startup files. The formula does not remove or replace Stack configuration and icon stores during an upgrade or uninstall. Formula updates verify release checksums, provenance, and SBOM attestations before changing the archive mapping. The fail-closed update and recovery procedure is maintained in the tap's [maintainer guide](https://github.com/stack-sh/homebrew-tap/blob/main/docs/maintaining.md).
 
-Homebrew was activated after the immutable `v0.3.0` release assets were published. The release manifest therefore remains the publication-time record, while this contract and the tap CI record the later channel activation; release assets are not replaced to retrofit that state.
+The Homebrew v0.4.0 formula was activated after the immutable release assets were published. Its macOS ARM64, Linux ARM64, and Linux x86_64 lifecycle tests verify the archived completion and manual bytes during install, upgrade, and uninstall. The release manifest remains the publication-time record with only `github-release` in `verifiedChannels`; this contract and the tap CI record the later channel verification without replacing any release asset.
 
 ## Aqua installation
 
@@ -101,7 +101,7 @@ registries:
     ref: 42702cda91a4156901b9a601bd143c43dcf05766
     path: aqua/registry.yaml
 packages:
-  - name: stack-sh/cli@v0.3.0
+  - name: stack-sh/cli@v0.4.0
     registry: stack-sh
 ```
 
@@ -132,24 +132,24 @@ stack --version
 
 Commit `aqua-checksums.json` with the configuration. To upgrade after a new stable Stack release, run `aqua update`, review the version change, then run `aqua update-checksum` and `aqua install`. Aqua owns the replacement; `stack` self-update must refuse to overwrite it. The registry maintainer procedure and four-target test command are in [`aqua/README.md`](../aqua/README.md).
 
-Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. On a release that includes the generator, use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
+Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. Stack CLI 0.4.0 includes the generators; use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
 
-Aqua was activated after the immutable `v0.3.0` release assets were published. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later activation evidence. No release asset is replaced.
+The Aqua v0.4.0 pin was activated after the immutable release assets were published. CI verifies all four target mappings without executing foreign binaries, then installs the native archive and compares all completion and manual generator bytes. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later verification evidence. No release asset is replaced.
 
 ## Direct installation
 
-Download [Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0), select the archive whose target matches the supported platform table, and obtain all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. Replace `{target}` with the exact release target:
+Download [Stack CLI 0.4.0](https://github.com/stack-sh/cli/releases/tag/v0.4.0), select the archive whose target matches the supported platform table, and obtain all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. Replace `{target}` with the exact release target:
 
 ```sh
-tar -xzf "stack-v0.3.0-{target}.tar.gz"
+tar -xzf "stack-v0.4.0-{target}.tar.gz"
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "stack-v0.3.0-{target}/stack" "$HOME/.local/bin/stack"
+install -m 0755 "stack-v0.4.0-{target}/stack" "$HOME/.local/bin/stack"
 "$HOME/.local/bin/stack" --version
 ```
 
-Add `$HOME/.local/bin` to `PATH` if it is not already present. This manual installation has no self-update receipt. The source tree after 0.3.0 contains `stack update`, but the published 0.3.0 binary does not, and this installation cannot be claimed retroactively without risking a package-manager-owned binary. Self-update remains unavailable until a later release and verified direct installer separately activate the channel. The command and receipt contract are documented in the [self-update guide](./self-update.md).
+Add `$HOME/.local/bin` to `PATH` if it is not already present. This manual installation has no self-update receipt. Although 0.4.0 contains `stack update`, its release manifest does not activate `self-update`, and an unreceipted binary cannot be claimed retroactively without risking a package-manager-owned installation. Self-update remains unavailable until a later release and verified direct installer separately activate the channel. The command and receipt contract are documented in the [self-update guide](./self-update.md).
 
-On a future archive that carries completion and manual assets, either copy the verified `share/` files into the matching system prefix or use the installed binary to generate user-owned files following the [completion guide](./completions.md). Do not copy these files from a different Stack version; CI and release verification require them to match the binary's command definition.
+The 0.4.0 archive carries completion and manual assets. Either copy its verified `share/` files into the matching system prefix or use the installed binary to generate user-owned files following the [completion guide](./completions.md). Do not copy these files from a different Stack version; CI and release verification require them to match the binary's command definition.
 
 ## Channel ownership
 

@@ -57,11 +57,16 @@ jobs:
           smoke_directory="$RUNNER_TEMP/aqua-smoke"
           mkdir -p "$smoke_directory"
           AQUA_ROOT_DIR="$native_root" aqua install
-          "$native_root/bin/stack" --version
+          expected_version=$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync("distribution/distribution-contract.json", "utf8")).product.currentSourceVersion)')
+          test "$("$native_root/bin/stack" --version)" = "stack $expected_version"
           "$native_root/bin/stack" init -o "$smoke_directory/diagram.stack"
           "$native_root/bin/stack" check "$smoke_directory/diagram.stack"
           "$native_root/bin/stack" render "$smoke_directory/diagram.stack" -o "$smoke_directory/diagram.svg"
           test -s "$smoke_directory/diagram.svg"
+          "$native_root/bin/stack" completions bash | cmp distribution/generated/share/bash-completion/completions/stack -
+          "$native_root/bin/stack" completions zsh | cmp distribution/generated/share/zsh/site-functions/_stack -
+          "$native_root/bin/stack" completions fish | cmp distribution/generated/share/fish/vendor_completions.d/stack.fish -
+          "$native_root/bin/stack" manpage | cmp distribution/generated/share/man/man1/stack.1 -
       - name: Validate release supply chain
         run: |
           node --check scripts/create-supply-chain-smoke-fixture.mjs

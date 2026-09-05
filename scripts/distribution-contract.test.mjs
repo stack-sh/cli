@@ -40,6 +40,19 @@ test("source version drift is rejected", () => {
   assert.throws(() => validateDistributionContract(candidate, cargoToml), /must match Cargo.toml/);
 });
 
+test("a stale stable release in the availability message is rejected", () => {
+  const candidate = changed((value) => {
+    value.availability.message = value.availability.message.replace(
+      `Stack CLI ${value.product.currentSourceVersion}`,
+      "Stack CLI 0.0.0",
+    );
+  });
+  assert.throws(
+    () => validateDistributionContract(candidate, cargoToml),
+    /must identify the verified stable GitHub release/,
+  );
+});
+
 test("an unverified crates.io package name is rejected", () => {
   const candidate = changed((value) => {
     value.product.publishedCargoPackage = "stack-cli";
