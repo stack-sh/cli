@@ -3,6 +3,7 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+import zlib
 
 from scripts.package_release import create_archive, verify_archive
 
@@ -89,7 +90,9 @@ class PackageReleaseTest(unittest.TestCase):
         contents = bytearray(archive.read_bytes())
         contents[len(contents) // 2] ^= 0xFF
         archive.write_bytes(contents)
-        with self.assertRaises((gzip.BadGzipFile, tarfile.TarError, EOFError, OSError, ValueError)):
+        with self.assertRaises(
+            (gzip.BadGzipFile, tarfile.TarError, EOFError, OSError, ValueError, zlib.error)
+        ):
             verify_archive(archive, self.target, self.version, self.source_date_epoch, self.binary)
 
 

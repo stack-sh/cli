@@ -8,6 +8,7 @@ import re
 import stat
 import tarfile
 import tempfile
+import zlib
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -243,7 +244,7 @@ def main():
                 arguments.binary,
             )
             print(f"verified {result['archive']} ({result['entries']} entries, sha256:{result['sha256']})")
-    except (OSError, tarfile.TarError, ValueError) as error:
+    except (OSError, tarfile.TarError, ValueError, zlib.error) as error:
         raise SystemExit(str(error)) from error
 
 
