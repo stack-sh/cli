@@ -151,6 +151,7 @@ jobs:
           test -s Cargo.toml
           test -s Cargo.lock
           test -s src/config.rs
+          test -s src/lsp.rs
           test -s src/main.rs
           test -s src/templates.rs
           test -s src/provider.rs
@@ -188,6 +189,7 @@ jobs:
           test -s templates/sources/01-minimal.stack
           test -s tests/specification-revision
           test -s tests/fixtures/render.stack
+          test -s tests/snapshots/lsp-help.txt
 
   msrv:
     name: Minimum supported Rust
