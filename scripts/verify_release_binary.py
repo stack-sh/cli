@@ -93,6 +93,10 @@ def verify_commands(binary, version):
         b"stack lsp" in command([binary, "lsp", "--help"]),
         "LSP help output is missing usage",
     )
+    require(
+        b"stack update" in command([binary, "update", "--help"]),
+        "update help output is missing usage",
+    )
 
     with tempfile.TemporaryDirectory(prefix="stack-release-smoke-") as temporary:
         working_directory = Path(temporary)
@@ -116,6 +120,10 @@ def verify_release_binary(binary, target, version):
     require(stat.S_ISREG(binary_stat.st_mode), "release binary must be a regular file, not a symlink")
     require(0 < binary_stat.st_size <= MAXIMUM_BINARY_BYTES, "release binary size is invalid")
     require(os.access(binary_path, os.X_OK), "release binary must be executable")
+    require(
+        b"STACK_CLI_TEST_UPDATE_BASE_URL" not in binary_path.read_bytes(),
+        "release binary contains the debug-only update endpoint override",
+    )
     verify_architecture(binary_path, target)
     if target.endswith("linux-gnu"):
         verify_linux_runtime(binary_path, target)

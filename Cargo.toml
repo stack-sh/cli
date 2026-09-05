@@ -14,7 +14,9 @@ name = "stack"
 path = "src/main.rs"
 
 [dependencies]
+flate2 = { version = "=1.1.10", default-features = false, features = ["zlib-rs"] }
 roxmltree = "=0.21.1"
+semver = "=1.0.28"
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.151"
 serde_yaml_ng = "=0.10.0"
@@ -22,6 +24,7 @@ sha2 = "=0.11.0"
 stack-compiler = { git = "https://github.com/stack-sh/compiler.git", rev = "84ab5663a7f7c5b7dc0b5e9e2f04c8894ed02820" }
 stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "9af727aea79233b8389e0ed6fdbae7d3f388dc29" }
 stack-theme = { git = "https://github.com/stack-sh/theme.git", rev = "7e208d6a3c90d255799f390a4e8b86248c73caee" }
+tar = { version = "=0.4.46", default-features = false }
 ureq = { version = "=3.4.0", default-features = false, features = ["rustls"] }
 zip = { version = "=6.0.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 

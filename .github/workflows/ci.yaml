@@ -124,6 +124,7 @@ jobs:
           ./target/release/stack check --help
           ./target/release/stack fmt --help
           ./target/release/stack render --help
+          ./target/release/stack update --help
           ./target/release/stack lsp --help
           ./target/release/stack icons --help
           ./target/release/stack icons list
@@ -139,6 +140,7 @@ jobs:
           test -s CONTRIBUTING.md
           test -s SECURITY.md
           test -s docs/language-server.md
+          test -s docs/self-update.md
           test -s docs/publication-audit.md
           test -s docs/provider-icon-import.md
           test -s docs/distribution.md
@@ -147,11 +149,15 @@ jobs:
           test -s aqua/registry.yaml
           test -s distribution/distribution-contract.json
           test -s distribution/distribution-contract.schema.json
+          test -s distribution/install-receipt.schema.json
           test -s distribution/release-manifest.schema.json
           test -s Cargo.toml
           test -s Cargo.lock
           test -s src/config.rs
           test -s src/lsp.rs
+          test -s src/update.rs
+          test -s src/update/install.rs
+          test -s src/update/tests.rs
           test -s src/main.rs
           test -s src/templates.rs
           test -s src/provider.rs
@@ -190,6 +196,8 @@ jobs:
           test -s tests/specification-revision
           test -s tests/fixtures/render.stack
           test -s tests/snapshots/lsp-help.txt
+          test -s tests/snapshots/update-help.txt
+          test -s tests/update.rs
 
   msrv:
     name: Minimum supported Rust

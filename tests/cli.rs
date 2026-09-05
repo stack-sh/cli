@@ -237,6 +237,14 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
             &["help", "render"],
             include_bytes!("snapshots/render-help.txt"),
         ),
+        (
+            &["update", "--help"],
+            include_bytes!("snapshots/update-help.txt"),
+        ),
+        (
+            &["help", "update"],
+            include_bytes!("snapshots/update-help.txt"),
+        ),
         (&["lsp", "--help"], include_bytes!("snapshots/lsp-help.txt")),
         (&["help", "lsp"], include_bytes!("snapshots/lsp-help.txt")),
         (

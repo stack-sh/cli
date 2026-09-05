@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/stack-sh/cli/main/distribution/install-receipt.schema.json",
+  "title": "Stack CLI installation receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "owner",
+    "repository",
+    "version",
+    "target",
+    "sourceCommit",
+    "archive",
+    "binary"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "pattern": "^https://raw\\.githubusercontent\\.com/stack-sh/cli/[0-9a-f]{40}/distribution/install-receipt\\.schema\\.json$"
+    },
+    "schemaVersion": { "const": 1 },
+    "owner": { "enum": ["github-release", "homebrew", "cargo", "aqua"] },
+    "repository": { "const": "stack-sh/cli" },
+    "version": { "$ref": "#/$defs/version" },
+    "target": {
+      "enum": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu"
+      ]
+    },
+    "sourceCommit": { "$ref": "#/$defs/commit" },
+    "archive": { "$ref": "#/$defs/artifact" },
+    "binary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^/", "minLength": 2 },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc\\.[1-9][0-9]*)?$"
+    },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "sha256"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^stack-v[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc\\.[1-9][0-9]*)?-(?:aarch64-apple-darwin|x86_64-apple-darwin|aarch64-unknown-linux-gnu|x86_64-unknown-linux-gnu)\\.tar\\.gz$"
+        },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    }
+  }
+}

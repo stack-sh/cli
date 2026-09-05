@@ -9,6 +9,7 @@ Commands:
   check      Validate a Stack source file without modifying it
   fmt        Format a file in place or read from standard input
   render     Render standalone SVG to standard output or a file
+  update     Check for or install a verified direct-install update
   lsp        Run the Stack language server over standard input and output
   icons      List catalogs and import audited provider icon archives
   help       Print this message or the help of a subcommand
@@ -24,5 +25,6 @@ Examples:
   stack check arch.stack
   stack fmt --check arch.stack
   stack render arch.stack -o arch.svg
+  stack update --check
   stack lsp
   stack icons list aws s3

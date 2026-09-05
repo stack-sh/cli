@@ -63,6 +63,10 @@ pub(crate) fn icon_store_root(
     Ok(stack_root.join("icons"))
 }
 
+pub(crate) fn installation_receipt_path(environment: &Environment) -> Result<PathBuf, String> {
+    Ok(config_root(environment)?.join("stack/install-receipt.json"))
+}
+
 fn config_root(environment: &Environment) -> Result<PathBuf, String> {
     if let Some(value) = &environment.xdg_config_home {
         if !value.is_empty() {
@@ -199,6 +203,14 @@ mod tests {
             Ok(path) if path == home.join(".config/stack/icons")
         ));
         assert!(icon_store_root(None, &Environment::new(None, None)).is_err());
+        assert!(matches!(
+            installation_receipt_path(&Environment::new(Some(&xdg), Some(&home))),
+            Ok(path) if path == xdg.join("stack/install-receipt.json")
+        ));
+        assert!(matches!(
+            installation_receipt_path(&Environment::new(None, Some(&home))),
+            Ok(path) if path == home.join(".config/stack/install-receipt.json")
+        ));
     }
 
     #[test]

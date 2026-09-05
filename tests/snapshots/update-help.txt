@@ -1,0 +1,23 @@
+Check for or install a verified direct-install update
+
+Usage:
+  stack update
+  stack update --check
+  stack update --version <VERSION>
+
+Options:
+  --check              Resolve an update without downloading or changing files
+  --version <VERSION>  Select an exact stable or MAJOR.MINOR.PATCH-rc.N release
+  -h, --help           Print help
+
+Safety:
+  Replacement requires a matching direct-install receipt and a GitHub CLI
+  artifact-attestation check for the exact repository, workflow, tag, commit,
+  and GitHub-hosted runner. Homebrew, Aqua, Cargo, and unknown installs are
+  never replaced.
+
+Examples:
+  stack update --check
+  stack update
+  stack update --version 0.4.0
+  stack update --version 0.4.0-rc.1
