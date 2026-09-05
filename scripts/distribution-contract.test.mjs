@@ -73,6 +73,13 @@ test("the activated Homebrew channel cannot regress to planned", () => {
   assert.throws(() => validateDistributionContract(candidate, cargoToml), /homebrew state must be available/);
 });
 
+test("the activated Aqua channel cannot regress to planned", () => {
+  const candidate = changed((value) => {
+    value.channels.find(({ id }) => id === "aqua").state = "planned";
+  });
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /aqua state must be available/);
+});
+
 test("an unactivated package-manager channel cannot become available", () => {
   const candidate = changed((value) => {
     value.channels.find(({ id }) => id === "cargo").state = "available";

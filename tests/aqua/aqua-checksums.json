@@ -19,6 +19,11 @@
       "id": "github_release/github.com/stack-sh/cli/v0.3.0/stack-v0.3.0-x86_64-unknown-linux-gnu.tar.gz",
       "checksum": "6C9AB21D96FC6FB0A12A6FF4F7F56103D8DD8513AC85C8D30AB6E072C5C6A7D9",
       "algorithm": "sha256"
+    },
+    {
+      "id": "registries/github_content/github.com/stack-sh/cli/42702cda91a4156901b9a601bd143c43dcf05766/aqua/registry.yaml",
+      "checksum": "FCF882176F20C6C85A07B848935633EC45F19B0A04A7010E14D051A71EAD5AAC1A6BE2F60B4F730D72821DFB293CF3CEFCE92A680059A3259D8FD85A32A3D4BF",
+      "algorithm": "sha512"
     }
   ]
 }

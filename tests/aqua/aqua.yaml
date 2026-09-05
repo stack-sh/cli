@@ -7,8 +7,11 @@ checksum:
     - all
 registries:
   - name: stack-sh
-    type: local
-    path: ../../aqua/registry.yaml
+    type: github_content
+    repo_owner: stack-sh
+    repo_name: cli
+    ref: 42702cda91a4156901b9a601bd143c43dcf05766
+    path: aqua/registry.yaml
 packages:
   - name: stack-sh/cli@v0.3.0
     registry: stack-sh
