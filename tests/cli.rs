@@ -531,6 +531,20 @@ fn lsp_large_invalid_document_has_bounded_latency_and_no_crash() -> Result<(), B
 }
 
 #[test]
+fn lsp_rejects_untrusted_framing_before_allocating_the_body() -> Result<(), Box<dyn Error>> {
+    let input = b"Content-Length: 8388609\r\n\r\n";
+    let output = stack_with_input(["lsp"], input)?;
+
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    assert_eq!(
+        output.stderr,
+        b"error: invalid LSP frame: message exceeds the size limit\n"
+    );
+    Ok(())
+}
+
+#[test]
 fn provider_catalog_commands_are_available_from_the_binary() -> Result<(), Box<dyn Error>> {
     let listed = stack(["icons", "list", "simple-icons", "linear"])?;
     assert_eq!(listed.status.code(), Some(0));
