@@ -107,8 +107,13 @@ for usage and the [skill source](./skills/stack-diagrams/SKILL.md) for review.
 To pin reviewed instructions, check out a specific commit of this repository and
 run `npx skills add /absolute/path/to/cli --skill stack-diagrams`.
 
-The CLI repository owns these instructions; the website owns the usage guides.
-Process-level tests execute the skill's command examples against the built CLI.
+The shared instruction source lives in [stack-sh/docs](https://github.com/stack-sh/docs).
+This repository distributes its generated skill; do not edit `SKILL.md` directly.
+`skills/docs-source.json` pins the reviewed Docs commit and manifest SHA-256.
+After merging a Docs change, update that lock and run `npm run skills:sync`.
+`npm run skills:check` verifies the manifest, artifact hash, and exact local bytes;
+CI rejects drift. Process-level tests also execute the generated commands against
+the built CLI. Updating the skill does not require a new CLI binary release.
 
 ## Development
 

@@ -1,8 +1,10 @@
 ---
-name: stack-diagrams
-description: Create or edit Stack (.stack) software architecture diagrams, validate them with the Stack CLI, and render SVG. Use for Stack diagrams or when a user chooses Stack for architecture documentation; not for infrastructure provisioning or unrelated programming stacks.
-license: Apache-2.0
+name: "stack-diagrams"
+description: "Create or edit Stack (.stack) software architecture diagrams, validate them with the Stack CLI, and render SVG. Use for Stack diagrams or when a user chooses Stack for architecture documentation; not for infrastructure provisioning or unrelated programming stacks."
+license: "Apache-2.0"
 ---
+
+<!-- Generated from stack-sh/docs/content/agent-workflow.md. Do not edit. -->
 
 # Stack diagrams
 

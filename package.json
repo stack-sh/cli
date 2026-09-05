@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "skills:check": "node scripts/sync-agent-skill.mjs --check",
+    "skills:sync": "node scripts/sync-agent-skill.mjs --sync",
     "test:cli-output-schema": "node scripts/validate-cli-output-schema.mjs && node --test scripts/cli-output-schema.test.mjs",
     "test:consumer-prototype": "node examples/consume-cli-json.mjs check tests/fixtures/render.stack"
   },
