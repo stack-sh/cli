@@ -183,6 +183,32 @@ The source and published Cargo package names are both `stack-diagram-cli`; the i
 
 ## Release activation and rollback
 
+### Continuous clean-install verification
+
+[`Distribution smoke`](../.github/workflows/distribution-smoke.yaml) runs on pull requests and pushes to `main`, and accepts a manual exact stable version. Without an override it tests `currentReleaseVersion` from the distribution contract, not the possibly unpublished source version. It resolves the immutable release source and the official tap revision once before starting:
+
+| Channel | Native installation cells |
+| --- | --- |
+| Direct archive | Four supported targets |
+| Aqua 2.62.3 | Four supported targets, fresh Git project and Aqua store |
+| Cargo | Four supported targets, each with Rust 1.85.0 and stable; fresh registry cache and build directory |
+| Homebrew | Apple Silicon macOS, GNU/Linux arm64 and x86_64; fresh Stack formula prefix and download cache |
+
+All 19 cells execute the installed binary on the matching native architecture. They check the exact version, help, configuration, doctor, templates, validation, formatting, SVG/JSON output, and completion/manual generation against the **published source**. Each also explicitly imports the audited Simple Icons catalog into a disposable store and renders an imported icon with its attribution. Only result metadata is uploaded; imported artwork and rendered provider examples are not redistributed as CI artifacts.
+
+Direct, Aqua, and Homebrew binaries must byte-match the canonical archive after checksum, source-bound GitHub provenance, and archive-layout verification. Cargo must install the exact registry package with `--locked` and match its packaged source commit; it is not expected to reproduce prebuilt binary bytes. Homebrew additionally checks installed completion/manual files. Fresh installations do not use the repository's Cargo build output or an existing Stack configuration/icon store.
+
+The `distribution smoke completion` job always evaluates the context and the whole requested matrix. A failure, cancellation, skip, missing artifact, wrong version, or mismatched digest prevents success. The job summary identifies the version and scope; GitHub Actions reports failure through its normal workflow notifications. Maintainers should watch **Actions** notifications for this repository and inspect the failed matrix cell before retrying; a retry is not a substitute for resolving a reproducible failure.
+
+The reusable workflow also exposes `native` (Direct + Aqua, eight cells) and `cargo` (eight cells) scopes for publication integration. Cargo-only checks require the exact published source commit and do not assume the GitHub Release already exists. A scoped success is **not** all-channel activation. Full activation requires a successful `all` run for the same stable version after the tap and registry are available. These later results supplement the immutable publication-time manifest; they never rewrite a tag, release asset, or its `verifiedChannels` field.
+
+Run the negative guards locally with:
+
+```sh
+node --test scripts/distribution-smoke-context.test.mjs scripts/distribution-smoke-workflow.test.mjs
+python3 -m unittest scripts/test_smoke_installed_cli.py
+```
+
 A channel becomes available only after all of its target builds and clean-install smoke tests pass. A stable GitHub release additionally requires matching tag/version metadata, complete archive contents, valid checksums and Sigstore bundle, inspectable SPDX SBOMs and provenance, exact generated completion/manual bytes, and successful `stack --version`, `help`, `init`, `check`, and `render` smoke tests on every tier-1 target.
 
 Tags and assets are immutable. For a broken release, mark it as withdrawn, exclude it from default update resolution, restore package-manager metadata to the last verified release, and publish a new patch version. Do not overwrite the broken tag or assets. Cargo may yank a broken package version, but yanking is not deletion and the replacement still uses a new version.

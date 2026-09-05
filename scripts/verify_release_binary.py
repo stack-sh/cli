@@ -39,11 +39,12 @@ def command(arguments, working_directory=None, environment=None, allow_stderr=Fa
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        timeout=180,
     )
     if completed.returncode != 0:
         details = completed.stderr.decode("utf-8", errors="replace").strip()
         raise ValueError(f"command failed ({completed.returncode}): {' '.join(map(str, arguments))}: {details}")
-    require(allow_stderr or completed.stderr == b"", f"command emitted unexpected diagnostics: {' '.join(map(str, arguments))}")
+    require(allow_stderr or completed.stderr == b"", f"command emitted unexpected diagnostics: {' '.join(map(str, arguments))}: {completed.stderr.decode('utf-8', errors='replace').strip()}")
     return completed.stdout
 
 
@@ -92,7 +93,9 @@ def verify_macos_runtime(binary):
     require("Signature=adhoc\n" in details, "macOS release binary must use an ad-hoc signature")
 
 
-def verify_commands(binary, version):
+def verify_commands(binary, version, assets_root=None):
+    if assets_root is None:
+        assets_root = ROOT / "distribution/generated"
     expected_version = f"stack {version}\n".encode()
     require(command([binary, "--version"]) == expected_version, "--version output does not match Cargo version")
     require(command([binary, "version"]) == expected_version, "version command output does not match Cargo version")
@@ -113,7 +116,7 @@ def verify_commands(binary, version):
         "config help output is missing usage",
     )
     for relative_path, arguments in GENERATED_COMMANDS.items():
-        expected = (ROOT / "distribution/generated" / relative_path).read_bytes()
+        expected = (assets_root / relative_path).read_bytes()
         require(
             command([binary, *arguments]) == expected,
             f"generated CLI asset differs from source: {relative_path}",

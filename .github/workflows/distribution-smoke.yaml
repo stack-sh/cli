@@ -1,0 +1,196 @@
+name: Distribution smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact stable release (empty uses the distribution contract)
+        type: string
+        default: ''
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: ''
+      scope:
+        type: string
+        default: all
+      source_commit:
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  attestations: read
+
+concurrency:
+  group: distribution-smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.scope || 'all' }}-${{ inputs.version || 'current' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  context:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.context.outputs.version }}
+      scope: ${{ steps.context.outputs.scope }}
+      source: ${{ steps.context.outputs.source }}
+      tap: ${{ steps.context.outputs.tap }}
+      matrix: ${{ steps.context.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Resolve exact published version, source, and supported matrix
+        id: context
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SMOKE_VERSION: ${{ inputs.version }}
+          SMOKE_SCOPE: ${{ inputs.scope }}
+          SMOKE_SOURCE_COMMIT: ${{ inputs.source_commit }}
+        run: node scripts/distribution-smoke-context.mjs >> "$GITHUB_OUTPUT"
+
+  install:
+    name: install (${{ matrix.channel }}, ${{ matrix.target }}, Rust ${{ matrix.rust }})
+    needs: context
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.context.outputs.matrix) }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.context.outputs.version }}
+      SOURCE_COMMIT: ${{ needs.context.outputs.source }}
+      TAP_COMMIT: ${{ needs.context.outputs.tap }}
+      CHANNEL: ${{ matrix.channel }}
+      TARGET: ${{ matrix.target }}
+      RUST_VERSION: ${{ matrix.rust }}
+    steps:
+      - name: Check out current verification code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Check out exact published source for command and catalog comparisons
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: stack-sh/cli
+          ref: ${{ needs.context.outputs.source }}
+          path: .release-source
+          persist-credentials: false
+      - name: Verify canonical archive checksum, provenance, and package before execution
+        if: matrix.channel != 'cargo'
+        run: |
+          python3 -m scripts.download_smoke_archive --version "$VERSION" --target "$TARGET" \
+            --source-commit "$SOURCE_COMMIT" --source-root "$GITHUB_WORKSPACE/.release-source" \
+            --destination "$RUNNER_TEMP/canonical-release"
+          echo "CANONICAL_BINARY=$RUNNER_TEMP/canonical-release/stack-v${VERSION}-${TARGET}/stack" >> "$GITHUB_ENV"
+
+      - name: Install directly into an empty prefix
+        if: matrix.channel == 'direct'
+        run: |
+          mkdir "$RUNNER_TEMP/direct-install"
+          install -m 0755 "$CANONICAL_BINARY" "$RUNNER_TEMP/direct-install/stack"
+          echo "STACK_BINARY=$RUNNER_TEMP/direct-install/stack" >> "$GITHUB_ENV"
+
+      - name: Install pinned Aqua
+        if: matrix.channel == 'aqua'
+        uses: aquaproj/aqua-installer@96a9bc20066c5bf5e275b41019cfc165b25f4e2e # v4.0.5
+        with:
+          aqua_version: v2.62.3
+          enable_aqua_install: false
+      - name: Install through Aqua in a fresh project and store
+        if: matrix.channel == 'aqua'
+        env:
+          AQUA_ROOT_DIR: ${{ runner.temp }}/aqua-root
+          XDG_CONFIG_HOME: ${{ runner.temp }}/aqua-config
+        run: |
+          project="$RUNNER_TEMP/aqua-project"
+          node scripts/prepare-aqua-smoke.mjs "$VERSION" "$project"
+          git init --quiet "$project"
+          cd "$project"
+          export AQUA_CONFIG="$project/aqua.yaml"
+          export AQUA_POLICY_CONFIG="$project/aqua-policy.yaml"
+          aqua policy allow
+          aqua update-checksum
+          aqua install
+          echo "STACK_BINARY=$(aqua which stack)" >> "$GITHUB_ENV"
+
+      - name: Set up supported Homebrew host
+        if: matrix.channel == 'homebrew'
+        uses: Homebrew/actions/setup-homebrew@3cdb78d0f62ad29dd32de765782654f4eedea607
+      - name: Install the exact official tap revision into a clean formula prefix
+        if: matrix.channel == 'homebrew'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_ANALYTICS: 1
+          HOMEBREW_CACHE: ${{ runner.temp }}/brew-cache
+        run: |
+          brew tap stack-sh/tap
+          tap_path=$(brew --repository stack-sh/tap)
+          git -C "$tap_path" fetch origin "$TAP_COMMIT"
+          git -C "$tap_path" checkout --detach "$TAP_COMMIT"
+          test "$(git -C "$tap_path" rev-parse HEAD)" = "$TAP_COMMIT"
+          brew info --json=v2 stack-sh/tap/stack > "$RUNNER_TEMP/formula.json"
+          node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; const [formula] = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/formula.json")).formulae; assert.equal(formula.versions.stable, process.env.VERSION); assert.equal(formula.installed.length, 0);'
+          brew install stack-sh/tap/stack
+          brew test stack-sh/tap/stack
+          prefix=$(brew --prefix stack-sh/tap/stack)
+          cmp "$prefix/etc/bash_completion.d/stack" .release-source/distribution/generated/share/bash-completion/completions/stack
+          for asset in zsh/site-functions/_stack fish/vendor_completions.d/stack.fish man/man1/stack.1; do
+            cmp "$prefix/share/$asset" ".release-source/distribution/generated/share/$asset"
+          done
+          echo "STACK_BINARY=$prefix/bin/stack" >> "$GITHUB_ENV"
+
+      - name: Install exact registry package with a fresh Cargo cache and build directory
+        if: matrix.channel == 'cargo'
+        env:
+          CARGO_HOME: ${{ runner.temp }}/cargo-registry-home
+          CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-registry-target
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          cargo "+$RUST_VERSION" install stack-diagram-cli --version "=$VERSION" --locked --registry crates-io --root "$RUNNER_TEMP/cargo-install"
+          python3 -m scripts.verify_smoke_cargo_source --cargo-home "$CARGO_HOME" --version "$VERSION" --source-commit "$SOURCE_COMMIT"
+          echo "STACK_BINARY=$RUNNER_TEMP/cargo-install/bin/stack" >> "$GITHUB_ENV"
+
+      - name: Exercise the installed CLI and a real audited provider import
+        run: |
+          comparison=()
+          if [ "$CHANNEL" != cargo ]; then comparison=(--canonical-binary "$CANONICAL_BINARY"); fi
+          python3 -m scripts.smoke_installed_cli --binary "$STACK_BINARY" --target "$TARGET" --version "$VERSION" \
+            --source-root "$GITHUB_WORKSPACE/.release-source" "${comparison[@]}" > "$RUNNER_TEMP/smoke.json"
+          cat "$RUNNER_TEMP/smoke.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve only verification metadata, never imported artwork
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: install-${{ matrix.channel }}-${{ matrix.target }}-${{ matrix.rust }}
+          path: ${{ runner.temp }}/smoke.json
+          if-no-files-found: error
+          retention-days: 14
+
+  completion:
+    name: distribution smoke completion
+    if: always()
+    needs: [context, install]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Fail closed unless every requested installation passed
+        env:
+          CONTEXT_RESULT: ${{ needs.context.result }}
+          INSTALL_RESULT: ${{ needs.install.result }}
+          SMOKE_SCOPE: ${{ needs.context.outputs.scope }}
+          SMOKE_VERSION: ${{ needs.context.outputs.version }}
+        run: |
+          printf 'Scope: %s; version: %s; context: %s; installs: %s\n' "$SMOKE_SCOPE" "$SMOKE_VERSION" "$CONTEXT_RESULT" "$INSTALL_RESULT" >> "$GITHUB_STEP_SUMMARY"
+          node --input-type=module -e 'import { requireSuccessfulSmoke } from "./scripts/distribution-smoke-context.mjs"; requireSuccessfulSmoke(process.env.CONTEXT_RESULT, process.env.INSTALL_RESULT);'
