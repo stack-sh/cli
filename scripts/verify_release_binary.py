@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import os
 from pathlib import Path
 import re
@@ -148,6 +149,14 @@ def verify_commands(binary, version):
         svg = ET.fromstring(rendered.read_bytes())
         require(svg.tag == "{http://www.w3.org/2000/svg}svg", "rendered output is not an SVG root")
         require(svg.attrib.get("viewBox"), "rendered SVG has no viewBox")
+        for operation in ("check", "fmt", "render"):
+            envelope = json.loads(command([binary, operation, source, "--json"], working_directory, environment))
+            require(envelope["schemaVersion"] == 1, "JSON output schema version changed")
+            require(envelope["command"] == operation, "JSON output command is inconsistent")
+            require(envelope["exitStatus"] == 0 and envelope["error"] is None, "JSON command failed")
+            require(isinstance(envelope["diagnostics"], list), "JSON diagnostics are missing")
+            if operation == "render":
+                require(envelope["artifacts"], "JSON render did not report its SVG artifact")
 
 
 def verify_release_binary(binary, target, version):
