@@ -21,5 +21,7 @@ Write repository content, code comments, commit messages, issues, and pull reque
 
 ## Delivery
 
+- Agent guidance is generated from the pinned `stack-sh/docs` source. Edit shared instructions there, then update `skills/docs-source.json` and run `npm run skills:sync`. Never hand-edit the generated skill; verify with `npm run skills:check` and the CLI integration tests.
+
 - Use a topic branch and pull request; squash merge after approval.
 - Work in small increments and add repository-specific formatting, linting, tests, and release checks with the code that needs them.
