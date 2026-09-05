@@ -24,7 +24,7 @@ Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architec
 - Cargo `package.version`, CLI output, the Git tag `v{version}`, release title, archive names, and release manifest version must agree exactly.
 - Stable versions use `MAJOR.MINOR.PATCH`. Release candidates use `MAJOR.MINOR.PATCH-rc.N`, are GitHub prereleases, and are never selected by default by package managers or self-update.
 - Before 1.0, only the latest stable release is supported. Starting at 1.0, the latest two minor lines are supported.
-- Each stable release manifest records `minimumSupportedCliVersion`. This is the only input used by update clients and documentation to describe the minimum supported version.
+- Each stable release manifest records `minimumSupportedCliVersion`. The self-update channel owns this compatibility floor, and release generation copies it forward instead of advancing it automatically with every release. This is the only input used by update clients and documentation to describe the minimum supported updater.
 - A Cargo source version alone is not a supported distribution. Support starts only when a stable GitHub Release built from that exact source passes every activation check; changing a version does not reserve or silently publish it.
 
 `.github/workflows/release.yaml` accepts a version-checked manual run from `main` without publication and an annotated `v{version}` tag for publication. A tag run is allowed only for a commit contained in `main`. The manual path must pass first for the same commit and version before a release tag is created.
@@ -136,7 +136,7 @@ install -m 0755 "stack-v0.3.0-{target}/stack" "$HOME/.local/bin/stack"
 "$HOME/.local/bin/stack" --version
 ```
 
-Add `$HOME/.local/bin` to `PATH` if it is not already present. This manual installation has no self-update receipt, and `stack` self-update remains unavailable until that channel is separately activated.
+Add `$HOME/.local/bin` to `PATH` if it is not already present. This manual installation has no self-update receipt. The source tree after 0.3.0 contains `stack update`, but the published 0.3.0 binary does not, and this installation cannot be claimed retroactively without risking a package-manager-owned binary. Self-update remains unavailable until a later release and verified direct installer separately activate the channel. The command and receipt contract are documented in the [self-update guide](./self-update.md).
 
 ## Channel ownership
 
@@ -148,7 +148,7 @@ Add `$HOME/.local/bin` to `PATH` if it is not already present. This manual insta
 | Aqua | Registry metadata and version pinning mapped to canonical archives and digests | Repack an archive or select prereleases by default |
 | `stack` self-update | Verified atomic replacement for direct installs with a Stack installation receipt | Replace a binary owned by Homebrew, Cargo, Aqua, or an unknown installer |
 
-The direct installer must create an installation receipt that identifies the GitHub Release channel, installed version, target, and artifact digest. Self-update refuses to write when that receipt is absent or names another owner and prints the appropriate package-manager upgrade command. This keeps ownership deterministic instead of guessing from an executable path.
+The direct installer must create an installation receipt that identifies the GitHub Release channel, installed version, target, source commit, archive digest, and final binary path and digest. Its public format is [`distribution/install-receipt.schema.json`](../distribution/install-receipt.schema.json). Self-update refuses to write when that receipt is absent or names another owner and prints detected or possible package-manager upgrade commands. Paths may improve guidance, but never authorize replacement. This keeps ownership deterministic instead of guessing from an executable path.
 
 The workspace currently uses `stack-cli` as its local Cargo package name, but that name is already occupied by an unrelated crates.io package. No public Cargo install command is supported yet. The Cargo channel must select and verify an unambiguous registry package name, while keeping the installed binary name `stack`, before changing its state to available.
 

@@ -19,7 +19,7 @@
     "stableVersionRequirement": "MAJOR.MINOR.PATCH without a prerelease suffix",
     "prereleaseVersionRequirement": "MAJOR.MINOR.PATCH-rc.N",
     "prereleasePolicy": "GitHub prerelease only; never selected by default by package managers or self-update",
-    "minimumSupportedVersionSource": "The minimumSupportedCliVersion field in the stable release manifest",
+    "minimumSupportedVersionSource": "The self-update channel's minimumSupportedCliVersion floor, copied into each release manifest",
     "preOneSupportWindow": "latest stable release only",
     "stableSupportWindow": "latest two minor lines after 1.0.0"
   },
@@ -33,6 +33,7 @@
       "THIRD_PARTY_LICENSES.md"
     ],
     "releaseManifestNameTemplate": "stack-v{version}-release-manifest.json",
+    "installReceiptSchema": "distribution/install-receipt.schema.json",
     "checksumNameTemplate": "stack-v{version}-checksums.txt",
     "signatureBundleNameTemplate": "stack-v{version}-checksums.txt.sigstore.json",
     "sbomNameTemplate": "stack-v{version}-{target}.spdx.json",
@@ -164,9 +165,10 @@
         "aarch64-unknown-linux-gnu",
         "x86_64-unknown-linux-gnu"
       ],
-      "owns": "verified atomic replacement for direct GitHub installations carrying a Stack installation receipt",
+      "owns": "GitHub-attested release-manifest and archive verification, then atomic replacement for direct GitHub installations carrying a Stack installation receipt",
       "source": "github-release",
-      "updatePolicy": "refuse without a direct-install receipt and print the owning package manager command"
+      "minimumSupportedCliVersion": null,
+      "updatePolicy": "refuse without a direct-install receipt matching the running binary and print the detected or possible owning package manager command"
     }
   ],
   "verification": {
@@ -177,6 +179,11 @@
       "all checksums, Sigstore bundles, SBOMs, and provenance verify",
       "stack --version, help, init, check, and render pass on each target",
       "the release manifest records minimumSupportedCliVersion and each verified channel"
+    ],
+    "selfUpdateActivation": [
+      "the authenticated release manifest explicitly records the self-update channel",
+      "the direct installer writes a receipt matching the installed binary path, digest, target, version, and source commit",
+      "local update server, tampered material, package-manager ownership, permission failure, atomic replacement, and rollback tests pass"
     ],
     "rollback": "Never replace a tag or asset. Mark a broken release as withdrawn, remove it from default update resolution, restore package-manager metadata to the last verified release, and publish a new patch version."
   }

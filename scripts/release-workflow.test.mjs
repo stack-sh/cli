@@ -10,7 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "release.yaml"), "utf8");
 
 test("the checked-in release workflow has the reviewed target and trust boundaries", () => {
-  assert.deepEqual(validateReleaseWorkflow(workflow), { actions: 18, jobs: 6, permissions: 11, targets: 4 });
+  assert.deepEqual(validateReleaseWorkflow(workflow), { actions: 19, jobs: 6, permissions: 11, targets: 4 });
 });
 
 test("an additional automatic trigger is rejected", () => {
@@ -71,4 +71,20 @@ test("publication without post-upload SBOM verification is rejected", () => {
   assert.notEqual(lastIndex, -1);
   const candidate = workflow.slice(0, lastIndex) + workflow.slice(lastIndex + marker.length);
   assert.throws(() => validateReleaseWorkflow(candidate), /SBOM attestations must verify/);
+});
+
+test("publication without post-upload manifest attestation verification is rejected", () => {
+  const marker = "--predicate-type https://slsa.dev/provenance/v1";
+  const lastIndex = workflow.lastIndexOf(marker);
+  assert.notEqual(lastIndex, -1);
+  const candidate = workflow.slice(0, lastIndex) + workflow.slice(lastIndex + marker.length);
+  assert.throws(() => validateReleaseWorkflow(candidate), /manifest attestations must verify/);
+});
+
+test("release generation cannot silently advance the updater compatibility floor", () => {
+  const candidate = workflow.replace(
+    '--minimum-supported-version "$MINIMUM_SUPPORTED_CLI_VERSION"',
+    '--minimum-supported-version "$VERSION"',
+  );
+  assert.throws(() => validateReleaseWorkflow(candidate), /release assembly requirement is missing/);
 });

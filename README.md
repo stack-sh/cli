@@ -38,6 +38,7 @@ stack fmt --check arch.stack
 stack fmt -
 stack render arch.stack
 stack render arch.stack -o arch.svg
+stack update --check
 stack lsp
 stack icons list
 stack icons list aws s3
@@ -57,6 +58,8 @@ stack render arch.stack -o arch.svg --notice arch.NOTICE.md
 `stack render` uses the same engine pipeline to produce deterministic standalone SVG. Without `-o`, standard output contains only SVG. With `-o`, the output is written atomically in the destination directory. It discovers imported `aws`, `gcp`, `azure`, and `simple-icons` packs below the shared icon store. Use `--provider-pack <DIRECTORY>` for a project-local icon-store root, and use `--notice <NOTICE>` to save the exact provider pack revisions, terms, source archives, and icon IDs embedded in that artifact. Pack files are bounded and validated before rendering. Diagnostics remain on standard error, warnings preserve SVG, and Stack errors never create or replace output.
 
 `stack lsp` runs a native [Language Server Protocol 3.18 adapter](./docs/language-server.md) over standard input and output. It provides incremental document synchronization, versioned diagnostics, completion, hover, hierarchical document symbols, and whole-document formatting for `.stack` files. The adapter negotiates UTF-8, UTF-16, or UTF-32 positions and delegates language semantics and formatting to the pinned compiler and engine rather than reimplementing them. Standard output is reserved for framed JSON-RPC messages.
+
+`stack update` is implemented for future receipted direct installations, with `--check`, exact-version selection, authenticated release-manifest and archive verification, and rollback-aware atomic replacement. It refuses Homebrew, Aqua, Cargo, and unknown ownership. The published 0.3.0 binary does not contain this command and its manual installation has no receipt, so the self-update channel remains planned. See the [self-update contract](./docs/self-update.md).
 
 `stack icons list [PROVIDER] [QUERY]` searches the asset-free catalog by ID, product name, or category. The catalog currently contains 1,051 IDs: 305 AWS, 45 Google Cloud, 639 Azure, and 62 curated developer and collaboration tool icons. This command reads only metadata embedded in the CLI.
 

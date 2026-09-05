@@ -30,6 +30,7 @@ test("main dispatch resolves a non-publishing verification run", () => {
       sourceRef: "refs/heads/main",
       publish: false,
       verifiedChannels: "",
+      minimumSupportedCliVersion: "0.3.0",
     },
   );
 });
@@ -51,8 +52,56 @@ test("an exact version tag resolves a publishing run", () => {
       sourceRef: "refs/tags/v0.3.0",
       publish: true,
       verifiedChannels: "github-release",
+      minimumSupportedCliVersion: "0.3.0",
     },
   );
+});
+
+test("an activated self-update channel is recorded in a tagged release", () => {
+  const activated = structuredClone(contract);
+  const selfUpdate = activated.channels.find(({ id }) => id === "self-update");
+  selfUpdate.state = "available";
+  selfUpdate.minimumSupportedCliVersion = "0.2.1";
+  assert.deepEqual(
+    resolveReleaseContext({
+      eventName: "push",
+      ref: "refs/tags/v0.3.0",
+      refName: "v0.3.0",
+      sha,
+      requestedVersion: "",
+      cargoToml,
+      contract: activated,
+    }),
+    {
+      version: "0.3.0",
+      tag: "v0.3.0",
+      sourceRef: "refs/tags/v0.3.0",
+      publish: true,
+      verifiedChannels: "github-release,self-update",
+      minimumSupportedCliVersion: "0.2.1",
+    },
+  );
+});
+
+test("self-update activation rejects a missing or future compatibility floor", () => {
+  for (const floor of [null, "0.4.0", "invalid"]) {
+    const activated = structuredClone(contract);
+    const selfUpdate = activated.channels.find(({ id }) => id === "self-update");
+    selfUpdate.state = "available";
+    selfUpdate.minimumSupportedCliVersion = floor;
+    assert.throws(
+      () => resolveReleaseContext({
+        eventName: "push",
+        ref: "refs/tags/v0.3.0",
+        refName: "v0.3.0",
+        sha,
+        requestedVersion: "",
+        cargoToml,
+        contract: activated,
+      }),
+      /minimum supported CLI version|invalid updater compatibility version/,
+    );
+  }
 });
 
 test("manual runs from another ref or version are rejected", () => {

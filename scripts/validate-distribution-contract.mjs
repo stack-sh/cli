@@ -135,6 +135,16 @@ export function validateDistributionContract(contract, cargoToml) {
     channels.get("self-update")?.updatePolicy.includes("refuse without a direct-install receipt"),
     "self-update must require a direct-install receipt",
   );
+  invariant(
+    channels.get("self-update")?.minimumSupportedCliVersion === null,
+    "planned self-update must not claim a minimum supported CLI version",
+  );
+  for (const id of ["github-release", "homebrew", "cargo", "aqua"]) {
+    invariant(
+      !("minimumSupportedCliVersion" in channels.get(id)),
+      `${id} must not own the self-update compatibility floor`,
+    );
+  }
 
   for (const [name, template] of Object.entries(contract.artifacts ?? {})) {
     if (!name.endsWith("Template")) continue;
@@ -151,6 +161,10 @@ export function validateDistributionContract(contract, cargoToml) {
   }
   sameValues(contract.artifacts?.requiredEntries ?? [], requiredArchiveEntries, "archive entries");
   invariant(contract.artifacts?.checksumAlgorithm === "sha256", "checksum algorithm must be sha256");
+  invariant(
+    contract.artifacts?.installReceiptSchema === "distribution/install-receipt.schema.json",
+    "install receipt schema path is invalid",
+  );
   invariant(contract.artifacts?.signatureBundleNameTemplate?.endsWith(".sigstore.json"), "signature bundle must use .sigstore.json");
   invariant(contract.artifacts?.sbomNameTemplate?.endsWith(".spdx.json"), "SBOM must use .spdx.json");
   invariant(
@@ -175,6 +189,10 @@ export function validateDistributionContract(contract, cargoToml) {
   const activation = (contract.verification?.releaseActivation ?? []).join(" ");
   for (const term of requiredActivationTerms) {
     invariant(activation.includes(term), `release activation must mention ${term}`);
+  }
+  const selfUpdateActivation = (contract.verification?.selfUpdateActivation ?? []).join(" ");
+  for (const term of ["authenticated release manifest", "direct installer", "tampered material", "atomic replacement", "rollback"]) {
+    invariant(selfUpdateActivation.includes(term), `self-update activation must mention ${term}`);
   }
   invariant(contract.verification?.rollback?.includes("Never replace"), "rollback must preserve immutable releases");
 

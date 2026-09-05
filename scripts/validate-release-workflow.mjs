@@ -19,7 +19,7 @@ const expectedPermissions = new Map([
   ["build-macos", ["contents: read"]],
   ["build-linux", ["contents: read"]],
   ["attest", ["attestations: write", "contents: read", "id-token: write"]],
-  ["assemble", ["attestations: read", "contents: read", "id-token: write"]],
+  ["assemble", ["attestations: write", "contents: read", "id-token: write"]],
   ["publish", ["attestations: read", "contents: write"]],
 ]);
 
@@ -161,7 +161,7 @@ export function validateReleaseWorkflow(source) {
   invariant(linux.includes('test "$(rustc --version)" = "rustc 1.85.0 (4d91de4e4 2025-02-17)"'), "GNU/Linux Rust version must be exact");
 
   const uses = [...workflow.matchAll(/^\s+uses: ([^\s#]+)(?:\s+#.*)?$/gm)].map((match) => match[1]);
-  invariant(uses.length === 18, "release workflow action count changed and requires review");
+  invariant(uses.length === 19, "release workflow action count changed and requires review");
   for (const action of uses) {
     const match = action.match(/^([^@]+)@([0-9a-f]{40})$/);
     invariant(match, `action must be pinned to a full commit: ${action}`);
@@ -189,6 +189,11 @@ export function validateReleaseWorkflow(source) {
   }
   for (const requirement of [
     "cosign-release: v3.1.3",
+    "MINIMUM_SUPPORTED_CLI_VERSION: ${{ needs.context.outputs.minimum-supported-cli-version }}",
+    '--minimum-supported-version "$MINIMUM_SUPPORTED_CLI_VERSION"',
+    "subject-path: dist/release/stack-v${{ needs.context.outputs.version }}-release-manifest.json",
+    'gh attestation verify "dist/release/stack-v${VERSION}-release-manifest.json"',
+    "--predicate-type https://slsa.dev/provenance/v1",
     "--certificate-oidc-issuer https://token.actions.githubusercontent.com",
     "--signer-workflow stack-sh/cli/.github/workflows/release.yaml",
     "node scripts/release-security.mjs verify --directory dist/release",
@@ -205,7 +210,12 @@ export function validateReleaseWorkflow(source) {
   invariant(occurrences(publish, 'cmp "$source"') === 2, "downloaded draft assets must match the assembled bytes");
   invariant(occurrences(publish, "node scripts/release-security.mjs verify") === 2, "release metadata must verify before and after upload");
   invariant(occurrences(publish, "cosign verify-blob") === 2, "checksum signatures must verify before and after upload");
-  invariant(occurrences(publish, "gh attestation verify") === 4, "provenance and SBOM attestations must verify before and after upload");
+  invariant(occurrences(publish, "gh attestation verify") === 6, "manifest, provenance, and SBOM attestations must verify before and after upload");
+  invariant(
+    occurrences(publish, "release-manifest.json") >= 2 &&
+      occurrences(publish, "--predicate-type https://slsa.dev/provenance/v1") === 2,
+    "release manifest attestations must verify before and after upload",
+  );
   invariant(
     occurrences(publish, "--predicate-type https://spdx.dev/Document/v2.3") === 2,
     "SBOM attestations must verify before and after upload",

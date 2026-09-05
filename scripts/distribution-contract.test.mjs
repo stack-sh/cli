@@ -86,3 +86,17 @@ test("an unactivated package-manager channel cannot become available", () => {
   });
   assert.throws(() => validateDistributionContract(candidate, cargoToml), /cargo state must be planned/);
 });
+
+test("self-update activation cannot omit authenticated release metadata", () => {
+  const candidate = changed((value) => {
+    value.verification.selfUpdateActivation = ["direct installer and rollback tests pass"];
+  });
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /authenticated release manifest/);
+});
+
+test("planned self-update cannot claim an updater compatibility floor", () => {
+  const candidate = changed((value) => {
+    value.channels.find(({ id }) => id === "self-update").minimumSupportedCliVersion = "0.3.0";
+  });
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /must not claim a minimum supported/);
+});
