@@ -9,9 +9,13 @@ const configuration = fs.readFileSync(path.join(root, "tests/aqua/aqua.yaml"), "
 const policy = fs.readFileSync(path.join(root, "tests/aqua/aqua-policy.yaml"), "utf8");
 const registry = fs.readFileSync(path.join(root, "aqua/registry.yaml"), "utf8");
 const distribution = fs.readFileSync(path.join(root, "docs/distribution.md"), "utf8");
+const distributionContract = JSON.parse(
+  fs.readFileSync(path.join(root, "distribution/distribution-contract.json"), "utf8"),
+);
 const checksums = JSON.parse(
   fs.readFileSync(path.join(root, "tests/aqua/aqua-checksums.json"), "utf8"),
 );
+const releaseVersion = `v${distributionContract.product.currentSourceVersion}`;
 
 const targets = [
   "aarch64-apple-darwin",
@@ -44,9 +48,10 @@ test("the registry maps exactly the four supported release targets", () => {
 
 test("the checksum lock covers every archive and the registry revision", () => {
   const revision = configuration.match(/^\s+ref: ([0-9a-f]{40})$/m)?.[1];
+  assert.ok(configuration.includes(`name: stack-sh/cli@${releaseVersion}`));
   const expectedIds = targets.map(
     (target) =>
-      `github_release/github.com/stack-sh/cli/v0.3.0/stack-v0.3.0-${target}.tar.gz`,
+      `github_release/github.com/stack-sh/cli/${releaseVersion}/stack-${releaseVersion}-${target}.tar.gz`,
   );
   expectedIds.push(
     `registries/github_content/github.com/stack-sh/cli/${revision}/aqua/registry.yaml`,

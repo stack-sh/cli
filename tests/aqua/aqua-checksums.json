@@ -1,23 +1,23 @@
 {
   "checksums": [
     {
-      "id": "github_release/github.com/stack-sh/cli/v0.3.0/stack-v0.3.0-aarch64-apple-darwin.tar.gz",
-      "checksum": "10DF35058C9E8438B331B69392F6B9840CBAE3A5278105B0118C3942F62FC356",
+      "id": "github_release/github.com/stack-sh/cli/v0.4.0/stack-v0.4.0-aarch64-apple-darwin.tar.gz",
+      "checksum": "DD43CF3D966A3DC28DE3AC8752B6A98F19E4CB7CF6B04652AB73A013800CB015",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/stack-sh/cli/v0.3.0/stack-v0.3.0-aarch64-unknown-linux-gnu.tar.gz",
-      "checksum": "2BED2BA5FF4A727646CEDB4EC77AC875E09FC3EDE996A963022D9A97CCDBF7AC",
+      "id": "github_release/github.com/stack-sh/cli/v0.4.0/stack-v0.4.0-aarch64-unknown-linux-gnu.tar.gz",
+      "checksum": "A0D76BFA9ED9E767FCD06DBEB7140234DB865440210C7C3ABF6C3DB4F6983A6E",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/stack-sh/cli/v0.3.0/stack-v0.3.0-x86_64-apple-darwin.tar.gz",
-      "checksum": "23D8EEA13FF2663E059B7EC91CBC8D6BCA8825380766E87F1718C2DEA217A49F",
+      "id": "github_release/github.com/stack-sh/cli/v0.4.0/stack-v0.4.0-x86_64-apple-darwin.tar.gz",
+      "checksum": "48A72328FCF6D160A123A766D9701108F8EE9F633001581DAB533B93DDDF0827",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/stack-sh/cli/v0.3.0/stack-v0.3.0-x86_64-unknown-linux-gnu.tar.gz",
-      "checksum": "6C9AB21D96FC6FB0A12A6FF4F7F56103D8DD8513AC85C8D30AB6E072C5C6A7D9",
+      "id": "github_release/github.com/stack-sh/cli/v0.4.0/stack-v0.4.0-x86_64-unknown-linux-gnu.tar.gz",
+      "checksum": "89D8A34C0DA5F67932EDFF2641FE0A0527AFBD120CFD5133CB38CDEFFCA55319",
       "algorithm": "sha256"
     },
     {

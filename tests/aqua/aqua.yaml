@@ -13,5 +13,5 @@ registries:
     ref: 42702cda91a4156901b9a601bd143c43dcf05766
     path: aqua/registry.yaml
 packages:
-  - name: stack-sh/cli@v0.3.0
+  - name: stack-sh/cli@v0.4.0
     registry: stack-sh

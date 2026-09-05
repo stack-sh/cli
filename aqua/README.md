@@ -22,7 +22,7 @@ done
 
 `aqua update` must leave the pinned fixture unchanged until a newer stable release exists. `aqua update-checksum` must then reproduce `tests/aqua/aqua-checksums.json` exactly. The file locks all four release archives to the SHA-256 values obtained from the release checksum asset after Aqua verifies its Sigstore bundle.
 
-On the native host, repeat without `--test` in an isolated `AQUA_ROOT_DIR`, then run `stack --version`, `stack init`, `stack check`, and `stack render`.
+On the native host, repeat without `--test` in an isolated `AQUA_ROOT_DIR`, then run `stack --version`, `stack init`, `stack check`, and `stack render`. Generate bash, zsh, and fish completions plus the manual and compare every byte with the tracked release assets.
 
 ## Publish an update
 

@@ -59,6 +59,7 @@ function cargoValue(cargoToml, field) {
 }
 
 export function validateDistributionContract(contract, cargoToml) {
+  const cargoVersion = cargoValue(cargoToml, "version");
   invariant(contract.schemaVersion === 1, "schemaVersion must be 1");
   invariant(contract.product?.binary === "stack", "binary must be stack");
   invariant(contract.product?.sourceCargoPackage === "stack-cli", "source Cargo package must be stack-cli");
@@ -69,14 +70,14 @@ export function validateDistributionContract(contract, cargoToml) {
   invariant(contract.product?.publishedCargoPackage === null, "published Cargo package must remain unset before registry ownership is verified");
   invariant(contract.availability?.state === "available", "distribution must be available after the verified stable release");
   invariant(
-    contract.availability?.message?.includes("Stack CLI 0.3.0") &&
+    contract.availability?.message?.includes(`Stack CLI ${cargoVersion}`) &&
       contract.availability.message.includes("GitHub Releases") &&
       contract.availability.message.includes("Homebrew") &&
       contract.availability.message.includes("Aqua"),
     "availability message must identify the verified stable GitHub release, Homebrew, and Aqua channels",
   );
   invariant(
-    contract.product.currentSourceVersion === cargoValue(cargoToml, "version"),
+    contract.product.currentSourceVersion === cargoVersion,
     "currentSourceVersion must match Cargo.toml",
   );
   invariant(
