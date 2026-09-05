@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/aquaproj/aqua/v2.62.3/json-schema/aqua-yaml.json
+
+checksum:
+  enabled: true
+  require_checksum: true
+  supported_envs:
+    - all
+registries:
+  - name: stack-sh
+    type: local
+    path: ../../aqua/registry.yaml
+packages:
+  - name: stack-sh/cli@v0.3.0
+    registry: stack-sh
