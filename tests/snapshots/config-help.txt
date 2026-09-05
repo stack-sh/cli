@@ -1,0 +1,16 @@
+Inspect effective read-only Stack configuration
+
+Usage:
+  stack config <COMMAND>
+
+Commands:
+  path  Print the resolved config.yaml path without requiring the file to exist
+  get   Print one effective configuration value
+  help  Print this message or the help of a config subcommand
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack config path
+  stack config get default_icons_path

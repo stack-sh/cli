@@ -39,6 +39,81 @@ struct StackConfig {
     default_icons_path: Option<PathBuf>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ConfigRootSource {
+    XdgConfigHome,
+    Home,
+}
+
+impl ConfigRootSource {
+    pub(crate) const fn label(self) -> &'static str {
+        match self {
+            Self::XdgConfigHome => "XDG_CONFIG_HOME",
+            Self::Home => "HOME fallback",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ConfigFileState {
+    Missing,
+    Loaded,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum IconStoreSource {
+    ConfigFile,
+    Default,
+}
+
+impl IconStoreSource {
+    pub(crate) const fn label(self) -> &'static str {
+        match self {
+            Self::ConfigFile => "config default_icons_path",
+            Self::Default => "default",
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct Discovery {
+    pub(crate) config_file_state: ConfigFileState,
+    pub(crate) icon_store_root: PathBuf,
+    pub(crate) icon_store_source: IconStoreSource,
+}
+
+pub(crate) fn config_file_path(
+    environment: &Environment,
+) -> Result<(PathBuf, ConfigRootSource), String> {
+    let (root, source) = config_root(environment)?;
+    Ok((root.join("stack/config.yaml"), source))
+}
+
+pub(crate) fn discover(environment: &Environment) -> Result<Discovery, String> {
+    let (config_path, _) = config_file_path(environment)?;
+    let (config, config_file_state) = read_config(&config_path)?;
+    let (icon_store_root, icon_store_source) =
+        if let Some(default_icons_path) = config.default_icons_path {
+            if !default_icons_path.is_absolute() {
+                return Err(format!(
+                    "config '{}' must set 'default_icons_path' to an absolute path",
+                    config_path.display()
+                ));
+            }
+            (default_icons_path, IconStoreSource::ConfigFile)
+        } else {
+            (
+                config_path.with_file_name("icons"),
+                IconStoreSource::Default,
+            )
+        };
+    Ok(Discovery {
+        config_file_state,
+        icon_store_root,
+        icon_store_source,
+    })
+}
+
 pub(crate) fn icon_store_root(
     explicit_root: Option<&Path>,
     environment: &Environment,
@@ -46,33 +121,21 @@ pub(crate) fn icon_store_root(
     if let Some(root) = explicit_root {
         return Ok(root.to_owned());
     }
-
-    let config_root = config_root(environment)?;
-    let stack_root = config_root.join("stack");
-    let config_path = stack_root.join("config.yaml");
-    let config = read_config(&config_path)?;
-    if let Some(default_icons_path) = config.default_icons_path {
-        if !default_icons_path.is_absolute() {
-            return Err(format!(
-                "config '{}' must set 'default_icons_path' to an absolute path",
-                config_path.display()
-            ));
-        }
-        return Ok(default_icons_path);
-    }
-    Ok(stack_root.join("icons"))
+    discover(environment).map(|discovery| discovery.icon_store_root)
 }
 
 pub(crate) fn installation_receipt_path(environment: &Environment) -> Result<PathBuf, String> {
-    Ok(config_root(environment)?.join("stack/install-receipt.json"))
+    Ok(config_root(environment)?
+        .0
+        .join("stack/install-receipt.json"))
 }
 
-fn config_root(environment: &Environment) -> Result<PathBuf, String> {
+fn config_root(environment: &Environment) -> Result<(PathBuf, ConfigRootSource), String> {
     if let Some(value) = &environment.xdg_config_home {
         if !value.is_empty() {
             let path = PathBuf::from(value);
             if path.is_absolute() {
-                return Ok(path);
+                return Ok((path, ConfigRootSource::XdgConfigHome));
             }
         }
     }
@@ -81,7 +144,7 @@ fn config_root(environment: &Environment) -> Result<PathBuf, String> {
         if !value.is_empty() {
             let home = PathBuf::from(value);
             if home.is_absolute() {
-                return Ok(home.join(".config"));
+                return Ok((home.join(".config"), ConfigRootSource::Home));
             }
         }
     }
@@ -91,11 +154,11 @@ fn config_root(environment: &Environment) -> Result<PathBuf, String> {
     )
 }
 
-fn read_config(path: &Path) -> Result<StackConfig, String> {
+fn read_config(path: &Path) -> Result<(StackConfig, ConfigFileState), String> {
     let metadata = match fs::symlink_metadata(path) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Ok(StackConfig::default());
+            return Ok((StackConfig::default(), ConfigFileState::Missing));
         }
         Err(error) => {
             return Err(format!(
@@ -134,10 +197,10 @@ fn read_config(path: &Path) -> Result<StackConfig, String> {
         ));
     }
     if bytes.iter().all(u8::is_ascii_whitespace) {
-        return Ok(StackConfig::default());
+        return Ok((StackConfig::default(), ConfigFileState::Loaded));
     }
     match serde_yaml_ng::from_slice(&bytes) {
-        Ok(config) => Ok(config),
+        Ok(config) => Ok((config, ConfigFileState::Loaded)),
         Err(_) => Err(format!("config '{}' is invalid YAML", path.display())),
     }
 }
@@ -204,6 +267,14 @@ mod tests {
         ));
         assert!(icon_store_root(None, &Environment::new(None, None)).is_err());
         assert!(matches!(
+            config_file_path(&Environment::new(Some(&xdg), Some(&home))),
+            Ok((path, ConfigRootSource::XdgConfigHome)) if path == xdg.join("stack/config.yaml")
+        ));
+        assert!(matches!(
+            config_file_path(&Environment::new(None, Some(&home))),
+            Ok((path, ConfigRootSource::Home)) if path == home.join(".config/stack/config.yaml")
+        ));
+        assert!(matches!(
             installation_receipt_path(&Environment::new(Some(&xdg), Some(&home))),
             Ok(path) if path == xdg.join("stack/install-receipt.json")
         ));
@@ -228,8 +299,12 @@ mod tests {
             .is_ok()
         );
         assert!(matches!(
-            icon_store_root(None, &Environment::new(Some(&xdg), None)),
-            Ok(path) if path == custom
+            discover(&Environment::new(Some(&xdg), None)),
+            Ok(Discovery {
+                config_file_state: ConfigFileState::Loaded,
+                icon_store_root,
+                icon_store_source: IconStoreSource::ConfigFile,
+            }) if icon_store_root == custom
         ));
 
         assert!(

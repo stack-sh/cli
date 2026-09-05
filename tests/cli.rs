@@ -61,6 +61,41 @@ fn stack_in(
         .output()?)
 }
 
+fn stack_with_config_environment(
+    xdg_root: Option<&Path>,
+    home_root: Option<&Path>,
+    arguments: impl IntoIterator<Item = impl AsRef<OsStr>>,
+) -> Result<Output, Box<dyn Error>> {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_stack"));
+    command
+        .args(arguments)
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("HOME");
+    if let Some(root) = xdg_root {
+        command.env("XDG_CONFIG_HOME", root);
+    }
+    if let Some(root) = home_root {
+        command.env("HOME", root);
+    }
+    Ok(command.output()?)
+}
+
+fn create_provider_store(root: &Path) -> Result<(), Box<dyn Error>> {
+    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/provider-pack");
+    let pack = root.join("simple-icons");
+    fs::create_dir_all(pack.join("assets"))?;
+    let manifest = fs::read_to_string(fixture.join("manifest.json"))?
+        .replace("\"example\"", "\"simple-icons\"")
+        .replace("example:storage", "simple-icons:storage")
+        .replace("Example Cloud", "Simple Icons Fixture");
+    fs::write(pack.join("manifest.json"), manifest)?;
+    fs::copy(
+        fixture.join("assets/storage.svg"),
+        pack.join("assets/storage.svg"),
+    )?;
+    Ok(())
+}
+
 fn stack_with_input(
     arguments: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: &[u8],
@@ -248,6 +283,50 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
         (&["lsp", "--help"], include_bytes!("snapshots/lsp-help.txt")),
         (&["help", "lsp"], include_bytes!("snapshots/lsp-help.txt")),
         (
+            &["doctor", "--help"],
+            include_bytes!("snapshots/doctor-help.txt"),
+        ),
+        (
+            &["help", "doctor"],
+            include_bytes!("snapshots/doctor-help.txt"),
+        ),
+        (
+            &["config", "--help"],
+            include_bytes!("snapshots/config-help.txt"),
+        ),
+        (
+            &["config", "help"],
+            include_bytes!("snapshots/config-help.txt"),
+        ),
+        (
+            &["help", "config"],
+            include_bytes!("snapshots/config-help.txt"),
+        ),
+        (
+            &["config", "path", "--help"],
+            include_bytes!("snapshots/config-path-help.txt"),
+        ),
+        (
+            &["config", "help", "path"],
+            include_bytes!("snapshots/config-path-help.txt"),
+        ),
+        (
+            &["help", "config", "path"],
+            include_bytes!("snapshots/config-path-help.txt"),
+        ),
+        (
+            &["config", "get", "--help"],
+            include_bytes!("snapshots/config-get-help.txt"),
+        ),
+        (
+            &["config", "help", "get"],
+            include_bytes!("snapshots/config-get-help.txt"),
+        ),
+        (
+            &["help", "config", "get"],
+            include_bytes!("snapshots/config-get-help.txt"),
+        ),
+        (
             &["icons", "--help"],
             include_bytes!("snapshots/icons-help.txt"),
         ),
@@ -322,6 +401,289 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
     for arguments in [["version"], ["-v"], ["-V"], ["--version"]] {
         assert_stdout_only(&arguments, expected_version.as_bytes())?;
     }
+    Ok(())
+}
+
+#[test]
+fn config_discovery_and_doctor_are_read_only_and_report_sources() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("config-discovery")?;
+    let xdg_root = directory.path.join("xdg");
+    let config_path = xdg_root.join("stack/config.yaml");
+    let default_store = xdg_root.join("stack/icons");
+
+    let output = stack_with_config_environment(Some(&xdg_root), None, ["config", "path"])?;
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        output.stdout,
+        format!("{}\n", config_path.display()).as_bytes()
+    );
+    assert!(output.stderr.is_empty());
+    assert!(!xdg_root.exists());
+
+    let output = stack_with_config_environment(
+        Some(&xdg_root),
+        None,
+        ["config", "get", "default_icons_path"],
+    )?;
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        output.stdout,
+        format!("{}\n", default_store.display()).as_bytes()
+    );
+    assert!(output.stderr.is_empty());
+    assert!(!xdg_root.exists());
+
+    let output = stack_with_config_environment(Some(&xdg_root), None, ["doctor"])?;
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains(&format!(
+        "[ok] config path: {} (source: XDG_CONFIG_HOME)",
+        config_path.display()
+    )));
+    assert!(report.contains("[ok] config file: missing; defaults apply"));
+    assert!(report.contains(&format!(
+        "[ok] icon store: {} (source: default)",
+        default_store.display()
+    )));
+    assert!(report.contains("[ok] provider packs: store is missing; 0 packs installed"));
+    assert!(report.ends_with("Result: healthy\n"));
+    let normalized_report = report
+        .replace(env!("CARGO_PKG_VERSION"), "<VERSION>")
+        .replace(
+            directory.path.to_str().ok_or("non-UTF-8 test path")?,
+            "<ROOT>",
+        );
+    assert_eq!(
+        normalized_report.as_bytes(),
+        include_bytes!("snapshots/doctor-report.txt")
+    );
+    assert!(!xdg_root.exists());
+
+    let home_root = directory.path.join("home");
+    let output = stack_with_config_environment(
+        Some(Path::new("relative-xdg")),
+        Some(&home_root),
+        ["config", "path"],
+    )?;
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        output.stdout,
+        format!(
+            "{}\n",
+            home_root.join(".config/stack/config.yaml").display()
+        )
+        .as_bytes()
+    );
+    assert!(output.stderr.is_empty());
+    assert!(!home_root.exists());
+
+    fs::create_dir_all(config_path.parent().ok_or("missing config parent")?)?;
+    let custom_store = directory.path.join("shared-icons");
+    create_provider_store(&custom_store)?;
+    let config = format!("default_icons_path: {}\n", custom_store.display());
+    fs::write(&config_path, &config)?;
+
+    let output = stack_with_config_environment(
+        Some(&xdg_root),
+        None,
+        ["config", "get", "default_icons_path"],
+    )?;
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        output.stdout,
+        format!("{}\n", custom_store.display()).as_bytes()
+    );
+    assert!(output.stderr.is_empty());
+
+    let output = stack_with_config_environment(Some(&xdg_root), None, ["doctor"])?;
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains("[ok] config file: loaded"));
+    assert!(report.contains("(source: config default_icons_path)"));
+    assert!(report.contains("[ok] provider packs: 1 valid known-provider pack"));
+    assert!(report.ends_with("Result: healthy\n"));
+    assert_eq!(fs::read_to_string(&config_path)?, config);
+
+    let output = stack_with_config_environment(None, None, ["doctor"])?;
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains("[error] config path: unavailable"));
+    assert!(report.contains("[blocked] provider packs: not checked"));
+    Ok(())
+}
+
+#[test]
+fn doctor_distinguishes_warnings_errors_and_redacts_untrusted_values() -> Result<(), Box<dyn Error>>
+{
+    const SECRET: &str = "stack-test-secret-do-not-print";
+
+    let directory = TestDirectory::new("doctor-diagnostics")?;
+    let xdg_root = directory.path.join("xdg");
+    let stack_root = xdg_root.join("stack");
+    let config_path = stack_root.join("config.yaml");
+    let missing_store = directory.path.join("configured-but-missing");
+    fs::create_dir_all(&stack_root)?;
+    fs::write(
+        &config_path,
+        format!("default_icons_path: {}\n", missing_store.display()),
+    )?;
+
+    let output = stack_with_config_environment(Some(&xdg_root), None, ["doctor"])?;
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains("[warn] provider packs: configured store is missing"));
+    assert!(report.ends_with("Result: healthy with 1 warning\n"));
+
+    let output = stack_with_config_environment(
+        Some(&xdg_root),
+        None,
+        [
+            "doctor",
+            "--provider-pack",
+            missing_store.to_str().ok_or("non-UTF-8 test path")?,
+        ],
+    )?;
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains("[error] provider packs: explicit store is missing"));
+    assert!(report.ends_with("Result: 1 problem found\n"));
+
+    let invalid_config = format!("default_icons_path: [\nprivate_token: {SECRET}\n");
+    fs::write(&config_path, &invalid_config)?;
+    let output = stack_with_config_environment(
+        Some(&xdg_root),
+        None,
+        ["config", "get", "default_icons_path"],
+    )?;
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    let diagnostic = String::from_utf8(output.stderr)?;
+    assert!(diagnostic.contains("invalid YAML"));
+    assert!(!diagnostic.contains(SECRET));
+
+    let output = Command::new(env!("CARGO_BIN_EXE_stack"))
+        .arg("doctor")
+        .env("XDG_CONFIG_HOME", &xdg_root)
+        .env("STACK_PRIVATE_TOKEN", SECRET)
+        .output()?;
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains("[error] config file: invalid YAML"));
+    assert!(report.contains("[blocked] icon store"));
+    assert!(!report.contains(SECRET));
+    assert_eq!(fs::read_to_string(&config_path)?, invalid_config);
+
+    fs::remove_file(&config_path)?;
+    let invalid_store = directory.path.join("invalid-store");
+    fs::create_dir_all(invalid_store.join("aws"))?;
+    fs::write(
+        invalid_store.join("aws/manifest.json"),
+        format!("{{\"private_token\":\"{SECRET}\"}}"),
+    )?;
+    let output = stack_with_config_environment(
+        Some(&xdg_root),
+        None,
+        [
+            "doctor",
+            "--provider-pack",
+            invalid_store.to_str().ok_or("non-UTF-8 test path")?,
+        ],
+    )?;
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains("[error] provider packs: a known-provider pack is invalid"));
+    assert!(!report.contains(SECRET));
+
+    let invalid_store_path = directory.file("provider-store-file", SECRET.as_bytes())?;
+    let output = stack_with_config_environment(
+        Some(&xdg_root),
+        None,
+        [
+            "doctor",
+            "--provider-pack",
+            invalid_store_path.to_str().ok_or("non-UTF-8 test path")?,
+        ],
+    )?;
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains("store must be a real directory, not a file or symlink"));
+    assert!(!report.contains(SECRET));
+    Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn doctor_reports_permission_failures_without_exposing_file_contents() -> Result<(), Box<dyn Error>>
+{
+    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::symlink;
+
+    const SECRET: &str = "permission-test-secret-do-not-print";
+
+    let directory = TestDirectory::new("doctor-permissions")?;
+    let xdg_root = directory.path.join("xdg");
+    let stack_root = xdg_root.join("stack");
+    let config_path = stack_root.join("config.yaml");
+    fs::create_dir_all(&stack_root)?;
+    fs::write(&config_path, format!("private_token: {SECRET}\n"))?;
+    fs::set_permissions(&config_path, fs::Permissions::from_mode(0o000))?;
+
+    if fs::read(&config_path).is_err() {
+        let output = stack_with_config_environment(Some(&xdg_root), None, ["doctor"])?;
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stderr.is_empty());
+        let report = String::from_utf8(output.stdout)?;
+        assert!(report.contains("[error] config file: permission denied"));
+        assert!(!report.contains(SECRET));
+    }
+    fs::set_permissions(&config_path, fs::Permissions::from_mode(0o600))?;
+    fs::remove_file(&config_path)?;
+
+    let provider_store = directory.path.join("provider-store");
+    create_provider_store(&provider_store)?;
+    let manifest = provider_store.join("simple-icons/manifest.json");
+    fs::set_permissions(&manifest, fs::Permissions::from_mode(0o000))?;
+    if fs::read(&manifest).is_err() {
+        let output = stack_with_config_environment(
+            Some(&xdg_root),
+            None,
+            [
+                "doctor",
+                "--provider-pack",
+                provider_store.to_str().ok_or("non-UTF-8 test path")?,
+            ],
+        )?;
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stderr.is_empty());
+        let report = String::from_utf8(output.stdout)?;
+        assert!(report.contains("store or pack is unreadable"));
+        assert!(!report.contains(SECRET));
+    }
+    fs::set_permissions(&manifest, fs::Permissions::from_mode(0o600))?;
+
+    let provider_store_link = directory.path.join("provider-store-link");
+    symlink(&provider_store, &provider_store_link)?;
+    let output = stack_with_config_environment(
+        Some(&xdg_root),
+        None,
+        [
+            "doctor",
+            "--provider-pack",
+            provider_store_link.to_str().ok_or("non-UTF-8 test path")?,
+        ],
+    )?;
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stderr.is_empty());
+    let report = String::from_utf8(output.stdout)?;
+    assert!(report.contains("store must be a real directory, not a file or symlink"));
     Ok(())
 }
 

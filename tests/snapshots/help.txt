@@ -11,6 +11,8 @@ Commands:
   render     Render standalone SVG to standard output or a file
   update     Check for or install a verified direct-install update
   lsp        Run the Stack language server over standard input and output
+  doctor     Diagnose CLI configuration and provider icon packs
+  config     Inspect effective read-only configuration
   icons      List catalogs and import audited provider icon archives
   completions  Generate bash, zsh, or fish completion source
   manpage    Print the offline Stack CLI manual page
@@ -29,6 +31,8 @@ Examples:
   stack render arch.stack -o arch.svg
   stack update --check
   stack lsp
+  stack doctor
+  stack config get default_icons_path
   stack icons list aws s3
   stack completions zsh > _stack
   stack manpage > stack.1

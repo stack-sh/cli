@@ -1,0 +1,13 @@
+Print the resolved Stack config file path
+
+Usage:
+  stack config path
+
+Options:
+  -h, --help  Print help
+
+The path is selected from absolute XDG_CONFIG_HOME first, then absolute HOME.
+The config file does not need to exist and is never created.
+
+Examples:
+  stack config path

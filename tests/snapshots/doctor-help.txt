@@ -1,0 +1,17 @@
+Diagnose Stack CLI configuration and provider icon packs
+
+Usage:
+  stack doctor [--provider-pack <DIRECTORY>]
+
+Options:
+  --provider-pack <DIRECTORY>  Diagnose this icon-store root instead of the effective default
+  -h, --help                   Print help
+
+Checks:
+  CLI version, config path and source, config validity, effective icon-store
+  source, and installed known-provider packs. The report never prints config
+  contents or unrelated environment variables.
+
+Examples:
+  stack doctor
+  stack doctor --provider-pack .stack-icons
