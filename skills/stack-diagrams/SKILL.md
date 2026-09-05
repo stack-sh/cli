@@ -12,9 +12,9 @@ Deliver editable `.stack` source and, when rendering is available, an SVG. Prese
 
 ## Start with the available tools
 
-Run `stack --version` and `stack help` before selecting commands. Use the installed binary's help, not unreleased repository instructions. This workflow is tested with published CLI 0.4.0 using `check`, `fmt`, and `render` without `--json` for compatibility. Before using additional options such as JSON output, verify them using `stack help <command>`.
+Run `stack --version` and `stack help` before selecting commands. Use the installed binary's help, not unreleased repository instructions. This workflow is tested with published CLI 0.5.0. The commands below use human-readable output; `check`, `fmt`, and `render` also accept `--json` for structured diagnostics, artifacts, and operational errors. Read the [versioned JSON output contract](https://github.com/stack-sh/cli/blob/v0.5.0/docs/machine-readable-output.md) before parsing it, and verify options using `stack help <command>`.
 
-If the CLI is missing, consult the [installation guide](https://stack-diagram.com/docs/guide/getting-started.md) and [release distribution contract](https://github.com/stack-sh/cli/blob/v0.4.0/docs/distribution.md). Install only when the user's authorization allows it. Otherwise provide source with an explicit validation gap; do not report it as checked. No remote source upload is required.
+If the CLI is missing, consult the [installation guide](https://stack-diagram.com/docs/guide/getting-started.md) and [release distribution contract](https://github.com/stack-sh/cli/blob/v0.5.0/docs/distribution.md). Install only when the user's authorization allows it. Otherwise provide source with an explicit validation gap; do not report it as checked. No remote source upload is required. Upgrade with the package manager that installed Stack, or verify and manually replace a direct download; `stack update` has been removed. For local configuration problems, `stack doctor` and `stack config path` provide read-only diagnosis.
 
 ## Read only the relevant reference
 

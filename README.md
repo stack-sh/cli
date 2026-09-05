@@ -2,7 +2,7 @@
 
 `stack-sh/cli` is the open-source native Rust `stack` command for Stack architecture diagrams.
 
-The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.4.0](https://github.com/stack-sh/cli/releases/tag/v0.4.0) is the supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. GitHub Releases, Homebrew, and the owner-maintained Aqua registry are available; Cargo remains planned. Source for 0.5.0 removes self-update; use the installation owner to upgrade. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
+The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.5.0](https://github.com/stack-sh/cli/releases/tag/v0.5.0) is the supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. GitHub Releases, Homebrew, and the owner-maintained Aqua registry are available; Cargo remains planned. Self-update was removed in 0.5.0; use the installation owner to upgrade. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
 
 ## Install
 
@@ -21,11 +21,11 @@ aqua install
 stack --version
 ```
 
-For a direct installation, download the archive for your target and its verification material from [GitHub Releases](https://github.com/stack-sh/cli/releases/tag/v0.4.0). Verify the checksum signature and both attestations by following the [supply-chain guide](./docs/supply-chain.md), then follow the [direct installation steps](./docs/distribution.md#direct-installation). The macOS artifacts are reproducibly ad-hoc signed, not Apple-notarized; Sigstore and GitHub attestations provide the publisher-identity check.
+For a direct installation, download the archive for your target and its verification material from [GitHub Releases](https://github.com/stack-sh/cli/releases/tag/v0.5.0). Verify the checksum signature and both attestations by following the [supply-chain guide](./docs/supply-chain.md), then follow the [direct installation steps](./docs/distribution.md#direct-installation). The macOS artifacts are reproducibly ad-hoc signed, not Apple-notarized; Sigstore and GitHub attestations provide the publisher-identity check.
 
 ## Commands
 
-The command inventory below follows the current source tree. `stack doctor` and `stack config` were added after 0.4.0 and are not present in the published 0.4.0 binaries; they will become available through installation channels in a later release.
+The command inventory below is available in the published 0.5.0 binaries, including `stack doctor`, `stack config`, and structured JSON output for automation.
 
 ```text
 stack help
@@ -75,7 +75,7 @@ stack manpage
 
 `stack update` is removed in 0.5.0. Homebrew, Aqua, and future Cargo installations are updated through their package manager; direct downloads are updated manually after verification. See the [upgrade and migration guide](./docs/self-update.md).
 
-`stack completions <bash|zsh|fish>` and `stack manpage` generate deterministic shell integration and an offline roff manual from the CLI command metadata. The 0.4.0 release archives carry the exact generated files; Homebrew installs them into its managed completion and manual paths, while direct, Aqua, and future Cargo users can generate them into user-owned locations without modifying shell startup files. See the [completion and manual guide](./docs/completions.md).
+`stack completions <bash|zsh|fish>` and `stack manpage` generate deterministic shell integration and an offline roff manual from the CLI command metadata. The 0.5.0 release archives carry the exact generated files; Homebrew installs them into its managed completion and manual paths, while direct, Aqua, and future Cargo users can generate them into user-owned locations without modifying shell startup files. See the [completion and manual guide](./docs/completions.md).
 
 `stack icons list [PROVIDER] [QUERY]` searches the asset-free catalog by ID, product name, or category. The catalog currently contains 1,051 IDs: 305 AWS, 45 Google Cloud, 639 Azure, and 62 curated developer and collaboration tool icons. This command reads only metadata embedded in the CLI.
 
