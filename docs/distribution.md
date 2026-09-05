@@ -2,7 +2,7 @@
 
 This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, and Aqua implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
 
-[Stack CLI 0.5.0](https://github.com/stack-sh/cli/releases/tag/v0.5.0) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. Cargo remains **planned**. Version 0.5.0 removes self-update; see the [upgrade guide](./self-update.md).
+[Stack CLI 0.5.1](https://github.com/stack-sh/cli/releases/tag/v0.5.1) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. The registry-only Cargo source package is also available. Version 0.5.0 removes self-update; see the [upgrade guide](./self-update.md).
 
 ## Supported platform matrix
 
@@ -10,10 +10,10 @@ The first supported binary matrix is intentionally narrow:
 
 | Rust target | OS | Architecture | Runtime floor | Direct | Homebrew | Cargo | Aqua |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | available | planned | available |
-| `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | available | — | planned | available |
-| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | available | planned | available |
-| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | available | planned | available |
+| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | available | available | available |
+| `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | available | — | available | available |
+| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | available | available | available |
+| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | available | available | available |
 
 Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architectures are not supported release targets. A source build may happen to work elsewhere, but it is best-effort and does not block a release. Cargo installs on supported targets require Rust 1.85 or newer. Homebrew availability additionally follows [Homebrew's current tier-1 host requirements](https://docs.brew.sh/Support-Tiers); Stack does not label a host as supported when the package manager itself classifies it below tier 1.
 
@@ -67,6 +67,23 @@ The sorted checksum file uses SHA-256 and covers the release manifest, all archi
 
 The release manifest records the tag, commit, source version, `minimumSupportedCliVersion`, each target's artifact names and SHA-256 values, the build identity, and each channel whose own install smoke test passed. Its schema is [`distribution/release-manifest.schema.json`](../distribution/release-manifest.schema.json). Supply-chain generation and user verification are documented in the [supply-chain guide](./supply-chain.md).
 
+## Cargo installation
+
+Install the official source package with Rust 1.85 or newer and a working native linker:
+
+```sh
+cargo install stack-diagram-cli --version 0.5.1 --locked
+stack --version
+```
+
+The package name is `stack-diagram-cli`; the executable name is `stack`. The unrelated `stack-cli` crate is not this project. The complete locked dependency graph comes from crates.io, including `stack-compiler 0.1.0`, `stack-theme 0.5.0`, `stack-formatter 0.1.0`, and `stack-engine 0.7.0`. The source package contains the embedded templates/catalogs and Apache-2.0 license, notice, and dependency attribution.
+
+Cargo places the executable in its installation root (normally `$CARGO_HOME/bin`, defaulting to `$HOME/.cargo/bin`); ensure that directory is on `PATH`. macOS needs the Xcode Command Line Tools, and Linux needs a native C compiler/linker. Supported Cargo targets are the same four native targets above. The runtime floors in the table describe prebuilt GitHub archives: Cargo compiles on your host with your local toolchain, and its binary runtime requirements and bytes may differ. Cargo source installation is not a Sigstore-attested prebuilt archive.
+
+Upgrade through Cargo by installing the desired published version with `--locked`, or use `cargo install stack-diagram-cli --locked` for the latest release. Uninstall with `cargo uninstall stack-diagram-cli`. Choose one installer for each binary location; do not use Cargo to replace a Homebrew- or Aqua-owned executable. Stack never replaces its own executable. Cargo does not place shell completions or manual pages automatically; use the generators described in the [shell integration guide](./completions.md). Configuration and imported icons remain outside Cargo’s binary installation root and are not removed on uninstall.
+
+Initial publication verifies an isolated, registry-only installation on macOS and GNU/Linux arm64 / x86_64 with both Rust 1.85.0 and stable, then exercises version/help, templates, validation, rendering, JSON output, configuration, and generated shell assets. The [publication procedure](./cargo-releasing.md) records the bootstrap credential boundary.
+
 ## Homebrew installation
 
 The owner-maintained [`stack-sh/homebrew-tap`](https://github.com/stack-sh/homebrew-tap) installs the canonical GitHub Release archive without rebuilding or repacking it. Homebrew is available on Apple Silicon macOS and glibc-based Linux on arm64 and x86_64 when the host meets Homebrew's current tier-1 requirements.
@@ -81,7 +98,7 @@ brew uninstall stack-sh/tap/stack
 
 For releases carrying the generated assets, the formula installs bash, zsh, and fish completions plus `stack.1` through Homebrew's standard path helpers. It does not edit shell startup files. The formula does not remove or replace Stack configuration and icon stores during an upgrade or uninstall. Formula updates verify release checksums, provenance, and SBOM attestations before changing the archive mapping. The fail-closed update and recovery procedure is maintained in the tap's [maintainer guide](https://github.com/stack-sh/homebrew-tap/blob/main/docs/maintaining.md).
 
-The Homebrew v0.5.0 formula was activated after the immutable release assets were published. Its macOS ARM64, Linux ARM64, and Linux x86_64 lifecycle tests verify the archived completion and manual bytes during install, upgrade, and uninstall. The release manifest remains the publication-time record with only `github-release` in `verifiedChannels`; this contract and the tap CI record the later channel verification without replacing any release asset.
+The Homebrew v0.5.1 formula was activated after the immutable release assets were published. Its macOS ARM64, Linux ARM64, and Linux x86_64 lifecycle tests verify the archived completion and manual bytes during install, upgrade, and uninstall. The release manifest remains the publication-time record with only `github-release` in `verifiedChannels`; this contract and the tap CI record the later channel verification without replacing any release asset.
 
 ## Aqua installation
 
@@ -101,7 +118,7 @@ registries:
     ref: 42702cda91a4156901b9a601bd143c43dcf05766
     path: aqua/registry.yaml
 packages:
-  - name: stack-sh/cli@v0.5.0
+  - name: stack-sh/cli@v0.5.1
     registry: stack-sh
 ```
 
@@ -132,24 +149,24 @@ stack --version
 
 Commit `aqua-checksums.json` with the configuration. To upgrade after a new stable Stack release, run `aqua update`, review the version change, then run `aqua update-checksum` and `aqua install`. Aqua owns the replacement; Stack never replaces its own executable. The registry maintainer procedure and four-target test command are in [`aqua/README.md`](../aqua/README.md).
 
-Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. Stack CLI 0.5.0 includes the generators; use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
+Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. Stack CLI 0.5.1 includes the generators; use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
 
-The Aqua v0.5.0 pin was activated after the immutable release assets were published. CI verifies all four target mappings without executing foreign binaries, then installs the native archive and compares all completion and manual generator bytes with the matching checksum-locked canonical release archive. This keeps the published release check independent from later source-tree command additions. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later verification evidence. No release asset is replaced.
+The Aqua v0.5.1 pin was activated after the immutable release assets were published. CI verifies all four target mappings without executing foreign binaries, then installs the native archive and compares all completion and manual generator bytes with the matching checksum-locked canonical release archive. This keeps the published release check independent from later source-tree command additions. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later verification evidence. No release asset is replaced.
 
 ## Direct installation
 
-Download [Stack CLI 0.5.0](https://github.com/stack-sh/cli/releases/tag/v0.5.0), select the archive whose target matches the supported platform table, and obtain all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. Replace `{target}` with the exact release target:
+Download [Stack CLI 0.5.1](https://github.com/stack-sh/cli/releases/tag/v0.5.1), select the archive whose target matches the supported platform table, and obtain all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. Replace `{target}` with the exact release target:
 
 ```sh
-tar -xzf "stack-v0.5.0-{target}.tar.gz"
+tar -xzf "stack-v0.5.1-{target}.tar.gz"
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "stack-v0.5.0-{target}/stack" "$HOME/.local/bin/stack"
+install -m 0755 "stack-v0.5.1-{target}/stack" "$HOME/.local/bin/stack"
 "$HOME/.local/bin/stack" --version
 ```
 
 Add `$HOME/.local/bin` to `PATH` if it is not already present. Repeat the verified manual installation to update a directly downloaded binary; never overwrite a package-manager-owned binary. No receipt is created or required. See the [upgrade guide](./self-update.md).
 
-The 0.5.0 archive carries completion and manual assets. Either copy its verified `share/` files into the matching system prefix or use the installed binary to generate user-owned files following the [completion guide](./completions.md). Do not copy these files from a different Stack version; CI and release verification require them to match the binary's command definition.
+The 0.5.1 archive carries completion and manual assets. Either copy its verified `share/` files into the matching system prefix or use the installed binary to generate user-owned files following the [completion guide](./completions.md). Do not copy these files from a different Stack version; CI and release verification require them to match the binary's command definition.
 
 ## Channel ownership
 
@@ -157,12 +174,12 @@ The 0.5.0 archive carries completion and manual assets. Either copy its verified
 | --- | --- | --- |
 | GitHub Releases | Canonical immutable archives with generated completions and manual, manifest, checksums, signature bundle, SBOMs, and provenance | Replace a tag or asset after publication |
 | Homebrew | Formula metadata, archive URL/digest mapping, standard completion/manual placement, install, upgrade, and uninstall | Rebuild a different binary or delegate upgrades to `stack` |
-| Cargo | A future unambiguous crates.io source package, its registry dependency graph, and installation of the `stack` binary | Claim binary-archive identity, promise the local `stack-cli` package name on crates.io, or publish while dependencies remain Git-only |
+| Cargo | The `stack-diagram-cli` crates.io source package, registry-only locked dependencies, and installation of the `stack` binary | Claim binary-archive identity, claim the unrelated `stack-cli` package, or publish while dependencies remain Git-only |
 | Aqua | Registry metadata and version pinning mapped to canonical archives and digests | Repack an archive or select prereleases by default |
 
 Stack does not provide a self-updater or a receipt-writing installer. Update through the tool that installed the binary, or verify and manually install a new GitHub archive for a direct download. Existing receipts are neither read nor deleted.
 
-The workspace currently uses `stack-cli` as its local Cargo package name, but that name is already occupied by an unrelated crates.io package. No public Cargo install command is supported yet. The Cargo channel must select and verify an unambiguous registry package name, while keeping the installed binary name `stack`, before changing its state to available.
+The source and published Cargo package names are both `stack-diagram-cli`; the installed binary remains `stack`. Registry ownership and supported-target installation are verified before activating this channel.
 
 ## Release activation and rollback
 

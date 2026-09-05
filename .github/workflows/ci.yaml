@@ -16,7 +16,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
       - name: Validate initial Cargo publication guards
-        run: node --test scripts/initial-publish-context.test.mjs
+        run: node --test scripts/initial-publish-context.test.mjs scripts/cargo-publish-context.test.mjs
 
       - name: Read supported specification revision
         id: specification

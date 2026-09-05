@@ -12,7 +12,7 @@ const expectedTargets = [
   "x86_64-unknown-linux-gnu",
 ];
 const expectedChannels = ["aqua", "cargo", "github-release", "homebrew"];
-const availableChannels = new Set(["aqua", "github-release", "homebrew"]);
+const availableChannels = new Set(["aqua", "cargo", "github-release", "homebrew"]);
 const requiredArchiveEntries = [
   "LICENSE",
   "NOTICE",
@@ -67,7 +67,7 @@ export function validateDistributionContract(contract, cargoToml) {
     contract.product.sourceCargoPackage === cargoValue(cargoToml, "name"),
     "sourceCargoPackage must match Cargo.toml",
   );
-  invariant(contract.product?.publishedCargoPackage === null, "published Cargo package must remain unset before registry ownership is verified");
+  invariant(contract.product?.publishedCargoPackage === "stack-diagram-cli", "published Cargo package must be stack-diagram-cli");
   invariant(contract.availability?.state === "available", "distribution must be available after the verified stable release");
   invariant(
     contract.availability?.message?.includes(`Stack CLI ${cargoVersion}`) &&
