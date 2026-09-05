@@ -1,0 +1,15 @@
+Generate shell completion source
+
+Usage:
+  stack completions <SHELL>
+
+Arguments:
+  <SHELL>  bash, zsh, or fish
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack completions bash > stack.bash
+  stack completions zsh > _stack
+  stack completions fish > stack.fish

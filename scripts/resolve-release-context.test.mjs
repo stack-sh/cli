@@ -20,17 +20,17 @@ test("main dispatch resolves a non-publishing verification run", () => {
       ref: "refs/heads/main",
       refName: "main",
       sha,
-      requestedVersion: "0.3.0",
+      requestedVersion: "0.4.0",
       cargoToml,
       contract,
     }),
     {
-      version: "0.3.0",
-      tag: "v0.3.0",
+      version: "0.4.0",
+      tag: "v0.4.0",
       sourceRef: "refs/heads/main",
       publish: false,
       verifiedChannels: "",
-      minimumSupportedCliVersion: "0.3.0",
+      minimumSupportedCliVersion: "0.4.0",
     },
   );
 });
@@ -39,20 +39,20 @@ test("an exact version tag resolves a publishing run", () => {
   assert.deepEqual(
     resolveReleaseContext({
       eventName: "push",
-      ref: "refs/tags/v0.3.0",
-      refName: "v0.3.0",
+      ref: "refs/tags/v0.4.0",
+      refName: "v0.4.0",
       sha,
       requestedVersion: "",
       cargoToml,
       contract,
     }),
     {
-      version: "0.3.0",
-      tag: "v0.3.0",
-      sourceRef: "refs/tags/v0.3.0",
+      version: "0.4.0",
+      tag: "v0.4.0",
+      sourceRef: "refs/tags/v0.4.0",
       publish: true,
       verifiedChannels: "github-release",
-      minimumSupportedCliVersion: "0.3.0",
+      minimumSupportedCliVersion: "0.4.0",
     },
   );
 });
@@ -65,17 +65,17 @@ test("an activated self-update channel is recorded in a tagged release", () => {
   assert.deepEqual(
     resolveReleaseContext({
       eventName: "push",
-      ref: "refs/tags/v0.3.0",
-      refName: "v0.3.0",
+      ref: "refs/tags/v0.4.0",
+      refName: "v0.4.0",
       sha,
       requestedVersion: "",
       cargoToml,
       contract: activated,
     }),
     {
-      version: "0.3.0",
-      tag: "v0.3.0",
-      sourceRef: "refs/tags/v0.3.0",
+      version: "0.4.0",
+      tag: "v0.4.0",
+      sourceRef: "refs/tags/v0.4.0",
       publish: true,
       verifiedChannels: "github-release,self-update",
       minimumSupportedCliVersion: "0.2.1",
@@ -84,7 +84,7 @@ test("an activated self-update channel is recorded in a tagged release", () => {
 });
 
 test("self-update activation rejects a missing or future compatibility floor", () => {
-  for (const floor of [null, "0.4.0", "invalid"]) {
+  for (const floor of [null, "0.5.0", "invalid"]) {
     const activated = structuredClone(contract);
     const selfUpdate = activated.channels.find(({ id }) => id === "self-update");
     selfUpdate.state = "available";
@@ -92,8 +92,8 @@ test("self-update activation rejects a missing or future compatibility floor", (
     assert.throws(
       () => resolveReleaseContext({
         eventName: "push",
-        ref: "refs/tags/v0.3.0",
-        refName: "v0.3.0",
+        ref: "refs/tags/v0.4.0",
+        refName: "v0.4.0",
         sha,
         requestedVersion: "",
         cargoToml,
@@ -113,17 +113,17 @@ test("manual runs from another ref or version are rejected", () => {
     contract,
   };
   assert.throws(
-    () => resolveReleaseContext({ ...common, ref: "refs/heads/topic", requestedVersion: "0.3.0" }),
+    () => resolveReleaseContext({ ...common, ref: "refs/heads/topic", requestedVersion: "0.4.0" }),
     /must run from main/,
   );
   assert.throws(
-    () => resolveReleaseContext({ ...common, ref: "refs/heads/main", requestedVersion: "0.4.0" }),
+    () => resolveReleaseContext({ ...common, ref: "refs/heads/main", requestedVersion: "0.5.0" }),
     /must match Cargo.toml/,
   );
 });
 
 test("floating and mismatched tags are rejected", () => {
-  for (const ref of ["refs/tags/latest", "refs/tags/v0.3", "refs/tags/v0.4.0"]) {
+  for (const ref of ["refs/tags/latest", "refs/tags/v0.4", "refs/tags/v0.5.0"]) {
     assert.throws(
       () => resolveReleaseContext({
         eventName: "push",
@@ -141,14 +141,14 @@ test("floating and mismatched tags are rejected", () => {
 
 test("source and contract version drift is rejected", () => {
   const drifted = structuredClone(contract);
-  drifted.product.currentSourceVersion = "0.4.0";
+  drifted.product.currentSourceVersion = "0.5.0";
   assert.throws(
     () => resolveReleaseContext({
       eventName: "workflow_dispatch",
       ref: "refs/heads/main",
       refName: "main",
       sha,
-      requestedVersion: "0.3.0",
+      requestedVersion: "0.4.0",
       cargoToml,
       contract: drifted,
     }),

@@ -17,7 +17,19 @@ TARGETS = {
     "aarch64-unknown-linux-gnu",
     "x86_64-unknown-linux-gnu",
 }
-REQUIRED_FILES = ("LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "stack")
+GENERATED_FILES = {
+    "share/bash-completion/completions/stack": ROOT / "distribution/generated/share/bash-completion/completions/stack",
+    "share/fish/vendor_completions.d/stack.fish": ROOT / "distribution/generated/share/fish/vendor_completions.d/stack.fish",
+    "share/man/man1/stack.1": ROOT / "distribution/generated/share/man/man1/stack.1",
+    "share/zsh/site-functions/_stack": ROOT / "distribution/generated/share/zsh/site-functions/_stack",
+}
+REQUIRED_FILES = (
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_LICENSES.md",
+    *GENERATED_FILES,
+    "stack",
+)
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:-rc\.[1-9][0-9]*)?$")
 MAXIMUM_FILE_BYTES = 256 * 1024 * 1024
 
@@ -82,6 +94,16 @@ def tar_info(name, mode, size, source_date_epoch, entry_type=tarfile.REGTYPE):
     return info
 
 
+def archive_file_sources(binary_path):
+    return {
+        "LICENSE": ROOT / "LICENSE",
+        "NOTICE": ROOT / "NOTICE",
+        "THIRD_PARTY_LICENSES.md": ROOT / "THIRD_PARTY_LICENSES.md",
+        **GENERATED_FILES,
+        "stack": binary_path,
+    }
+
+
 def create_archive(binary, target, version, source_date_epoch, output_directory):
     binary_path = validate_inputs(binary, target, version, source_date_epoch)
     output = Path(output_directory).absolute()
@@ -93,12 +115,7 @@ def create_archive(binary, target, version, source_date_epoch, output_directory)
     require(not os.path.lexists(destination), f"refusing to replace release archive: {destination.name}")
     root_name = archive_root(target, version)
 
-    file_sources = {
-        "LICENSE": ROOT / "LICENSE",
-        "NOTICE": ROOT / "NOTICE",
-        "THIRD_PARTY_LICENSES.md": ROOT / "THIRD_PARTY_LICENSES.md",
-        "stack": binary_path,
-    }
+    file_sources = archive_file_sources(binary_path)
     for name, source in file_sources.items():
         source_stat = source.lstat()
         require(stat.S_ISREG(source_stat.st_mode), f"archive input must be a regular file: {name}")
@@ -182,7 +199,8 @@ def verify_archive(archive, target, version, source_date_epoch, expected_binary=
                 expected_digest = sha256_file(expected_binary)
                 require(sha256_stream(extracted) == expected_digest, "archived binary differs from its build output")
             elif name != "stack":
-                require(extracted.read() == (ROOT / name).read_bytes(), f"archive notice differs from source: {name}")
+                source = archive_file_sources(expected_binary)[name]
+                require(extracted.read() == source.read_bytes(), f"archive file differs from source: {name}")
 
     return {"archive": archive_path.name, "entries": len(expected_names), "sha256": sha256_file(archive_path)}
 

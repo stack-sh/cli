@@ -40,7 +40,16 @@ stack-v{version}-{target}.provenance.sigstore.json
 stack-v{version}-{target}.sbom.sigstore.json
 ```
 
-Each archive contains one directory named `stack-v{version}-{target}` with `stack`, `LICENSE`, `NOTICE`, and `THIRD_PARTY_LICENSES.md`. Archives use bytewise path order, numeric uid/gid 0, `SOURCE_DATE_EPOCH` for entry times, and a gzip header without a source filename or wall-clock timestamp.
+Each archive contains one directory named `stack-v{version}-{target}` with `stack`, `LICENSE`, `NOTICE`, `THIRD_PARTY_LICENSES.md`, and the generated files below. Archives use bytewise path order, numeric uid/gid 0, `SOURCE_DATE_EPOCH` for entry times, and a gzip header without a source filename or wall-clock timestamp.
+
+```text
+share/bash-completion/completions/stack
+share/zsh/site-functions/_stack
+share/fish/vendor_completions.d/stack.fish
+share/man/man1/stack.1
+```
+
+The target binary must reproduce those exact bytes through `stack completions <SHELL>` and `stack manpage`. See the [shell completion and manual contract](./completions.md) for package-manager and user-owned installation paths.
 
 Release binaries use Rust 1.85.0 exactly. GNU/Linux builds run natively in the digest-pinned `rust:1.85.0-slim-bullseye` multi-architecture image and install their remaining release tools from the image's dated Debian snapshot, so their maximum glibc requirement is 2.31. macOS builds set `MACOSX_DEPLOYMENT_TARGET=13.0`, replace the path-dependent linker UUID with one derived from unsigned executable content, and apply a timestamp-free ad-hoc signature with a fixed identifier. Every target is built twice into isolated Cargo target directories on one GitHub-hosted native runner; the normalized binary bytes and independently packaged archive bytes must match before upload.
 
@@ -70,7 +79,7 @@ brew upgrade stack-sh/tap/stack
 brew uninstall stack-sh/tap/stack
 ```
 
-The formula does not remove or replace Stack configuration and icon stores during an upgrade or uninstall. Formula updates verify release checksums, provenance, and SBOM attestations before changing the archive mapping. The fail-closed update and recovery procedure is maintained in the tap's [maintainer guide](https://github.com/stack-sh/homebrew-tap/blob/main/docs/maintaining.md).
+For releases carrying the generated assets, the formula installs bash, zsh, and fish completions plus `stack.1` through Homebrew's standard path helpers. It does not edit shell startup files. The formula does not remove or replace Stack configuration and icon stores during an upgrade or uninstall. Formula updates verify release checksums, provenance, and SBOM attestations before changing the archive mapping. The fail-closed update and recovery procedure is maintained in the tap's [maintainer guide](https://github.com/stack-sh/homebrew-tap/blob/main/docs/maintaining.md).
 
 Homebrew was activated after the immutable `v0.3.0` release assets were published. The release manifest therefore remains the publication-time record, while this contract and the tap CI record the later channel activation; release assets are not replaced to retrofit that state.
 
@@ -123,6 +132,8 @@ stack --version
 
 Commit `aqua-checksums.json` with the configuration. To upgrade after a new stable Stack release, run `aqua update`, review the version change, then run `aqua update-checksum` and `aqua install`. Aqua owns the replacement; `stack` self-update must refuse to overwrite it. The registry maintainer procedure and four-target test command are in [`aqua/README.md`](../aqua/README.md).
 
+Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. On a release that includes the generator, use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
+
 Aqua was activated after the immutable `v0.3.0` release assets were published. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later activation evidence. No release asset is replaced.
 
 ## Direct installation
@@ -138,12 +149,14 @@ install -m 0755 "stack-v0.3.0-{target}/stack" "$HOME/.local/bin/stack"
 
 Add `$HOME/.local/bin` to `PATH` if it is not already present. This manual installation has no self-update receipt. The source tree after 0.3.0 contains `stack update`, but the published 0.3.0 binary does not, and this installation cannot be claimed retroactively without risking a package-manager-owned binary. Self-update remains unavailable until a later release and verified direct installer separately activate the channel. The command and receipt contract are documented in the [self-update guide](./self-update.md).
 
+On a future archive that carries completion and manual assets, either copy the verified `share/` files into the matching system prefix or use the installed binary to generate user-owned files following the [completion guide](./completions.md). Do not copy these files from a different Stack version; CI and release verification require them to match the binary's command definition.
+
 ## Channel ownership
 
 | Channel | Owns | Must not do |
 | --- | --- | --- |
-| GitHub Releases | Canonical immutable archives, manifest, checksums, signature bundle, SBOMs, and provenance | Replace a tag or asset after publication |
-| Homebrew | Formula metadata, archive URL/digest mapping, install, upgrade, and uninstall | Rebuild a different binary or delegate upgrades to `stack` |
+| GitHub Releases | Canonical immutable archives with generated completions and manual, manifest, checksums, signature bundle, SBOMs, and provenance | Replace a tag or asset after publication |
+| Homebrew | Formula metadata, archive URL/digest mapping, standard completion/manual placement, install, upgrade, and uninstall | Rebuild a different binary or delegate upgrades to `stack` |
 | Cargo | A future unambiguous crates.io source package, its registry dependency graph, and installation of the `stack` binary | Claim binary-archive identity, promise the local `stack-cli` package name on crates.io, or publish while dependencies remain Git-only |
 | Aqua | Registry metadata and version pinning mapped to canonical archives and digests | Repack an archive or select prereleases by default |
 | `stack` self-update | Verified atomic replacement for direct installs with a Stack installation receipt | Replace a binary owned by Homebrew, Cargo, Aqua, or an unknown installer |
@@ -154,7 +167,7 @@ The workspace currently uses `stack-cli` as its local Cargo package name, but th
 
 ## Release activation and rollback
 
-A channel becomes available only after all of its target builds and clean-install smoke tests pass. A stable GitHub release additionally requires matching tag/version metadata, complete archive contents, valid checksums and Sigstore bundle, inspectable SPDX SBOMs and provenance, and successful `stack --version`, `help`, `init`, `check`, and `render` smoke tests on every tier-1 target.
+A channel becomes available only after all of its target builds and clean-install smoke tests pass. A stable GitHub release additionally requires matching tag/version metadata, complete archive contents, valid checksums and Sigstore bundle, inspectable SPDX SBOMs and provenance, exact generated completion/manual bytes, and successful `stack --version`, `help`, `init`, `check`, and `render` smoke tests on every tier-1 target.
 
 Tags and assets are immutable. For a broken release, mark it as withdrawn, exclude it from default update resolution, restore package-manager metadata to the last verified release, and publish a new patch version. Do not overwrite the broken tag or assets. Cargo may yank a broken package version, but yanking is not deletion and the replacement still uses a new version.
 

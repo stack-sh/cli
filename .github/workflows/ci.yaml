@@ -71,7 +71,7 @@ jobs:
           node scripts/validate-supply-chain-workflow.mjs
           node scripts/validate-release-workflow.mjs
           node --test scripts/release-security.test.mjs scripts/supply-chain-workflow.test.mjs scripts/resolve-release-context.test.mjs scripts/release-workflow.test.mjs
-          python3 -m unittest scripts/test_normalize_macos_binary.py scripts/test_package_release.py
+          python3 -m unittest scripts/test_generate_cli_assets.py scripts/test_normalize_macos_binary.py scripts/test_package_release.py
       - name: Validate pinned example templates
         env:
           STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
@@ -82,6 +82,24 @@ jobs:
         run: cargo +stable fmt --check
       - name: Run tests
         run: cargo +stable test --locked
+      - name: Validate generated completion and manual assets
+        shell: bash
+        run: |
+          python3 scripts/generate_cli_assets.py --binary target/debug/stack --check
+          bash -n distribution/generated/share/bash-completion/completions/stack
+          source distribution/generated/share/bash-completion/completions/stack
+          COMP_WORDS=(stack r)
+          COMP_CWORD=1
+          _stack_completion
+          test "${COMPREPLY[*]}" = render
+          COMP_WORDS=(stack icons li)
+          COMP_CWORD=2
+          _stack_completion
+          test "${COMPREPLY[*]}" = list
+          COMP_WORDS=(stack icons list a)
+          COMP_CWORD=3
+          _stack_completion
+          test "${COMPREPLY[*]}" = "aws azure"
       - name: Run canonical formatter suite
         env:
           STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
@@ -127,6 +145,11 @@ jobs:
           ./target/release/stack update --help
           ./target/release/stack lsp --help
           ./target/release/stack icons --help
+          ./target/release/stack completions --help
+          ./target/release/stack completions bash | cmp distribution/generated/share/bash-completion/completions/stack -
+          ./target/release/stack completions zsh | cmp distribution/generated/share/zsh/site-functions/_stack -
+          ./target/release/stack completions fish | cmp distribution/generated/share/fish/vendor_completions.d/stack.fish -
+          ./target/release/stack manpage | cmp distribution/generated/share/man/man1/stack.1 -
           ./target/release/stack icons list
           ./target/release/stack icons list aws s3
           ./target/release/stack icons import --help
@@ -140,6 +163,7 @@ jobs:
           test -s CONTRIBUTING.md
           test -s SECURITY.md
           test -s docs/language-server.md
+          test -s docs/completions.md
           test -s docs/self-update.md
           test -s docs/publication-audit.md
           test -s docs/provider-icon-import.md
@@ -151,9 +175,14 @@ jobs:
           test -s distribution/distribution-contract.schema.json
           test -s distribution/install-receipt.schema.json
           test -s distribution/release-manifest.schema.json
+          test -s distribution/generated/share/bash-completion/completions/stack
+          test -s distribution/generated/share/zsh/site-functions/_stack
+          test -s distribution/generated/share/fish/vendor_completions.d/stack.fish
+          test -s distribution/generated/share/man/man1/stack.1
           test -s Cargo.toml
           test -s Cargo.lock
           test -s src/config.rs
+          test -s src/command_docs.rs
           test -s src/lsp.rs
           test -s src/update.rs
           test -s src/update/install.rs
@@ -176,6 +205,8 @@ jobs:
           test -s scripts/release-security.mjs
           test -s scripts/release-security.test.mjs
           test -s scripts/package_release.py
+          test -s scripts/generate_cli_assets.py
+          test -s scripts/test_generate_cli_assets.py
           test -s scripts/normalize_macos_binary.py
           test -s scripts/test_normalize_macos_binary.py
           test -s scripts/test_package_release.py

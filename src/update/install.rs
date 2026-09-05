@@ -288,6 +288,10 @@ pub(super) fn extract_binary(
         format!("{root}/LICENSE"),
         format!("{root}/NOTICE"),
         format!("{root}/THIRD_PARTY_LICENSES.md"),
+        format!("{root}/share/bash-completion/completions/stack"),
+        format!("{root}/share/fish/vendor_completions.d/stack.fish"),
+        format!("{root}/share/man/man1/stack.1"),
+        format!("{root}/share/zsh/site-functions/_stack"),
         format!("{root}/stack"),
     ];
     let decoder = GzDecoder::new(Cursor::new(archive_bytes));

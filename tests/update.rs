@@ -107,6 +107,19 @@ fn update_archive(
         ("LICENSE", b"license".as_slice()),
         ("NOTICE", b"notice".as_slice()),
         ("THIRD_PARTY_LICENSES.md", b"third party".as_slice()),
+        (
+            "share/bash-completion/completions/stack",
+            b"bash completion".as_slice(),
+        ),
+        (
+            "share/fish/vendor_completions.d/stack.fish",
+            b"fish completion".as_slice(),
+        ),
+        ("share/man/man1/stack.1", b"manual page".as_slice()),
+        (
+            "share/zsh/site-functions/_stack",
+            b"zsh completion".as_slice(),
+        ),
     ] {
         append_tar_entry(
             &mut builder,
@@ -298,7 +311,7 @@ fn update_binary_integrates_local_release_verification_and_atomic_replacement()
     let current_bytes = fs::read(&installed)?;
     let target = update_target()?;
     let current_version = env!("CARGO_PKG_VERSION");
-    let update_version = "0.3.1";
+    let update_version = "0.4.1";
     let epoch = 1_788_566_400_u64;
     let current_commit = "1111111111111111111111111111111111111111";
     let release_commit = "2222222222222222222222222222222222222222";
@@ -327,7 +340,7 @@ fn update_binary_integrates_local_release_verification_and_atomic_replacement()
         }))?,
     )?;
 
-    let candidate = b"#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then printf 'stack 0.3.1\\n'; exit 0; fi\nexit 2\n";
+    let candidate = b"#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then printf 'stack 0.4.1\\n'; exit 0; fi\nexit 2\n";
     let archive = update_archive(update_version, target, candidate, epoch)?;
     let archive_digest = sha256(&archive);
     let supported_targets = [
@@ -443,16 +456,16 @@ fn update_binary_integrates_local_release_verification_and_atomic_replacement()
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert!(String::from_utf8(output.stdout)?.contains("Updated stack 0.3.0 -> 0.3.1"));
+    assert!(String::from_utf8(output.stdout)?.contains("Updated stack 0.4.0 -> 0.4.1"));
     assert_eq!(fs::read(&installed)?, candidate);
     assert_eq!(fs::read_to_string(&gh_log)?, "verified\nverified\n");
     assert_eq!(server.hits().len(), 3);
 
     let version = Command::new(&installed).arg("--version").output()?;
     assert_eq!(version.status.code(), Some(0));
-    assert_eq!(version.stdout, b"stack 0.3.1\n");
+    assert_eq!(version.stdout, b"stack 0.4.1\n");
     let receipt: Value = serde_json::from_slice(&fs::read(receipt_path)?)?;
-    assert_eq!(receipt["version"], "0.3.1");
+    assert_eq!(receipt["version"], "0.4.1");
     assert_eq!(receipt["sourceCommit"], release_commit);
     assert_eq!(receipt["binary"]["sha256"], sha256(candidate));
     Ok(())

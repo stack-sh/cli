@@ -6,7 +6,11 @@ Usage:
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, update, lsp, icons, help, or version
+  <COMMAND>  init, check, fmt, render, update, lsp, icons, completions,
+             manpage, help, or version
+
+Options:
+  -h, --help  Print help
 
 Examples:
   stack help

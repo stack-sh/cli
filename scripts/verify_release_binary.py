@@ -9,6 +9,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 
+ROOT = Path(__file__).resolve().parent.parent
 TARGETS = {
     "aarch64-apple-darwin": ("Mach-O", "arm64"),
     "x86_64-apple-darwin": ("Mach-O", "x86_64"),
@@ -16,6 +17,12 @@ TARGETS = {
     "x86_64-unknown-linux-gnu": ("ELF", "x86-64"),
 }
 MAXIMUM_BINARY_BYTES = 256 * 1024 * 1024
+GENERATED_COMMANDS = {
+    "share/bash-completion/completions/stack": ("completions", "bash"),
+    "share/fish/vendor_completions.d/stack.fish": ("completions", "fish"),
+    "share/man/man1/stack.1": ("manpage",),
+    "share/zsh/site-functions/_stack": ("completions", "zsh"),
+}
 
 
 def require(condition, message):
@@ -97,6 +104,12 @@ def verify_commands(binary, version):
         b"stack update" in command([binary, "update", "--help"]),
         "update help output is missing usage",
     )
+    for relative_path, arguments in GENERATED_COMMANDS.items():
+        expected = (ROOT / "distribution/generated" / relative_path).read_bytes()
+        require(
+            command([binary, *arguments]) == expected,
+            f"generated CLI asset differs from source: {relative_path}",
+        )
 
     with tempfile.TemporaryDirectory(prefix="stack-release-smoke-") as temporary:
         working_directory = Path(temporary)

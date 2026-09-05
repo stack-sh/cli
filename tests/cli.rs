@@ -283,6 +283,22 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
             &["help", "icons", "import"],
             include_bytes!("snapshots/icons-import-help.txt"),
         ),
+        (
+            &["completions", "--help"],
+            include_bytes!("snapshots/completions-help.txt"),
+        ),
+        (
+            &["help", "completions"],
+            include_bytes!("snapshots/completions-help.txt"),
+        ),
+        (
+            &["manpage", "--help"],
+            include_bytes!("snapshots/manpage-help.txt"),
+        ),
+        (
+            &["help", "manpage"],
+            include_bytes!("snapshots/manpage-help.txt"),
+        ),
         (&["help", "help"], include_bytes!("snapshots/help-help.txt")),
         (
             &["help", "--help"],
@@ -306,6 +322,88 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
     for arguments in [["version"], ["-v"], ["-V"], ["--version"]] {
         assert_stdout_only(&arguments, expected_version.as_bytes())?;
     }
+    Ok(())
+}
+
+#[test]
+fn generated_shell_and_manual_assets_are_exact_and_usable() -> Result<(), Box<dyn Error>> {
+    for (shell, expected) in [
+        (
+            "bash",
+            include_bytes!("../distribution/generated/share/bash-completion/completions/stack")
+                .as_slice(),
+        ),
+        (
+            "zsh",
+            include_bytes!("../distribution/generated/share/zsh/site-functions/_stack").as_slice(),
+        ),
+        (
+            "fish",
+            include_bytes!("../distribution/generated/share/fish/vendor_completions.d/stack.fish")
+                .as_slice(),
+        ),
+    ] {
+        assert_stdout_only(&["completions", shell], expected)?;
+    }
+    assert_stdout_only(
+        &["manpage"],
+        include_bytes!("../distribution/generated/share/man/man1/stack.1"),
+    )?;
+
+    let directory = TestDirectory::new("completion-smoke")?;
+    let bash_completion = directory.file(
+        "stack.bash",
+        include_bytes!("../distribution/generated/share/bash-completion/completions/stack"),
+    )?;
+    let bash = Command::new("bash")
+        .args([
+            "-c",
+            "source \"$1\"; COMP_WORDS=(stack r); COMP_CWORD=1; _stack_completion; printf '%s\\n' \"${COMPREPLY[@]}\"; COMP_WORDS=(stack icons li); COMP_CWORD=2; _stack_completion; printf '%s\\n' \"${COMPREPLY[@]}\"; COMP_WORDS=(stack icons list a); COMP_CWORD=3; _stack_completion; printf '%s\\n' \"${COMPREPLY[@]}\"",
+            "stack-completion-test",
+        ])
+        .arg(&bash_completion)
+        .output()?;
+    assert!(bash.status.success());
+    assert_eq!(bash.stdout, b"render\nlist\naws\nazure\n");
+    assert!(bash.stderr.is_empty());
+
+    for (program, relative_path) in [
+        (
+            "zsh",
+            "distribution/generated/share/zsh/site-functions/_stack",
+        ),
+        (
+            "fish",
+            "distribution/generated/share/fish/vendor_completions.d/stack.fish",
+        ),
+    ] {
+        match Command::new(program)
+            .arg("-n")
+            .arg(Path::new(env!("CARGO_MANIFEST_DIR")).join(relative_path))
+            .output()
+        {
+            Ok(output) => {
+                assert!(output.status.success(), "{program} syntax check failed");
+                assert!(
+                    output.stderr.is_empty(),
+                    "{program} syntax check emitted diagnostics"
+                );
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
+    }
+
+    let unsupported = stack(["completions", "powershell"])?;
+    assert_eq!(unsupported.status.code(), Some(2));
+    assert!(unsupported.stdout.is_empty());
+    let diagnostics = String::from_utf8(unsupported.stderr)?;
+    assert!(
+        diagnostics.starts_with(
+            "error: unsupported shell 'powershell'; supported shells: bash, zsh, fish\n"
+        )
+    );
+    assert!(diagnostics.contains("Usage:\n  stack <COMMAND>"));
     Ok(())
 }
 

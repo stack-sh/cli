@@ -10,6 +10,8 @@ import { validateSupplyChainWorkflow } from "./validate-supply-chain-workflow.mj
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "supply-chain.yaml"), "utf8");
+const cargoToml = fs.readFileSync(path.join(root, "Cargo.toml"), "utf8");
+const packageVersion = cargoToml.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
 
 test("the checked-in supply-chain workflow is least privilege and fully pinned", () => {
   assert.deepEqual(validateSupplyChainWorkflow(workflow), { actions: 6, permissions: 3 });
@@ -55,7 +57,8 @@ test("the smoke fixture is bounded and never overwritten", (t) => {
   t.after(() => fs.rmSync(directory, { force: true, recursive: true }));
 
   const fixture = createSmokeFixture(directory);
-  assert.match(path.basename(fixture), /^stack-v0\.3\.0-supply-chain-smoke\.bin$/);
+  assert.ok(packageVersion, "Cargo.toml package version is missing");
+  assert.equal(path.basename(fixture), `stack-v${packageVersion}-supply-chain-smoke.bin`);
   assert.match(fs.readFileSync(fixture, "utf8"), /^Stack supply-chain smoke fixture\nsource=/);
   assert.throws(() => createSmokeFixture(directory), /refusing to replace smoke fixture/);
 });

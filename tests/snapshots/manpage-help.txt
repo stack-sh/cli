@@ -1,0 +1,11 @@
+Print the offline Stack CLI manual page
+
+Usage:
+  stack manpage
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack manpage > stack.1
+  man ./stack.1
