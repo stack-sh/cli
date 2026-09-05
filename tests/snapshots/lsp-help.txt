@@ -1,0 +1,14 @@
+Run the Stack language server over standard input and output
+
+Usage:
+  stack lsp
+
+Options:
+  -h, --help  Print help
+
+Protocol:
+  LSP 3.18 JSON-RPC messages use Content-Length framing over standard input
+  and output. Standard output is reserved for protocol messages.
+
+Examples:
+  stack lsp

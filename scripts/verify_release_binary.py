@@ -89,6 +89,10 @@ def verify_commands(binary, version):
     require(command([binary, "--version"]) == expected_version, "--version output does not match Cargo version")
     require(command([binary, "version"]) == expected_version, "version command output does not match Cargo version")
     require(b"Usage:" in command([binary, "help"]), "help output is missing usage")
+    require(
+        b"stack lsp" in command([binary, "lsp", "--help"]),
+        "LSP help output is missing usage",
+    )
 
     with tempfile.TemporaryDirectory(prefix="stack-release-smoke-") as temporary:
         working_directory = Path(temporary)

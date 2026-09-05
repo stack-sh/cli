@@ -6,8 +6,8 @@ Audit date: 2026-09-05
 
 | Component | Version or revision | License | Source | Distribution note |
 | --- | --- | --- | --- | --- |
-| `stack-engine` / `stack-formatter` | `2c9adabd2ffee627ac5fe3ee26331b0ad75bceac` | Apache-2.0 | <https://github.com/stack-sh/engine> | Linked into the native binary; validates and renders caller-owned provider packs without bundling vendor assets. |
-| `stack-compiler` | `4a18fac42afc2256a1bb3a6ff13d12d732a391e7` | Apache-2.0 | <https://github.com/stack-sh/compiler> | Linked transitively through `stack-engine`; preserves namespaced provider icon identifiers in normalized IR. |
+| `stack-engine` / `stack-formatter` | `9af727aea79233b8389e0ed6fdbae7d3f388dc29` | Apache-2.0 | <https://github.com/stack-sh/engine> | Linked into the native binary; validates and renders caller-owned provider packs without bundling vendor assets. |
+| `stack-compiler` | `84ab5663a7f7c5b7dc0b5e9e2f04c8894ed02820` | Apache-2.0 | <https://github.com/stack-sh/compiler> | Linked directly for protocol-neutral language intelligence and transitively through `stack-engine`; performs no runtime I/O. |
 | `stack-theme` | `7e208d6a3c90d255799f390a4e8b86248c73caee` | Apache-2.0 | <https://github.com/stack-sh/theme> | Linked directly and through `stack-engine`; its 30 fallback and 12 explicit core SVGs are Stack-authored Apache-2.0 assets. It also provides the asset-free provider-pack contract and types. |
 | `roxmltree` | `0.21.1` | MIT OR Apache-2.0 | <https://github.com/RazrFalcon/roxmltree> | Parses untrusted local SVG into a read-only tree before allowlisted serialization. |
 | `sha2`, `digest`, `block-buffer`, `crypto-common`, `hybrid-array`, `const-oid`, `typenum` | `0.11.0`, `0.11.3`, `0.12.1`, `0.2.2`, `0.4.14`, `0.10.2`, `1.20.1` | MIT OR Apache-2.0 | <https://github.com/RustCrypto> | Computes complete archive and per-asset SHA-256 identities. |

@@ -15,6 +15,7 @@ use stack_engine::{
 };
 
 mod config;
+mod lsp;
 mod provider;
 mod provider_catalog;
 mod templates;
@@ -38,6 +39,7 @@ Commands:
   check      Validate a Stack source file without modifying it
   fmt        Format a file in place or read from standard input
   render     Render standalone SVG to standard output or a file
+  lsp        Run the Stack language server over standard input and output
   icons      List catalogs and import audited provider icon archives
   help       Print this message or the help of a subcommand
   version    Print version information
@@ -52,6 +54,7 @@ Examples:
   stack check arch.stack
   stack fmt --check arch.stack
   stack render arch.stack -o arch.svg
+  stack lsp
   stack icons list aws s3
 ";
 const INIT_HELP: &str = "\
@@ -146,6 +149,22 @@ Examples:
   stack render arch.stack -o arch.svg
   stack render arch.stack --notice arch.NOTICE.md -o arch.svg
 ";
+const LSP_HELP: &str = "\
+Run the Stack language server over standard input and output
+
+Usage:
+  stack lsp
+
+Options:
+  -h, --help  Print help
+
+Protocol:
+  LSP 3.18 JSON-RPC messages use Content-Length framing over standard input
+  and output. Standard output is reserved for protocol messages.
+
+Examples:
+  stack lsp
+";
 const ICONS_HELP: &str = "\
 Manage local provider icon packs
 
@@ -219,7 +238,7 @@ Usage:
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, icons, help, or version
+  <COMMAND>  init, check, fmt, render, lsp, icons, help, or version
 
 Examples:
   stack help
@@ -303,6 +322,9 @@ pub fn run(
     if command == OsStr::new("render") {
         return run_render(arguments, stdout, stderr);
     }
+    if command == OsStr::new("lsp") {
+        return run_lsp(arguments, stdin, stdout, stderr);
+    }
     if command == OsStr::new("icons") {
         return run_icons(&mut arguments, stdout, stderr);
     }
@@ -310,7 +332,9 @@ pub fn run(
     unknown_command_error(
         "stack",
         &command,
-        &["init", "check", "fmt", "render", "icons", "help", "version"],
+        &[
+            "init", "check", "fmt", "render", "lsp", "icons", "help", "version",
+        ],
         "stack help",
         stderr,
     )
@@ -345,6 +369,8 @@ fn run_help(
         FORMAT_HELP
     } else if command == OsStr::new("render") {
         RENDER_HELP
+    } else if command == OsStr::new("lsp") {
+        LSP_HELP
     } else if command == OsStr::new("help") {
         HELP_HELP
     } else if command == OsStr::new("version") {
@@ -353,7 +379,9 @@ fn run_help(
         return unknown_command_error(
             "stack help",
             &command,
-            &["init", "check", "fmt", "render", "icons", "help", "version"],
+            &[
+                "init", "check", "fmt", "render", "lsp", "icons", "help", "version",
+            ],
             "stack help",
             stderr,
         );
@@ -519,6 +547,30 @@ fn run_version(
             );
         }
         return write_stdout(VERSION_HELP, stdout, stderr);
+    }
+    argument_error(
+        &format!("unexpected argument '{}'", argument.to_string_lossy()),
+        stderr,
+    )
+}
+
+fn run_lsp(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdin: &mut dyn Read,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(argument) = arguments.next() else {
+        return lsp::run(stdin, stdout, stderr);
+    };
+    if is_help_flag(&argument) {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(LSP_HELP, stdout, stderr);
     }
     argument_error(
         &format!("unexpected argument '{}'", argument.to_string_lossy()),
