@@ -12,7 +12,7 @@ Deliver editable `.stack` source and, when rendering is available, an SVG. Prese
 
 ## Start with the available tools
 
-Run `stack --version` and `stack help` before selecting commands. Use the installed binary's help, not unreleased repository instructions. The published CLI 0.4.0 supports `check`, `fmt`, and `render`; it does not support their `--json` flags. A newer version may support additional options: verify them using `stack help <command>`.
+Run `stack --version` and `stack help` before selecting commands. Use the installed binary's help, not unreleased repository instructions. This workflow is tested with published CLI 0.4.0 using `check`, `fmt`, and `render` without `--json` for compatibility. Before using additional options such as JSON output, verify them using `stack help <command>`.
 
 If the CLI is missing, consult the [installation guide](https://stack-diagram.com/docs/guide/getting-started.md) and [release distribution contract](https://github.com/stack-sh/cli/blob/v0.4.0/docs/distribution.md). Install only when the user's authorization allows it. Otherwise provide source with an explicit validation gap; do not report it as checked. No remote source upload is required.
 
