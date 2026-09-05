@@ -36,6 +36,32 @@ jobs:
         run: |
           node scripts/validate-distribution-contract.mjs
           node --test scripts/distribution-contract.test.mjs
+      - name: Install Aqua for registry validation
+        uses: aquaproj/aqua-installer@96a9bc20066c5bf5e275b41019cfc165b25f4e2e # v4.0.5
+        with:
+          aqua_version: v2.62.3
+          enable_aqua_install: false
+      - name: Validate Aqua release mappings
+        env:
+          AQUA_CONFIG: ${{ github.workspace }}/tests/aqua/aqua.yaml
+          AQUA_POLICY_CONFIG: ${{ github.workspace }}/tests/aqua/aqua-policy.yaml
+        run: |
+          aqua update-checksum
+          aqua update
+          git diff --exit-code -- tests/aqua/aqua-checksums.json tests/aqua/aqua.yaml
+          for environment in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64; do
+            root="$RUNNER_TEMP/aqua-${environment//\//-}"
+            AQUA_ROOT_DIR="$root" AQUA_GOOS="${environment%/*}" AQUA_GOARCH="${environment#*/}" aqua install --test
+          done
+          native_root="$RUNNER_TEMP/aqua-native"
+          smoke_directory="$RUNNER_TEMP/aqua-smoke"
+          mkdir -p "$smoke_directory"
+          AQUA_ROOT_DIR="$native_root" aqua install
+          "$native_root/bin/stack" --version
+          "$native_root/bin/stack" init -o "$smoke_directory/diagram.stack"
+          "$native_root/bin/stack" check "$smoke_directory/diagram.stack"
+          "$native_root/bin/stack" render "$smoke_directory/diagram.stack" -o "$smoke_directory/diagram.svg"
+          test -s "$smoke_directory/diagram.svg"
       - name: Validate release supply chain
         run: |
           node --check scripts/create-supply-chain-smoke-fixture.mjs
@@ -115,6 +141,8 @@ jobs:
           test -s docs/provider-icon-import.md
           test -s docs/distribution.md
           test -s docs/supply-chain.md
+          test -s aqua/README.md
+          test -s aqua/registry.yaml
           test -s distribution/distribution-contract.json
           test -s distribution/distribution-contract.schema.json
           test -s distribution/release-manifest.schema.json
@@ -148,6 +176,9 @@ jobs:
           test -s scripts/release-workflow.test.mjs
           test -s scripts/validate-supply-chain-workflow.mjs
           test -s scripts/supply-chain-workflow.test.mjs
+          test -s tests/aqua/aqua.yaml
+          test -s tests/aqua/aqua-checksums.json
+          test -s tests/aqua/aqua-policy.yaml
           test -s .github/workflows/release.yaml
           test -s .github/workflows/supply-chain.yaml
           test -s templates/catalog.json

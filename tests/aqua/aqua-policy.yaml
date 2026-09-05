@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/aquaproj/aqua/v2.62.3/json-schema/policy.json
+
+registries:
+  - name: stack-sh
+    type: local
+    path: ../../aqua/registry.yaml
+packages:
+  - name: stack-sh/cli
+    registry: stack-sh
+    version: semver(">= 0.3.0")

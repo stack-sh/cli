@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/aquaproj/aqua/v2.62.3/json-schema/registry.json
+
+packages:
+  - type: github_release
+    repo_owner: stack-sh
+    repo_name: cli
+    description: Native CLI for Stack architecture diagrams
+    version_constraint: "false"
+    files:
+      - name: stack
+        src: "{{.AssetWithoutExt}}/stack"
+    version_overrides:
+      - version_constraint: semver(">= 0.3.0")
+        asset: stack-{{.Version}}-{{.Arch}}-{{.OS}}.{{.Format}}
+        format: tar.gz
+        replacements:
+          amd64: x86_64
+          arm64: aarch64
+          darwin: apple-darwin
+          linux: unknown-linux-gnu
+        supported_envs:
+          - darwin/amd64
+          - darwin/arm64
+          - linux/amd64
+          - linux/arm64
+        checksum:
+          type: github_release
+          asset: stack-{{.Version}}-checksums.txt
+          algorithm: sha256
+          cosign:
+            opts:
+              - --certificate-identity-regexp
+              - "^https://github\\.com/stack-sh/cli/\\.github/workflows/release\\.ya?ml@refs/tags/\\Q{{.Version}}\\E$"
+              - --certificate-oidc-issuer
+              - https://token.actions.githubusercontent.com
+            bundle:
+              type: github_release
+              asset: stack-{{.Version}}-checksums.txt.sigstore.json
