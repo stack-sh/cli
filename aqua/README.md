@@ -9,8 +9,8 @@ The registry supports only the release contract's tier-1 environments: macOS and
 Install the pinned Aqua version used by CI, then test every supported mapping without executing a foreign-architecture binary:
 
 ```sh
-aqua update-checksum
 aqua update
+aqua update-checksum
 for environment in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64; do
   AQUA_CONFIG=tests/aqua/aqua.yaml \
     AQUA_POLICY_CONFIG=tests/aqua/aqua-policy.yaml \
@@ -20,7 +20,7 @@ for environment in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64; do
 done
 ```
 
-`aqua update-checksum` must reproduce `tests/aqua/aqua-checksums.json` exactly. The file locks all four release archives to the SHA-256 values obtained from the release checksum asset after Aqua verifies its Sigstore bundle. `aqua update` must leave the pinned fixture unchanged until a newer stable release exists.
+`aqua update` must leave the pinned fixture unchanged until a newer stable release exists. `aqua update-checksum` must then reproduce `tests/aqua/aqua-checksums.json` exactly. The file locks all four release archives to the SHA-256 values obtained from the release checksum asset after Aqua verifies its Sigstore bundle.
 
 On the native host, repeat without `--test` in an isolated `AQUA_ROOT_DIR`, then run `stack --version`, `stack init`, `stack check`, and `stack render`.
 

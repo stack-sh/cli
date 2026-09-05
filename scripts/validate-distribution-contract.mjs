@@ -12,7 +12,7 @@ const expectedTargets = [
   "x86_64-unknown-linux-gnu",
 ];
 const expectedChannels = ["aqua", "cargo", "github-release", "homebrew", "self-update"];
-const availableChannels = new Set(["github-release", "homebrew"]);
+const availableChannels = new Set(["aqua", "github-release", "homebrew"]);
 const requiredArchiveEntries = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "stack"];
 const requiredUnsupportedTerms = ["32-bit", "BSD", "Windows", "musl"];
 const requiredActivationTerms = ["Cargo package version", "SBOMs", "provenance", "stack --version"];
@@ -57,8 +57,9 @@ export function validateDistributionContract(contract, cargoToml) {
   invariant(
     contract.availability?.message?.includes("Stack CLI 0.3.0") &&
       contract.availability.message.includes("GitHub Releases") &&
-      contract.availability.message.includes("Homebrew"),
-    "availability message must identify the verified stable GitHub release and Homebrew channel",
+      contract.availability.message.includes("Homebrew") &&
+      contract.availability.message.includes("Aqua"),
+    "availability message must identify the verified stable GitHub release, Homebrew, and Aqua channels",
   );
   invariant(
     contract.product.currentSourceVersion === cargoValue(cargoToml, "version"),

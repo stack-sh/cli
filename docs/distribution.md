@@ -2,7 +2,7 @@
 
 This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, Aqua, and `stack` self-update implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
 
-[Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is available as a supported GitHub Release for every target below and through the owner-maintained Homebrew tap for the hosts marked below. Cargo, Aqua, and self-update remain **planned** and have no supported install command yet.
+[Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. Cargo and self-update remain **planned** and have no supported install command yet.
 
 ## Supported platform matrix
 
@@ -10,10 +10,10 @@ The first supported binary matrix is intentionally narrow:
 
 | Rust target | OS | Architecture | Runtime floor | Direct | Homebrew | Cargo | Aqua | Self-update |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | available | planned | planned | planned |
-| `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | available | — | planned | planned | planned |
-| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | available | planned | planned | planned |
-| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | available | planned | planned | planned |
+| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | available | planned | available | planned |
+| `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | available | — | planned | available | planned |
+| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | available | planned | available | planned |
+| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | available | planned | available | planned |
 
 Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architectures are not supported release targets. A source build may happen to work elsewhere, but it is best-effort and does not block a release. Cargo installs on supported targets require Rust 1.85 or newer. Homebrew availability additionally follows [Homebrew's current tier-1 host requirements](https://docs.brew.sh/Support-Tiers); Stack does not label a host as supported when the package manager itself classifies it below tier 1.
 
@@ -73,6 +73,57 @@ brew uninstall stack-sh/tap/stack
 The formula does not remove or replace Stack configuration and icon stores during an upgrade or uninstall. Formula updates verify release checksums, provenance, and SBOM attestations before changing the archive mapping. The fail-closed update and recovery procedure is maintained in the tap's [maintainer guide](https://github.com/stack-sh/homebrew-tap/blob/main/docs/maintaining.md).
 
 Homebrew was activated after the immutable `v0.3.0` release assets were published. The release manifest therefore remains the publication-time record, while this contract and the tap CI record the later channel activation; release assets are not replaced to retrofit that state.
+
+## Aqua installation
+
+The owner registry is the [`aqua/registry.yaml`](../aqua/registry.yaml) file pinned to immutable commit `42702cda91a4156901b9a601bd143c43dcf05766`. Aqua maps `darwin/amd64`, `darwin/arm64`, `linux/amd64`, and `linux/arm64` to the four canonical GitHub Release archives, reads their SHA-256 values from the signed checksum asset, and verifies the checksum bundle against the tagged `release.yaml` workflow identity.
+
+Add the following `aqua.yaml` to a Git repository:
+
+```yaml
+checksum:
+  enabled: true
+  require_checksum: true
+registries:
+  - name: stack-sh
+    type: github_content
+    repo_owner: stack-sh
+    repo_name: cli
+    ref: 42702cda91a4156901b9a601bd143c43dcf05766
+    path: aqua/registry.yaml
+packages:
+  - name: stack-sh/cli@v0.3.0
+    registry: stack-sh
+```
+
+Because Aqua denies non-standard registries by default, add and review this narrow `aqua-policy.yaml` rather than disabling policy:
+
+```yaml
+registries:
+  - name: stack-sh
+    type: github_content
+    repo_owner: stack-sh
+    repo_name: cli
+    ref: 'Version == "42702cda91a4156901b9a601bd143c43dcf05766"'
+    path: aqua/registry.yaml
+packages:
+  - name: stack-sh/cli
+    registry: stack-sh
+    version: semver(">= 0.3.0")
+```
+
+Allow the reviewed policy once, generate the checksum lock, and install:
+
+```sh
+aqua policy allow
+aqua update-checksum
+aqua install
+stack --version
+```
+
+Commit `aqua-checksums.json` with the configuration. To upgrade after a new stable Stack release, run `aqua update`, review the version change, then run `aqua update-checksum` and `aqua install`. Aqua owns the replacement; `stack` self-update must refuse to overwrite it. The registry maintainer procedure and four-target test command are in [`aqua/README.md`](../aqua/README.md).
+
+Aqua was activated after the immutable `v0.3.0` release assets were published. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later activation evidence. No release asset is replaced.
 
 ## Direct installation
 

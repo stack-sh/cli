@@ -2,7 +2,7 @@
 
 `stack-sh/cli` is the open-source native Rust `stack` command for Stack architecture diagrams.
 
-The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is the first supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. GitHub Releases and Homebrew are available; Cargo, Aqua, and self-update are still planned. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
+The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is the first supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. GitHub Releases, Homebrew, and the owner-maintained Aqua registry are available; Cargo and self-update are still planned. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
 
 ## Install
 
@@ -10,6 +10,15 @@ On supported Homebrew hosts, install the owner-maintained formula:
 
 ```sh
 brew install stack-sh/tap/stack
+```
+
+For Aqua, copy the pinned configuration and policy from the [Aqua installation section](./docs/distribution.md#aqua-installation), review them, allow the policy, and install the checksum-locked package:
+
+```sh
+aqua policy allow
+aqua update-checksum
+aqua install
+stack --version
 ```
 
 For a direct installation, download the archive for your target and its verification material from [GitHub Releases](https://github.com/stack-sh/cli/releases/tag/v0.3.0). Verify the checksum signature and both attestations by following the [supply-chain guide](./docs/supply-chain.md), then follow the [direct installation steps](./docs/distribution.md#direct-installation). The macOS artifacts are reproducibly ad-hoc signed, not Apple-notarized; Sigstore and GitHub attestations provide the publisher-identity check.
