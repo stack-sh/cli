@@ -2,7 +2,11 @@
 
 `stack-sh/cli` is the open-source native Rust `stack` command for Stack architecture diagrams.
 
-The repository contains native validation, formatting, and rendering commands. The interface remains pre-release and no supported binary distribution is published yet. The planned target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
+The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is the first supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. Homebrew, Cargo, Aqua, and self-update are not available yet. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
+
+## Install
+
+Download the archive for your target and its verification material from [GitHub Releases](https://github.com/stack-sh/cli/releases/tag/v0.3.0). Verify the checksum signature and both attestations by following the [supply-chain guide](./docs/supply-chain.md), then follow the [direct installation steps](./docs/distribution.md#direct-installation). The macOS artifacts are reproducibly ad-hoc signed, not Apple-notarized; Sigstore and GitHub attestations provide the publisher-identity check.
 
 ## Commands
 
@@ -79,4 +83,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a change. Please report 
 
 ## Licensing
 
-Repository-authored work is licensed under the [Apache License 2.0](./LICENSE) for personal and commercial use. Runtime and build dependency licenses are recorded in [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md). A future binary release must ship the applicable license and notice files described there.
+Repository-authored work is licensed under the [Apache License 2.0](./LICENSE) for personal and commercial use. Runtime and build dependency licenses are recorded in [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md). Every published binary archive ships the applicable license and notice files described there.

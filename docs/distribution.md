@@ -2,7 +2,7 @@
 
 This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, Aqua, and `stack` self-update implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
 
-No supported binary or package-manager release is published yet. Every target and channel below is **planned**, not currently available. A stable release changes availability only after its complete matrix passes the activation checks in this document.
+[Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is available as a supported GitHub Release for every target below. Homebrew, Cargo, Aqua, and self-update remain **planned** and have no supported install command yet.
 
 ## Supported platform matrix
 
@@ -10,10 +10,10 @@ The first supported binary matrix is intentionally narrow:
 
 | Rust target | OS | Architecture | Runtime floor | Direct | Homebrew | Cargo | Aqua | Self-update |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | planned | planned | planned | planned | planned |
-| `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | planned | — | planned | planned | planned |
-| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | planned | planned | planned | planned | planned |
-| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | planned | planned | planned | planned | planned |
+| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | planned | planned | planned | planned |
+| `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | available | — | planned | planned | planned |
+| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | planned | planned | planned | planned |
+| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | planned | planned | planned | planned |
 
 Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architectures are not supported release targets. A source build may happen to work elsewhere, but it is best-effort and does not block a release. Cargo installs on supported targets require Rust 1.85 or newer. Homebrew availability additionally follows [Homebrew's current tier-1 host requirements](https://docs.brew.sh/Support-Tiers); Stack does not label a host as supported when the package manager itself classifies it below tier 1.
 
@@ -60,12 +60,12 @@ The release manifest records the tag, commit, source version, `minimumSupportedC
 
 ## Direct installation
 
-After a GitHub Release is marked available, select the archive whose target matches the supported platform table and download it together with all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. For example, replace `{version}` and `{target}` with the exact release values:
+Download [Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0), select the archive whose target matches the supported platform table, and obtain all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. Replace `{target}` with the exact release target:
 
 ```sh
-tar -xzf "stack-v{version}-{target}.tar.gz"
+tar -xzf "stack-v0.3.0-{target}.tar.gz"
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "stack-v{version}-{target}/stack" "$HOME/.local/bin/stack"
+install -m 0755 "stack-v0.3.0-{target}/stack" "$HOME/.local/bin/stack"
 "$HOME/.local/bin/stack" --version
 ```
 
