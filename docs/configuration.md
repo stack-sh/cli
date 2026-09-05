@@ -2,7 +2,7 @@
 
 `stack config` exposes the paths already used by rendering and provider import, while `stack doctor` diagnoses that configuration and its known-provider packs. Every command on this page is read-only: it does not create a configuration directory, config file, icon store, provider pack, receipt, or temporary file.
 
-These commands were added to the source tree after Stack CLI 0.4.0. The published 0.4.0 GitHub, Homebrew, and Aqua binaries do not contain them. They will become available through those channels in a later release.
+These commands are available in Stack CLI 0.5.0 through GitHub Releases, Homebrew, and Aqua. Older 0.4.0 binaries do not contain them.
 
 ## Discovery order
 

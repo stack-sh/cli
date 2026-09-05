@@ -8,11 +8,11 @@
     "sourceVersionFile": "Cargo.toml",
     "currentSourceVersion": "0.5.0",
     "minimumRustVersion": "1.85",
-    "currentReleaseVersion": "0.4.0"
+    "currentReleaseVersion": "0.5.0"
   },
   "availability": {
     "state": "available",
-    "message": "Stack CLI 0.5.0 is the next source release. GitHub Releases, Homebrew, and Aqua currently distribute 0.4.0. Cargo remains planned; self-update is removed from 0.5.0."
+    "message": "Stack CLI 0.5.0 is available through GitHub Releases, Homebrew, and Aqua. Cargo remains planned; self-update was removed in 0.5.0."
   },
   "versioning": {
     "scheme": "Semantic Versioning",
