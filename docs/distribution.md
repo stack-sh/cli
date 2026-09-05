@@ -104,7 +104,7 @@ The Homebrew v0.5.1 formula was activated after the immutable release assets wer
 
 The owner registry is the [`aqua/registry.yaml`](../aqua/registry.yaml) file pinned to immutable commit `42702cda91a4156901b9a601bd143c43dcf05766`. Aqua maps `darwin/amd64`, `darwin/arm64`, `linux/amd64`, and `linux/arm64` to the four canonical GitHub Release archives, reads their SHA-256 values from the signed checksum asset, and verifies the checksum bundle against the tagged `release.yaml` workflow identity.
 
-Add the following `aqua.yaml` to a Git repository:
+Add the following `aqua.yaml` at the root of a Git repository (the directory containing `.git`). Run `git init` first for a new project:
 
 ```yaml
 checksum:
@@ -122,7 +122,7 @@ packages:
     registry: stack-sh
 ```
 
-Because Aqua denies non-standard registries by default, add and review this narrow `aqua-policy.yaml` rather than disabling policy:
+Because Aqua denies non-standard registries by default, add and review this narrow `aqua-policy.yaml` at the same repository root rather than disabling policy:
 
 ```yaml
 registries:
