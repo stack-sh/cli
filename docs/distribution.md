@@ -2,7 +2,7 @@
 
 This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, Aqua, and `stack` self-update implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
 
-[Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is available as a supported GitHub Release for every target below. Homebrew, Cargo, Aqua, and self-update remain **planned** and have no supported install command yet.
+[Stack CLI 0.3.0](https://github.com/stack-sh/cli/releases/tag/v0.3.0) is available as a supported GitHub Release for every target below and through the owner-maintained Homebrew tap for the hosts marked below. Cargo, Aqua, and self-update remain **planned** and have no supported install command yet.
 
 ## Supported platform matrix
 
@@ -10,10 +10,10 @@ The first supported binary matrix is intentionally narrow:
 
 | Rust target | OS | Architecture | Runtime floor | Direct | Homebrew | Cargo | Aqua | Self-update |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | planned | planned | planned | planned |
+| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | available | planned | planned | planned |
 | `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | available | — | planned | planned | planned |
-| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | planned | planned | planned | planned |
-| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | planned | planned | planned | planned |
+| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | available | planned | planned | planned |
+| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | available | planned | planned | planned |
 
 Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architectures are not supported release targets. A source build may happen to work elsewhere, but it is best-effort and does not block a release. Cargo installs on supported targets require Rust 1.85 or newer. Homebrew availability additionally follows [Homebrew's current tier-1 host requirements](https://docs.brew.sh/Support-Tiers); Stack does not label a host as supported when the package manager itself classifies it below tier 1.
 
@@ -57,6 +57,22 @@ stack-v{version}-checksums.txt.sigstore.json
 The sorted checksum file uses SHA-256 and covers the release manifest, all archives, all SPDX SBOMs, and the per-target provenance and SBOM attestation bundles. A keyless Sigstore bundle signs the checksum file; GitHub's [artifact attestation model](https://docs.github.com/actions/concepts/security/artifact-attestations) is the trust baseline. The immutable GitHub Release asset is the canonical binary byte sequence; Homebrew and Aqua must reference its URL and digest instead of rebuilding or repacking it. Aqua uses its [`github_release` package mapping](https://aquaproj.github.io/docs/reference/registry-config/github-release-package) rather than a separate binary build.
 
 The release manifest records the tag, commit, source version, `minimumSupportedCliVersion`, each target's artifact names and SHA-256 values, the build identity, and each channel whose own install smoke test passed. Its schema is [`distribution/release-manifest.schema.json`](../distribution/release-manifest.schema.json). Supply-chain generation and user verification are documented in the [supply-chain guide](./supply-chain.md).
+
+## Homebrew installation
+
+The owner-maintained [`stack-sh/homebrew-tap`](https://github.com/stack-sh/homebrew-tap) installs the canonical GitHub Release archive without rebuilding or repacking it. Homebrew is available on Apple Silicon macOS and glibc-based Linux on arm64 and x86_64 when the host meets Homebrew's current tier-1 requirements.
+
+Install, upgrade, or uninstall with:
+
+```sh
+brew install stack-sh/tap/stack
+brew upgrade stack-sh/tap/stack
+brew uninstall stack-sh/tap/stack
+```
+
+The formula does not remove or replace Stack configuration and icon stores during an upgrade or uninstall. Formula updates verify release checksums, provenance, and SBOM attestations before changing the archive mapping. The fail-closed update and recovery procedure is maintained in the tap's [maintainer guide](https://github.com/stack-sh/homebrew-tap/blob/main/docs/maintaining.md).
+
+Homebrew was activated after the immutable `v0.3.0` release assets were published. The release manifest therefore remains the publication-time record, while this contract and the tap CI record the later channel activation; release assets are not replaced to retrofit that state.
 
 ## Direct installation
 
