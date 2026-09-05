@@ -32,6 +32,21 @@ stack --version
 
 For a direct installation, download the archive for your target and its verification material from [GitHub Releases](https://github.com/stack-sh/cli/releases/tag/v0.5.1). Verify the checksum signature and both attestations by following the [supply-chain guide](./docs/supply-chain.md), then follow the [direct installation steps](./docs/distribution.md#direct-installation). The macOS artifacts are reproducibly ad-hoc signed, not Apple-notarized; Sigstore and GitHub attestations provide the publisher-identity check.
 
+## Create your first SVG
+
+After installing, open a new empty working directory and run:
+
+```sh
+stack --version
+stack init
+stack check diagram.stack
+stack render diagram.stack -o diagram.svg
+```
+
+Expect `stack 0.5.1`, a new `diagram.stack`, no check errors, and a non-empty `diagram.svg`. Open the SVG in a browser or include it in your README. Edit the source and repeat check/render; `stack init` refuses to overwrite existing work.
+
+The [four-language getting-started guide](https://stack-diagram.com/docs/guide/getting-started) keeps every installer, this walkthrough, and upgrade/uninstall guidance together. It is maintained in `stack-sh/docs` and verified against the published binary.
+
 ## Commands
 
 The command inventory below is available in the published 0.5.1 binaries, including `stack doctor`, `stack config`, and structured JSON output for automation.
