@@ -21,7 +21,7 @@ stack --version
 
 The package is `stack-diagram-cli`, not the unrelated `stack-cli`; the binary is `stack`. Cargo owns updates and uninstall, and does not automatically install completion or manual files. See [Cargo installation](./docs/distribution.md#cargo-installation).
 
-For Aqua, copy the pinned configuration and policy from the [Aqua installation section](./docs/distribution.md#aqua-installation), review them, allow the policy, and install the checksum-locked package:
+For Aqua, copy the pinned configuration and policy from the [Aqua installation section](./docs/distribution.md#aqua-installation) to your Git repository root (run `git init` first for a new project), review them, allow the policy, and install the checksum-locked package:
 
 ```sh
 aqua policy allow
@@ -34,7 +34,7 @@ For a direct installation, download the archive for your target and its verifica
 
 ## Create your first SVG
 
-After installing, open a new empty working directory and run:
+After installing, open a new empty working directory and run the following. With Aqua, keep it inside the Git repository containing your `aqua.yaml`:
 
 ```sh
 stack --version
