@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+      - name: Validate initial Cargo publication guards
+        run: node --test scripts/initial-publish-context.test.mjs
+
       - name: Read supported specification revision
         id: specification
         shell: bash
@@ -140,6 +143,9 @@ jobs:
           COMP_CWORD=3
           _stack_completion
           test "${COMPREPLY[*]}" = default_icons_path
+      - name: Verify crates.io source package
+        run: cargo +stable publish --dry-run -p stack-diagram-cli --locked
+
       - name: Run canonical formatter suite
         env:
           STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification

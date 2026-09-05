@@ -1,13 +1,21 @@
 [package]
-name = "stack-cli"
-version = "0.5.0"
+name = "stack-diagram-cli"
+version = "0.5.1"
 edition = "2024"
 rust-version = "1.85"
-publish = false
+publish = ["crates-io"]
+homepage = "https://stack-diagram.com/"
+documentation = "https://stack-diagram.com/docs/guide/getting-started"
+keywords = ["stack", "diagram", "cli", "svg"]
+categories = ["command-line-utilities", "visualization"]
+include = ["/src/**", "/templates/**", "/catalogs/**", "/tests/fixtures/**", "/LICENSE", "/NOTICE", "/THIRD_PARTY_LICENSES.md", "/README.md", "/Cargo.lock"]
 description = "Native command-line interface for Stack diagrams"
 repository = "https://github.com/stack-sh/cli"
 license = "Apache-2.0"
 readme = "README.md"
+
+[lib]
+name = "stack_cli"
 
 [[bin]]
 name = "stack"
@@ -19,9 +27,9 @@ serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.151"
 serde_yaml_ng = "=0.10.0"
 sha2 = "=0.11.0"
-stack-compiler = { git = "https://github.com/stack-sh/compiler.git", rev = "84ab5663a7f7c5b7dc0b5e9e2f04c8894ed02820" }
-stack-engine = { git = "https://github.com/stack-sh/engine.git", rev = "9af727aea79233b8389e0ed6fdbae7d3f388dc29" }
-stack-theme = { git = "https://github.com/stack-sh/theme.git", rev = "7e208d6a3c90d255799f390a4e8b86248c73caee" }
+stack-compiler = "=0.1.0"
+stack-engine = "=0.7.0"
+stack-theme = "=0.5.0"
 ureq = { version = "=3.4.0", default-features = false, features = ["rustls"] }
 zip = { version = "=6.0.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 

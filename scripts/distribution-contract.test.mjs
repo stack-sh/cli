@@ -106,8 +106,8 @@ test("removed self-update cannot be reintroduced", () => {
   assert.throws(() => validateDistributionContract(candidate, cargoToml), /channel set must be exactly/);
 });
 
-test("distribution v2 schema rejects removed updater fields", () => {
-  const schema = JSON.parse(fs.readFileSync(path.join(root, "distribution/distribution-contract-v2.schema.json"), "utf8"));
+test("distribution v3 schema rejects removed updater fields", () => {
+  const schema = JSON.parse(fs.readFileSync(path.join(root, "distribution/distribution-contract-v3.schema.json"), "utf8"));
   const validate = new Ajv2020({ strict: false }).compile(schema);
   assert.equal(validate(contract), true, JSON.stringify(validate.errors));
   for (const mutate of [value => value.artifacts.installReceiptSchema = "distribution/install-receipt.schema.json", value => value.verification.selfUpdateActivation = ["obsolete"], value => value.channels[0].minimumSupportedCliVersion = "0.4.0"]) {

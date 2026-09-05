@@ -9,7 +9,7 @@ from scripts.package_release import create_archive, verify_archive
 
 
 class PackageReleaseTest(unittest.TestCase):
-    version = "0.5.0"
+    version = "0.5.1"
     target = "aarch64-apple-darwin"
     source_date_epoch = 1_788_566_400
 
