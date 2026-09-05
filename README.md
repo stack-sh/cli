@@ -91,6 +91,25 @@ The CLI links `stack-engine` and the protocol-neutral `stack-compiler` language-
 
 The bundled engine resolves 30 provider-neutral core icons: `api`, `web`, `mobile`, `desktop`, `server`, `container`, `cluster`, `cloud`, `scheduler`, `webhook`, `identity`, `observability`, `gateway`, `load-balancer`, `dns`, `cdn`, `firewall`, `network`, `event`, `stream`, `search`, `analytics`, `repository`, `pipeline`, `secret`, `document`, `task`, `chat`, `email`, and `ai`. User-managed provider packs preserve upstream artwork and attach source, archive hash, transformation, terms, and notice metadata. Rendering resolves namespaced IDs such as `aws:s3`, preserves the authored semantic `kind`, embeds the selected local asset, and writes its provenance into SVG metadata and the optional notice sidecar.
 
+## Coding agent skill
+
+Install the optional `stack-diagrams` Agent Skill into your project:
+
+```sh
+npx skills add stack-sh/cli
+```
+
+The skill guides agents through creating and editing `.stack` diagrams, checking
+the installed CLI's capabilities, validating source, and rendering and inspecting
+SVG. It does not install the CLI or upload your source. Add `-g` only when you
+want a user-wide skill installation. See the [coding agent guide](https://stack-diagram.com/docs/guide/coding-agents)
+for usage and the [skill source](./skills/stack-diagrams/SKILL.md) for review.
+To pin reviewed instructions, check out a specific commit of this repository and
+run `npx skills add /absolute/path/to/cli --skill stack-diagrams`.
+
+The CLI repository owns these instructions; the website owns the usage guides.
+Process-level tests execute the skill's command examples against the built CLI.
+
 ## Development
 
 The CLI requires Rust 1.85 or newer.

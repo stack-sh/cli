@@ -12,6 +12,45 @@ use serde_json::{Value, json};
 
 static CASE_ID: AtomicU64 = AtomicU64::new(0);
 
+#[test]
+fn agent_skill_commands_validate_and_render_source() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new("agent-skill")?;
+    directory.file(
+        "architecture.stack",
+        include_bytes!("fixtures/render.stack"),
+    )?;
+    let skill = include_str!("../skills/stack-diagrams/SKILL.md");
+    let mut in_shell = false;
+    let mut command_count = 0;
+    for line in skill.lines() {
+        if line == "```sh" {
+            in_shell = true;
+        } else if line == "```" {
+            in_shell = false;
+        } else if in_shell && !line.trim().is_empty() {
+            let mut words = line.split_whitespace();
+            assert_eq!(words.next(), Some("stack"));
+            let output = stack_in(&directory.path, words)?;
+            assert!(
+                output.status.success(),
+                "{line}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            command_count += 1;
+        }
+    }
+    assert!(
+        command_count >= 4,
+        "The skill must exercise its validation loop"
+    );
+    let svg = fs::read_to_string(directory.path.join("architecture.svg"))?;
+    let document = roxmltree::Document::parse(&svg)?;
+    assert_eq!(document.root_element().tag_name().name(), "svg");
+    let output = stack_in(&directory.path, ["fmt", "--check", "architecture.stack"])?;
+    assert!(output.status.success());
+    Ok(())
+}
+
 struct TestDirectory {
     path: PathBuf,
 }
