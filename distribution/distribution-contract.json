@@ -1,18 +1,18 @@
 {
-  "$schema": "./distribution-contract-v2.schema.json",
-  "schemaVersion": 2,
+  "$schema": "./distribution-contract-v3.schema.json",
+  "schemaVersion": 3,
   "product": {
     "binary": "stack",
-    "sourceCargoPackage": "stack-cli",
+    "sourceCargoPackage": "stack-diagram-cli",
     "publishedCargoPackage": null,
     "sourceVersionFile": "Cargo.toml",
-    "currentSourceVersion": "0.5.0",
+    "currentSourceVersion": "0.5.1",
     "minimumRustVersion": "1.85",
     "currentReleaseVersion": "0.5.0"
   },
   "availability": {
     "state": "available",
-    "message": "Stack CLI 0.5.0 is available through GitHub Releases, Homebrew, and Aqua. Cargo remains planned; self-update was removed in 0.5.0."
+    "message": "Stack CLI 0.5.1 prepares the first Cargo distribution. GitHub Releases, Homebrew, and Aqua currently distribute 0.5.0; Cargo remains planned until registry publication and clean-install verification."
   },
   "versioning": {
     "scheme": "Semantic Versioning",

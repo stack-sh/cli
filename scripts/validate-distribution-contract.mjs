@@ -60,9 +60,9 @@ function cargoValue(cargoToml, field) {
 
 export function validateDistributionContract(contract, cargoToml) {
   const cargoVersion = cargoValue(cargoToml, "version");
-  invariant(contract.schemaVersion === 2, "schemaVersion must be 2");
+  invariant(contract.schemaVersion === 3, "schemaVersion must be 3");
   invariant(contract.product?.binary === "stack", "binary must be stack");
-  invariant(contract.product?.sourceCargoPackage === "stack-cli", "source Cargo package must be stack-cli");
+  invariant(contract.product?.sourceCargoPackage === "stack-diagram-cli", "source Cargo package must be stack-diagram-cli");
   invariant(
     contract.product.sourceCargoPackage === cargoValue(cargoToml, "name"),
     "sourceCargoPackage must match Cargo.toml",

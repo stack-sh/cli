@@ -42,7 +42,6 @@ stack fmt -
 stack render arch.stack
 stack render arch.stack -o arch.svg
 stack render arch.stack --json
-stack update --check
 stack lsp
 stack doctor
 stack doctor --provider-pack .stack-icons
@@ -146,3 +145,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a change. Please report 
 ## Licensing
 
 Repository-authored work is licensed under the [Apache License 2.0](./LICENSE) for personal and commercial use. Runtime and build dependency licenses are recorded in [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md). Every published binary archive ships the applicable license and notice files described there.
+
+## Cargo source package
+
+The source package is named `stack-diagram-cli`; its binary remains `stack`. All Rust dependencies resolve from crates.io. Consult the [current installation guide](https://stack-diagram.com/docs/guide/getting-started) for verified releases and installation commands. A source change does not activate a distribution channel or replace existing release archives. Maintainers follow the [Cargo publication procedure](https://github.com/stack-sh/cli/blob/main/docs/cargo-releasing.md).

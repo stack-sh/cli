@@ -1,6 +1,6 @@
 # Distribution contract
 
-This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, Aqua, implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
+This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, and Aqua implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
 
 [Stack CLI 0.5.0](https://github.com/stack-sh/cli/releases/tag/v0.5.0) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. Cargo remains **planned**. Version 0.5.0 removes self-update; see the [upgrade guide](./self-update.md).
 
@@ -8,12 +8,12 @@ This document defines the shared release contract for the Stack CLI. It is norma
 
 The first supported binary matrix is intentionally narrow:
 
-| Rust target | OS | Architecture | Runtime floor | Direct | Homebrew | Cargo | Aqua | Self-update |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | available | planned | available | planned |
-| `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | available | — | planned | available | planned |
-| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | available | planned | available | planned |
-| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | available | planned | available | planned |
+| Rust target | OS | Architecture | Runtime floor | Direct | Homebrew | Cargo | Aqua |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `aarch64-apple-darwin` | macOS | arm64 | macOS 13 | available | available | planned | available |
+| `x86_64-apple-darwin` | macOS | x86_64 | macOS 13 | available | — | planned | available |
+| `aarch64-unknown-linux-gnu` | Linux | arm64 | glibc 2.31 | available | available | planned | available |
+| `x86_64-unknown-linux-gnu` | Linux | x86_64 | glibc 2.31 | available | available | planned | available |
 
 Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architectures are not supported release targets. A source build may happen to work elsewhere, but it is best-effort and does not block a release. Cargo installs on supported targets require Rust 1.85 or newer. Homebrew availability additionally follows [Homebrew's current tier-1 host requirements](https://docs.brew.sh/Support-Tiers); Stack does not label a host as supported when the package manager itself classifies it below tier 1.
 
@@ -24,7 +24,7 @@ Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architec
 - Cargo `package.version`, CLI output, the Git tag `v{version}`, release title, archive names, and release manifest version must agree exactly.
 - Stable versions use `MAJOR.MINOR.PATCH`. Release candidates use `MAJOR.MINOR.PATCH-rc.N`, are GitHub prereleases, and are never selected by default by package managers.
 - Before 1.0, only the latest stable release is supported. Starting at 1.0, the latest two minor lines are supported.
-- Release-manifest schema v1 retains `minimumSupportedCliVersion` for compatibility and sets it to the release version. It does not enable self-update: new manifests never include that channel. Distribution contract v2 removes the updater channel, receipt requirement, and activation rules; the original v1 schema and receipt schema remain unchanged for historical consumers.
+- Release-manifest schema v1 retains `minimumSupportedCliVersion` for compatibility and sets it to the release version. It does not enable self-update: new manifests never include that channel. Distribution contract v3 declares the Cargo package name while retaining installer ownership. Historical v1/v2 schemas remain unchanged. Distribution contract v2 removed the updater channel, receipt requirement, and activation rules; the original v1 schema and receipt schema remain unchanged for historical consumers.
 - A Cargo source version alone is not a supported distribution. Support starts only when a stable GitHub Release built from that exact source passes every activation check; changing a version does not reserve or silently publish it.
 
 `.github/workflows/release.yaml` accepts a version-checked manual run from `main` without publication and an annotated `v{version}` tag for publication. A tag run is allowed only for a commit contained in `main`. The manual path must pass first for the same commit and version before a release tag is created.
