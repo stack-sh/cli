@@ -143,7 +143,8 @@ jobs:
           brew install stack-sh/tap/stack
           brew test stack-sh/tap/stack
           prefix=$(brew --prefix stack-sh/tap/stack)
-          for asset in bash-completion/completions/stack zsh/site-functions/_stack fish/vendor_completions.d/stack.fish man/man1/stack.1; do
+          cmp "$prefix/etc/bash_completion.d/stack" .release-source/distribution/generated/share/bash-completion/completions/stack
+          for asset in zsh/site-functions/_stack fish/vendor_completions.d/stack.fish man/man1/stack.1; do
             cmp "$prefix/share/$asset" ".release-source/distribution/generated/share/$asset"
           done
           echo "STACK_BINARY=$prefix/bin/stack" >> "$GITHUB_ENV"

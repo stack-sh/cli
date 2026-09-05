@@ -21,6 +21,7 @@ function validate(source) {
     "timeout-minutes: 30", "fail-fast: false", "matrix: ${{ fromJSON(needs.context.outputs.matrix) }}",
     "ref: ${{ needs.context.outputs.source }}", "python3 -m scripts.download_smoke_archive",
     'git -C "$tap_path" checkout --detach "$TAP_COMMIT"', "formula.installed.length, 0",
+    'cmp "$prefix/etc/bash_completion.d/stack" .release-source/distribution/generated/share/bash-completion/completions/stack',
     'git init --quiet "$project"', "aqua policy allow", "aqua update-checksum", "aqua install",
     'cargo "+$RUST_VERSION" install stack-diagram-cli --version "=$VERSION" --locked --registry crates-io',
     "CARGO_HOME: ${{ runner.temp }}/cargo-registry-home", "CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-registry-target",
