@@ -4,8 +4,8 @@ local current previous context words
 current="${COMP_WORDS[COMP_CWORD]-}"
 previous="${COMP_WORDS[COMP_CWORD-1]-}"
 context="${COMP_WORDS[1]-}"
-if [[ "$context" == icons && $COMP_CWORD -ge 3 ]]; then
-context="icons ${COMP_WORDS[2]-}"
+if [[ ( "$context" == icons || "$context" == config ) && $COMP_CWORD -ge 3 ]]; then
+context="$context ${COMP_WORDS[2]-}"
 fi
 case "$previous" in
 --template) words="hello-stack application-and-data groups-and-layout commerce-platform aws-serverless-checkout gcp-data-service azure-event-platform github-delivery-workflow mixed-provider-platform" ;;
@@ -15,7 +15,7 @@ case "$previous" in
 esac
 if [[ -z "$words" ]]; then
 if (( COMP_CWORD == 1 )); then
-words="init check fmt render update lsp icons completions manpage help version -h --help -v -V --version"
+words="init check fmt render update lsp doctor config icons completions manpage help version -h --help -v -V --version"
     else
       case "$context" in
         "init") words="--template -o --output --force -h --help" ;;
@@ -24,12 +24,16 @@ words="init check fmt render update lsp icons completions manpage help version -
         "render") words="--provider-pack -o --notice -h --help" ;;
         "update") words="--check --version -h --help" ;;
         "lsp") words="-h --help" ;;
+        "doctor") words="--provider-pack -h --help" ;;
+        "config") words="path get help -h --help" ;;
+        "config path") words="-h --help" ;;
+        "config get") words="default_icons_path -h --help" ;;
         "icons") words="list import help -h --help" ;;
         "icons list") words="aws gcp azure simple-icons -h --help" ;;
         "icons import") words="aws gcp azure simple-icons --accept-terms -o -h --help" ;;
         "completions") words="bash zsh fish -h --help" ;;
         "manpage") words="-h --help" ;;
-        "help") words="init check fmt render update lsp icons completions manpage help version -h --help" ;;
+        "help") words="init check fmt render update lsp doctor config icons completions manpage help version -h --help" ;;
         "version") words="-h --help" ;;
         *) words="" ;;
 esac

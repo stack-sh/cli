@@ -43,6 +43,8 @@ Commands:
   render     Render standalone SVG to standard output or a file
   update     Check for or install a verified direct-install update
   lsp        Run the Stack language server over standard input and output
+  doctor     Diagnose CLI configuration and provider icon packs
+  config     Inspect effective read-only configuration
   icons      List catalogs and import audited provider icon archives
   completions  Generate bash, zsh, or fish completion source
   manpage    Print the offline Stack CLI manual page
@@ -61,6 +63,8 @@ Examples:
   stack render arch.stack -o arch.svg
   stack update --check
   stack lsp
+  stack doctor
+  stack config get default_icons_path
   stack icons list aws s3
   stack completions zsh > _stack
   stack manpage > stack.1
@@ -172,6 +176,76 @@ Protocol:
 
 Examples:
   stack lsp
+";
+const DOCTOR_HELP: &str = "\
+Diagnose Stack CLI configuration and provider icon packs
+
+Usage:
+  stack doctor [--provider-pack <DIRECTORY>]
+
+Options:
+  --provider-pack <DIRECTORY>  Diagnose this icon-store root instead of the effective default
+  -h, --help                   Print help
+
+Checks:
+  CLI version, config path and source, config validity, effective icon-store
+  source, and installed known-provider packs. The report never prints config
+  contents or unrelated environment variables.
+
+Examples:
+  stack doctor
+  stack doctor --provider-pack .stack-icons
+";
+const CONFIG_HELP: &str = "\
+Inspect effective read-only Stack configuration
+
+Usage:
+  stack config <COMMAND>
+
+Commands:
+  path  Print the resolved config.yaml path without requiring the file to exist
+  get   Print one effective configuration value
+  help  Print this message or the help of a config subcommand
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack config path
+  stack config get default_icons_path
+";
+const CONFIG_PATH_HELP: &str = "\
+Print the resolved Stack config file path
+
+Usage:
+  stack config path
+
+Options:
+  -h, --help  Print help
+
+The path is selected from absolute XDG_CONFIG_HOME first, then absolute HOME.
+The config file does not need to exist and is never created.
+
+Examples:
+  stack config path
+";
+const CONFIG_GET_HELP: &str = "\
+Print an effective Stack configuration value
+
+Usage:
+  stack config get <KEY>
+
+Arguments:
+  <KEY>  default_icons_path
+
+Options:
+  -h, --help  Print help
+
+The value is resolved from config.yaml or the default icon-store path. No file
+is created or changed.
+
+Examples:
+  stack config get default_icons_path
 ";
 const UPDATE_HELP: &str = "\
 Check for or install a verified direct-install update
@@ -298,11 +372,12 @@ Print top-level or subcommand help
 Usage:
   stack help
   stack help <COMMAND>
+  stack help config <COMMAND>
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, update, lsp, icons, completions,
-             manpage, help, or version
+  <COMMAND>  init, check, fmt, render, update, lsp, doctor, config, icons,
+             completions, manpage, help, or version
 
 Options:
   -h, --help  Print help
@@ -310,6 +385,7 @@ Options:
 Examples:
   stack help
   stack help render
+  stack help config get
   stack help icons import
 ";
 const VERSION_HELP: &str = "\
@@ -395,6 +471,12 @@ pub fn run(
     if command == OsStr::new("lsp") {
         return run_lsp(arguments, stdin, stdout, stderr);
     }
+    if command == OsStr::new("doctor") {
+        return run_doctor(arguments, stdout, stderr);
+    }
+    if command == OsStr::new("config") {
+        return run_config(&mut arguments, stdout, stderr);
+    }
     if command == OsStr::new("icons") {
         return run_icons(&mut arguments, stdout, stderr);
     }
@@ -434,6 +516,9 @@ fn run_help(
     if command == OsStr::new("icons") {
         return run_icons_help(&mut arguments, stdout, stderr);
     }
+    if command == OsStr::new("config") {
+        return run_config_help(&mut arguments, stdout, stderr);
+    }
 
     let help = if command == OsStr::new("init") {
         INIT_HELP
@@ -447,6 +532,8 @@ fn run_help(
         UPDATE_HELP
     } else if command == OsStr::new("lsp") {
         LSP_HELP
+    } else if command == OsStr::new("doctor") {
+        DOCTOR_HELP
     } else if command == OsStr::new("completions") {
         COMPLETIONS_HELP
     } else if command == OsStr::new("manpage") {
@@ -770,6 +857,352 @@ fn run_lsp(
         &format!("unexpected argument '{}'", argument.to_string_lossy()),
         stderr,
     )
+}
+
+fn run_config(
+    arguments: &mut dyn Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(command) = arguments.next() else {
+        return argument_error("missing command for 'stack config'", stderr);
+    };
+    if is_help_flag(&command) {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(CONFIG_HELP, stdout, stderr);
+    }
+    if command == OsStr::new("help") {
+        return run_config_help(arguments, stdout, stderr);
+    }
+    if command == OsStr::new("path") {
+        return run_config_path(arguments, stdout, stderr);
+    }
+    if command == OsStr::new("get") {
+        return run_config_get(arguments, stdout, stderr);
+    }
+    unknown_command_error(
+        "stack config",
+        &command,
+        &["path", "get", "help"],
+        "stack help config",
+        stderr,
+    )
+}
+
+fn run_config_help(
+    arguments: &mut dyn Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(command) = arguments.next() else {
+        return write_stdout(CONFIG_HELP, stdout, stderr);
+    };
+    let help = if command == OsStr::new("path") {
+        CONFIG_PATH_HELP
+    } else if command == OsStr::new("get") {
+        CONFIG_GET_HELP
+    } else {
+        return unknown_command_error(
+            "stack config help",
+            &command,
+            &["path", "get"],
+            "stack help config",
+            stderr,
+        );
+    };
+    if let Some(extra) = arguments.next() {
+        return argument_error(
+            &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stderr,
+        );
+    }
+    write_stdout(help, stdout, stderr)
+}
+
+fn run_config_path(
+    arguments: &mut dyn Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    if let Some(argument) = arguments.next() {
+        if is_help_flag(&argument) {
+            if let Some(extra) = arguments.next() {
+                return argument_error(
+                    &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                    stderr,
+                );
+            }
+            return write_stdout(CONFIG_PATH_HELP, stdout, stderr);
+        }
+        return argument_error(
+            &format!("unexpected argument '{}'", argument.to_string_lossy()),
+            stderr,
+        );
+    }
+    match config::config_file_path(&config::Environment::capture()) {
+        Ok((path, _)) => write_stdout(&format!("{}\n", path.display()), stdout, stderr),
+        Err(error) => write_stderr_error(&error, stderr),
+    }
+}
+
+fn run_config_get(
+    arguments: &mut dyn Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(key) = arguments.next() else {
+        return argument_error("missing key for 'stack config get'", stderr);
+    };
+    if is_help_flag(&key) {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(CONFIG_GET_HELP, stdout, stderr);
+    }
+    if let Some(extra) = arguments.next() {
+        return argument_error(
+            &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stderr,
+        );
+    }
+    if key != OsStr::new("default_icons_path") {
+        return argument_error(
+            &format!(
+                "unknown config key '{}'; supported keys: default_icons_path",
+                key.to_string_lossy()
+            ),
+            stderr,
+        );
+    }
+    match config::discover(&config::Environment::capture()) {
+        Ok(discovery) => write_stdout(
+            &format!("{}\n", discovery.icon_store_root.display()),
+            stdout,
+            stderr,
+        ),
+        Err(error) => write_stderr_error(&error, stderr),
+    }
+}
+
+#[derive(Clone, Copy)]
+enum MissingStoreDiagnostic {
+    Healthy,
+    Warning,
+    Error,
+}
+
+fn run_doctor(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let first = arguments.next();
+    if first
+        .as_ref()
+        .is_some_and(|argument| is_help_flag(argument))
+    {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(DOCTOR_HELP, stdout, stderr);
+    }
+
+    let mut explicit_provider_pack_root = None;
+    let mut remaining = first.into_iter().chain(arguments);
+    while let Some(option) = remaining.next() {
+        if option == OsStr::new("--provider-pack") {
+            if explicit_provider_pack_root.is_some() {
+                return argument_error("duplicate '--provider-pack' option", stderr);
+            }
+            let Some(value) = remaining.next() else {
+                return argument_error("missing provider icon-store directory", stderr);
+            };
+            if value.to_string_lossy().starts_with('-') {
+                return argument_error("missing provider icon-store directory", stderr);
+            }
+            explicit_provider_pack_root = Some(PathBuf::from(value));
+        } else {
+            return argument_error(
+                &format!("unexpected argument '{}'", option.to_string_lossy()),
+                stderr,
+            );
+        }
+    }
+
+    let environment = config::Environment::capture();
+    let mut report = String::from("Stack CLI doctor\n\n");
+    let _ = writeln!(report, "[ok] version: {}", env!("CARGO_PKG_VERSION"));
+    let mut problems = 0_usize;
+    let mut warnings = 0_usize;
+    let mut discovery = None;
+
+    match config::config_file_path(&environment) {
+        Ok((path, source)) => {
+            let _ = writeln!(
+                report,
+                "[ok] config path: {} (source: {})",
+                doctor_path(&path),
+                source.label()
+            );
+            match config::discover(&environment) {
+                Ok(resolved) => {
+                    let config_state = match resolved.config_file_state {
+                        config::ConfigFileState::Missing => "missing; defaults apply",
+                        config::ConfigFileState::Loaded => "loaded",
+                    };
+                    let _ = writeln!(report, "[ok] config file: {config_state}");
+                    discovery = Some(resolved);
+                }
+                Err(error) => {
+                    let _ = writeln!(report, "[error] config file: {}", config_problem(&error));
+                    problems += 1;
+                }
+            }
+        }
+        Err(_) => {
+            report.push_str(
+                "[error] config path: unavailable; set XDG_CONFIG_HOME or HOME to an absolute path\n",
+            );
+            problems += 1;
+        }
+    }
+
+    let effective_store = if let Some(root) = explicit_provider_pack_root {
+        Some((root, "--provider-pack", MissingStoreDiagnostic::Error))
+    } else if let Some(resolved) = &discovery {
+        let missing_diagnostic = match resolved.icon_store_source {
+            config::IconStoreSource::ConfigFile => MissingStoreDiagnostic::Warning,
+            config::IconStoreSource::Default => MissingStoreDiagnostic::Healthy,
+        };
+        Some((
+            resolved.icon_store_root.clone(),
+            resolved.icon_store_source.label(),
+            missing_diagnostic,
+        ))
+    } else {
+        None
+    };
+
+    if let Some((root, source, missing_diagnostic)) = effective_store {
+        let _ = writeln!(
+            report,
+            "[ok] icon store: {} (source: {source})",
+            doctor_path(&root)
+        );
+        match fs::symlink_metadata(&root) {
+            Err(error) if error.kind() == io::ErrorKind::NotFound => match missing_diagnostic {
+                MissingStoreDiagnostic::Healthy => {
+                    report.push_str("[ok] provider packs: store is missing; 0 packs installed\n");
+                }
+                MissingStoreDiagnostic::Warning => {
+                    report.push_str(
+                        "[warn] provider packs: configured store is missing; import a pack or update default_icons_path\n",
+                    );
+                    warnings += 1;
+                }
+                MissingStoreDiagnostic::Error => {
+                    report.push_str(
+                        "[error] provider packs: explicit store is missing; create it or choose another directory\n",
+                    );
+                    problems += 1;
+                }
+            },
+            Err(_) => {
+                report.push_str(
+                    "[error] provider packs: store is unreadable; check directory permissions\n",
+                );
+                problems += 1;
+            }
+            Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_dir() => {
+                report.push_str(
+                    "[error] provider packs: store must be a real directory, not a file or symlink\n",
+                );
+                problems += 1;
+            }
+            Ok(_) => match load_provider_store(&root, false) {
+                Ok(packs) => {
+                    let _ = writeln!(
+                        report,
+                        "[ok] provider packs: {} valid known-provider pack{}",
+                        packs.len(),
+                        if packs.len() == 1 { "" } else { "s" }
+                    );
+                }
+                Err(error) => {
+                    let reason = if error.contains("permission denied") {
+                        "store or pack is unreadable; check directory and file permissions"
+                    } else {
+                        "a known-provider pack is invalid; remove and import it again"
+                    };
+                    let _ = writeln!(report, "[error] provider packs: {reason}");
+                    problems += 1;
+                }
+            },
+        }
+    } else {
+        report.push_str("[blocked] icon store: unresolved until the config problem is fixed\n");
+        report.push_str("[blocked] provider packs: not checked\n");
+    }
+
+    report.push('\n');
+    if problems > 0 {
+        let _ = writeln!(
+            report,
+            "Result: {problems} problem{} found",
+            if problems == 1 { "" } else { "s" }
+        );
+    } else if warnings > 0 {
+        let _ = writeln!(
+            report,
+            "Result: healthy with {warnings} warning{}",
+            if warnings == 1 { "" } else { "s" }
+        );
+    } else {
+        report.push_str("Result: healthy\n");
+    }
+
+    if stdout.write_all(report.as_bytes()).is_err() {
+        return write_stderr_error("cannot write command output", stderr);
+    }
+    if problems > 0 {
+        EXIT_USAGE_OR_IO
+    } else {
+        EXIT_SUCCESS
+    }
+}
+
+fn doctor_path(path: &Path) -> String {
+    path.to_string_lossy()
+        .chars()
+        .flat_map(char::escape_debug)
+        .collect()
+}
+
+fn config_problem(error: &str) -> &'static str {
+    if error.contains("permission denied") {
+        "permission denied; make config.yaml readable"
+    } else if error.contains("invalid YAML") {
+        "invalid YAML; keep only the supported default_icons_path key"
+    } else if error.contains("absolute path") {
+        "default_icons_path must be an absolute path"
+    } else if error.contains("64 KiB") {
+        "file exceeds the 64 KiB limit"
+    } else if error.contains("regular file") {
+        "path must be a regular file, not a directory or symlink"
+    } else {
+        "unreadable; inspect config.yaml permissions and file type"
+    }
 }
 
 fn run_icons(
@@ -2087,6 +2520,66 @@ mod tests {
                 OsString::from("artifact"),
                 OsString::from("--notice"),
                 OsString::from("artifact"),
+            ],
+            vec![
+                OsString::from("doctor"),
+                OsString::from("--help"),
+                OsString::from("extra"),
+            ],
+            vec![OsString::from("doctor"), OsString::from("--provider-pack")],
+            vec![
+                OsString::from("doctor"),
+                OsString::from("--provider-pack"),
+                OsString::from("--help"),
+            ],
+            vec![
+                OsString::from("doctor"),
+                OsString::from("--provider-pack"),
+                OsString::from("first"),
+                OsString::from("--provider-pack"),
+                OsString::from("second"),
+            ],
+            vec![OsString::from("doctor"), OsString::from("unexpected")],
+            vec![OsString::from("config")],
+            vec![OsString::from("config"), OsString::from("unknown")],
+            vec![
+                OsString::from("config"),
+                OsString::from("--help"),
+                OsString::from("extra"),
+            ],
+            vec![
+                OsString::from("config"),
+                OsString::from("path"),
+                OsString::from("extra"),
+            ],
+            vec![
+                OsString::from("config"),
+                OsString::from("path"),
+                OsString::from("--help"),
+                OsString::from("extra"),
+            ],
+            vec![OsString::from("config"), OsString::from("get")],
+            vec![
+                OsString::from("config"),
+                OsString::from("get"),
+                OsString::from("unknown"),
+            ],
+            vec![
+                OsString::from("config"),
+                OsString::from("get"),
+                OsString::from("default_icons_path"),
+                OsString::from("extra"),
+            ],
+            vec![
+                OsString::from("config"),
+                OsString::from("help"),
+                OsString::from("unknown"),
+            ],
+            vec![
+                OsString::from("config"),
+                OsString::from("help"),
+                OsString::from("path"),
+                OsString::from("extra"),
             ],
             vec![OsString::from("icons")],
             vec![OsString::from("icons"), OsString::from("unknown")],

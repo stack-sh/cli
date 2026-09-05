@@ -50,6 +50,7 @@ default_icons_path: /absolute/path/to/stack-icons
 ```
 
 The configured path is used by both `stack icons import` and `stack render`.
+Use `stack config get default_icons_path` to inspect the effective value and `stack doctor` to validate the store without changing it. These commands were added after the published 0.4.0 release; see the [configuration discovery and doctor contract](./configuration.md) for availability and failure behavior.
 
 ## Keep icons with a project
 

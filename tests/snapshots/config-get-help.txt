@@ -1,0 +1,16 @@
+Print an effective Stack configuration value
+
+Usage:
+  stack config get <KEY>
+
+Arguments:
+  <KEY>  default_icons_path
+
+Options:
+  -h, --help  Print help
+
+The value is resolved from config.yaml or the default icon-store path. No file
+is created or changed.
+
+Examples:
+  stack config get default_icons_path

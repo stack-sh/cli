@@ -3,11 +3,12 @@ Print top-level or subcommand help
 Usage:
   stack help
   stack help <COMMAND>
+  stack help config <COMMAND>
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, update, lsp, icons, completions,
-             manpage, help, or version
+  <COMMAND>  init, check, fmt, render, update, lsp, doctor, config, icons,
+             completions, manpage, help, or version
 
 Options:
   -h, --help  Print help
@@ -15,4 +16,5 @@ Options:
 Examples:
   stack help
   stack help render
+  stack help config get
   stack help icons import

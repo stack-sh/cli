@@ -104,6 +104,14 @@ def verify_commands(binary, version):
         b"stack update" in command([binary, "update", "--help"]),
         "update help output is missing usage",
     )
+    require(
+        b"stack doctor" in command([binary, "doctor", "--help"]),
+        "doctor help output is missing usage",
+    )
+    require(
+        b"stack config" in command([binary, "config", "--help"]),
+        "config help output is missing usage",
+    )
     for relative_path, arguments in GENERATED_COMMANDS.items():
         expected = (ROOT / "distribution/generated" / relative_path).read_bytes()
         require(
@@ -115,6 +123,22 @@ def verify_commands(binary, version):
         working_directory = Path(temporary)
         environment = os.environ.copy()
         environment["XDG_CONFIG_HOME"] = str(working_directory / "config")
+        expected_config_path = working_directory / "config/stack/config.yaml"
+        require(
+            command([binary, "config", "path"], working_directory, environment)
+            == f"{expected_config_path}\n".encode(),
+            "config path does not match isolated XDG_CONFIG_HOME",
+        )
+        require(
+            command([binary, "config", "get", "default_icons_path"], working_directory, environment)
+            == f"{working_directory / 'config/stack/icons'}\n".encode(),
+            "effective default_icons_path does not match isolated XDG_CONFIG_HOME",
+        )
+        require(
+            b"Result: healthy\n" in command([binary, "doctor"], working_directory, environment),
+            "doctor does not report a healthy missing default store",
+        )
+        require(not (working_directory / "config").exists(), "read-only config commands created files")
         command([binary, "init"], working_directory, environment)
         source = working_directory / "diagram.stack"
         require(source.is_file() and source.stat().st_size > 0, "stack init did not create diagram.stack")

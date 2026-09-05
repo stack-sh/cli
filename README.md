@@ -25,6 +25,8 @@ For a direct installation, download the archive for your target and its verifica
 
 ## Commands
 
+The command inventory below follows the current source tree. `stack doctor` and `stack config` were added after 0.4.0 and are not present in the published 0.4.0 binaries; they will become available through installation channels in a later release.
+
 ```text
 stack help
 stack help render
@@ -40,6 +42,10 @@ stack render arch.stack
 stack render arch.stack -o arch.svg
 stack update --check
 stack lsp
+stack doctor
+stack doctor --provider-pack .stack-icons
+stack config path
+stack config get default_icons_path
 stack icons list
 stack icons list aws s3
 stack icons import gcp --accept-terms
@@ -49,7 +55,7 @@ stack completions zsh
 stack manpage
 ```
 
-`stack help`, `stack -h`, and `stack --help` print top-level help. Use `stack help <COMMAND>` or `<COMMAND> -h` / `<COMMAND> --help` for command-specific usage and examples; nested icon help is available through `stack help icons <COMMAND>`. `stack version`, `stack -v`, `stack -V`, and `stack --version` print the same Cargo package version. Help and version output use standard output and exit with status `0`. Invalid arguments and unknown commands use standard error and status `2`; close command typos include a suggested command and the relevant help invocation.
+`stack help`, `stack -h`, and `stack --help` print top-level help. Use `stack help <COMMAND>` or `<COMMAND> -h` / `<COMMAND> --help` for command-specific usage and examples; nested help is available through `stack help config <COMMAND>` and `stack help icons <COMMAND>`. `stack version`, `stack -v`, `stack -V`, and `stack --version` print the same Cargo package version. Help and version output use standard output and exit with status `0`. Invalid arguments and unknown commands use standard error and status `2`; close command typos include a suggested command and the relevant help invocation.
 
 `stack init` creates `diagram.stack` from the versioned `hello-stack` template without prompting. Use `--template <ID>` to select any of the nine curated examples shared with the public Stack specification and Web gallery, and `-o` / `--output` to choose another file. Existing paths are never replaced unless `--force` is explicit; forced writes use the same atomic output behavior as rendering. Provider templates print the exact `stack icons import` commands needed for branded rendering and remain valid with deterministic fallback icons when packs are absent. The embedded catalog and source bytes are pinned by `tests/specification-revision`, and CI rejects drift from that public specification commit.
 
@@ -61,13 +67,15 @@ stack manpage
 
 `stack lsp` runs a native [Language Server Protocol 3.18 adapter](./docs/language-server.md) over standard input and output. It provides incremental document synchronization, versioned diagnostics, completion, hover, hierarchical document symbols, and whole-document formatting for `.stack` files. The adapter negotiates UTF-8, UTF-16, or UTF-32 positions and delegates language semantics and formatting to the pinned compiler and engine rather than reimplementing them. Standard output is reserved for framed JSON-RPC messages.
 
+`stack config path` prints the selected `config.yaml` path without creating or reading the file. `stack config get default_icons_path` strictly reads the supported configuration and prints the effective icon-store path. `stack doctor` reports the CLI version, configuration path and source, configuration validity, effective icon-store source, and installed known-provider packs. It is read-only, emits actionable categories instead of configuration contents, exits `0` for healthy and warning-only reports, and exits `2` when it finds an operational problem. See the [configuration discovery and doctor contract](./docs/configuration.md).
+
 `stack update` is included in 0.4.0 for future receipted direct installations, with `--check`, exact-version selection, authenticated release-manifest and archive verification, and rollback-aware atomic replacement. It refuses Homebrew, Aqua, Cargo, and unknown ownership. The 0.4.0 release manifest does not activate `self-update`, and the documented manual installation creates no receipt, so the channel remains planned. See the [self-update contract](./docs/self-update.md).
 
 `stack completions <bash|zsh|fish>` and `stack manpage` generate deterministic shell integration and an offline roff manual from the CLI command metadata. The 0.4.0 release archives carry the exact generated files; Homebrew installs them into its managed completion and manual paths, while direct, Aqua, and future Cargo users can generate them into user-owned locations without modifying shell startup files. See the [completion and manual guide](./docs/completions.md).
 
 `stack icons list [PROVIDER] [QUERY]` searches the asset-free catalog by ID, product name, or category. The catalog currently contains 1,051 IDs: 305 AWS, 45 Google Cloud, 639 Azure, and 62 curated developer and collaboration tool icons. This command reads only metadata embedded in the CLI.
 
-`stack icons import <PROVIDER> --accept-terms` downloads the audited official archive set, verifies every complete SHA-256 before ZIP processing, reads allowlisted SVG entries with fixed size limits, sanitizes active and external content, preserves official colors and geometry, and writes the manifest, notice, and processed SVGs atomically. The default store is `$XDG_CONFIG_HOME/stack/icons`, falling back to `$HOME/.config/stack/icons`. `$XDG_CONFIG_HOME/stack/config.yaml` can set an absolute `default_icons_path`. Use `-o <DIRECTORY>` to put provider child directories below a project-local root. See [the provider icon guide](./docs/provider-icon-import.md) for configuration, project-local usage, sources, hashes, and rights.
+`stack icons import <PROVIDER> --accept-terms` downloads the audited official archive set, verifies every complete SHA-256 before ZIP processing, reads allowlisted SVG entries with fixed size limits, sanitizes active and external content, preserves official colors and geometry, and writes the manifest, notice, and processed SVGs atomically. The default store is `$XDG_CONFIG_HOME/stack/icons`, falling back to `$HOME/.config/stack/icons`. `$XDG_CONFIG_HOME/stack/config.yaml` can set an absolute `default_icons_path`. Use `-o <DIRECTORY>` to put provider child directories below a project-local root. See the [configuration contract](./docs/configuration.md) for discovery and diagnosis, and [the provider icon guide](./docs/provider-icon-import.md) for project-local usage, sources, hashes, and rights.
 
 | Result | Exit status |
 | --- | ---: |

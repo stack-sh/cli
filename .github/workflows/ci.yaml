@@ -63,10 +63,21 @@ jobs:
           "$native_root/bin/stack" check "$smoke_directory/diagram.stack"
           "$native_root/bin/stack" render "$smoke_directory/diagram.stack" -o "$smoke_directory/diagram.svg"
           test -s "$smoke_directory/diagram.svg"
-          "$native_root/bin/stack" completions bash | cmp distribution/generated/share/bash-completion/completions/stack -
-          "$native_root/bin/stack" completions zsh | cmp distribution/generated/share/zsh/site-functions/_stack -
-          "$native_root/bin/stack" completions fish | cmp distribution/generated/share/fish/vendor_completions.d/stack.fish -
-          "$native_root/bin/stack" manpage | cmp distribution/generated/share/man/man1/stack.1 -
+          release_target=x86_64-unknown-linux-gnu
+          archive_name="stack-v${expected_version}-${release_target}.tar.gz"
+          archive_id="github_release/github.com/stack-sh/cli/v${expected_version}/${archive_name}"
+          release_archive="$RUNNER_TEMP/$archive_name"
+          release_root="$RUNNER_TEMP/aqua-release"
+          expected_archive_checksum=$(ARCHIVE_ID="$archive_id" node -e 'const lock = JSON.parse(require("fs").readFileSync("tests/aqua/aqua-checksums.json", "utf8")); const entry = lock.checksums.find(({ id }) => id === process.env.ARCHIVE_ID); if (!entry || entry.algorithm !== "sha256") process.exit(1); process.stdout.write(entry.checksum)')
+          curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --output "$release_archive" "https://github.com/stack-sh/cli/releases/download/v${expected_version}/${archive_name}"
+          test "$(sha256sum "$release_archive" | cut -d ' ' -f 1 | tr '[:lower:]' '[:upper:]')" = "$expected_archive_checksum"
+          mkdir -p "$release_root"
+          tar -xzf "$release_archive" -C "$release_root"
+          released_share="$release_root/stack-v${expected_version}-${release_target}/share"
+          "$native_root/bin/stack" completions bash | cmp "$released_share/bash-completion/completions/stack" -
+          "$native_root/bin/stack" completions zsh | cmp "$released_share/zsh/site-functions/_stack" -
+          "$native_root/bin/stack" completions fish | cmp "$released_share/fish/vendor_completions.d/stack.fish" -
+          "$native_root/bin/stack" manpage | cmp "$released_share/man/man1/stack.1" -
       - name: Validate release supply chain
         run: |
           node --check scripts/create-supply-chain-smoke-fixture.mjs
@@ -105,6 +116,14 @@ jobs:
           COMP_CWORD=3
           _stack_completion
           test "${COMPREPLY[*]}" = "aws azure"
+          COMP_WORDS=(stack config g)
+          COMP_CWORD=2
+          _stack_completion
+          test "${COMPREPLY[*]}" = get
+          COMP_WORDS=(stack config get d)
+          COMP_CWORD=3
+          _stack_completion
+          test "${COMPREPLY[*]}" = default_icons_path
       - name: Run canonical formatter suite
         env:
           STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
@@ -149,6 +168,10 @@ jobs:
           ./target/release/stack render --help
           ./target/release/stack update --help
           ./target/release/stack lsp --help
+          ./target/release/stack doctor --help
+          ./target/release/stack config --help
+          ./target/release/stack config path --help
+          ./target/release/stack config get --help
           ./target/release/stack icons --help
           ./target/release/stack completions --help
           ./target/release/stack completions bash | cmp distribution/generated/share/bash-completion/completions/stack -
@@ -158,6 +181,11 @@ jobs:
           ./target/release/stack icons list
           ./target/release/stack icons list aws s3
           ./target/release/stack icons import --help
+          config_smoke_root="$RUNNER_TEMP/stack-config-smoke"
+          test "$(XDG_CONFIG_HOME="$config_smoke_root" ./target/release/stack config path)" = "$config_smoke_root/stack/config.yaml"
+          test "$(XDG_CONFIG_HOME="$config_smoke_root" ./target/release/stack config get default_icons_path)" = "$config_smoke_root/stack/icons"
+          XDG_CONFIG_HOME="$config_smoke_root" ./target/release/stack doctor
+          test ! -e "$config_smoke_root"
       - name: Verify repository files
         run: |
           test -s README.md
@@ -168,6 +196,7 @@ jobs:
           test -s CONTRIBUTING.md
           test -s SECURITY.md
           test -s docs/language-server.md
+          test -s docs/configuration.md
           test -s docs/completions.md
           test -s docs/self-update.md
           test -s docs/publication-audit.md
@@ -232,6 +261,11 @@ jobs:
           test -s tests/specification-revision
           test -s tests/fixtures/render.stack
           test -s tests/snapshots/lsp-help.txt
+          test -s tests/snapshots/doctor-help.txt
+          test -s tests/snapshots/doctor-report.txt
+          test -s tests/snapshots/config-help.txt
+          test -s tests/snapshots/config-path-help.txt
+          test -s tests/snapshots/config-get-help.txt
           test -s tests/snapshots/update-help.txt
           test -s tests/update.rs
 

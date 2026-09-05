@@ -22,6 +22,8 @@ Commands:
   render     Render standalone SVG to standard output or a file
   update     Check for or install a verified direct\-install update
   lsp        Run the Stack language server over standard input and output
+  doctor     Diagnose CLI configuration and provider icon packs
+  config     Inspect effective read\-only configuration
   icons      List catalogs and import audited provider icon archives
   completions  Generate bash, zsh, or fish completion source
   manpage    Print the offline Stack CLI manual page
@@ -40,6 +42,8 @@ Examples:
   stack render arch.stack \-o arch.svg
   stack update \-\-check
   stack lsp
+  stack doctor
+  stack config get default_icons_path
   stack icons list aws s3
   stack completions zsh > _stack
   stack manpage > stack.1
@@ -183,6 +187,80 @@ Protocol:
 Examples:
   stack lsp
 .fi
+.SS "stack doctor"
+.nf
+Diagnose Stack CLI configuration and provider icon packs
+
+Usage:
+  stack doctor [\-\-provider\-pack <DIRECTORY>]
+
+Options:
+  \-\-provider\-pack <DIRECTORY>  Diagnose this icon\-store root instead of the effective default
+  \-h, \-\-help                   Print help
+
+Checks:
+  CLI version, config path and source, config validity, effective icon\-store
+  source, and installed known\-provider packs. The report never prints config
+  contents or unrelated environment variables.
+
+Examples:
+  stack doctor
+  stack doctor \-\-provider\-pack .stack\-icons
+.fi
+.SS "stack config"
+.nf
+Inspect effective read\-only Stack configuration
+
+Usage:
+  stack config <COMMAND>
+
+Commands:
+  path  Print the resolved config.yaml path without requiring the file to exist
+  get   Print one effective configuration value
+  help  Print this message or the help of a config subcommand
+
+Options:
+  \-h, \-\-help  Print help
+
+Examples:
+  stack config path
+  stack config get default_icons_path
+.fi
+.SS "stack config path"
+.nf
+Print the resolved Stack config file path
+
+Usage:
+  stack config path
+
+Options:
+  \-h, \-\-help  Print help
+
+The path is selected from absolute XDG_CONFIG_HOME first, then absolute HOME.
+The config file does not need to exist and is never created.
+
+Examples:
+  stack config path
+.fi
+.SS "stack config get"
+.nf
+Print an effective Stack configuration value
+
+Usage:
+  stack config get <KEY>
+
+Arguments:
+  <KEY>  default_icons_path
+
+Options:
+  \-h, \-\-help  Print help
+
+The value is resolved from config.yaml or the default icon\-store path. No file
+is created or changed.
+
+Examples:
+  stack config get default_icons_path
+.fi
 .SS "stack icons"
 .nf
 Manage local provider icon packs
@@ -289,11 +367,12 @@ Print top\-level or subcommand help
 Usage:
   stack help
   stack help <COMMAND>
+  stack help config <COMMAND>
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, update, lsp, icons, completions,
-             manpage, help, or version
+  <COMMAND>  init, check, fmt, render, update, lsp, doctor, config, icons,
+             completions, manpage, help, or version
 
 Options:
   \-h, \-\-help  Print help
@@ -301,6 +380,7 @@ Options:
 Examples:
   stack help
   stack help render
+  stack help config get
   stack help icons import
 .fi
 .SS "stack version"

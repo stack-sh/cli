@@ -1,0 +1,9 @@
+Stack CLI doctor
+
+[ok] version: <VERSION>
+[ok] config path: <ROOT>/xdg/stack/config.yaml (source: XDG_CONFIG_HOME)
+[ok] config file: missing; defaults apply
+[ok] icon store: <ROOT>/xdg/stack/icons (source: default)
+[ok] provider packs: store is missing; 0 packs installed
+
+Result: healthy

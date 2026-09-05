@@ -134,7 +134,7 @@ Commit `aqua-checksums.json` with the configuration. To upgrade after a new stab
 
 Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. Stack CLI 0.4.0 includes the generators; use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
 
-The Aqua v0.4.0 pin was activated after the immutable release assets were published. CI verifies all four target mappings without executing foreign binaries, then installs the native archive and compares all completion and manual generator bytes. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later verification evidence. No release asset is replaced.
+The Aqua v0.4.0 pin was activated after the immutable release assets were published. CI verifies all four target mappings without executing foreign binaries, then installs the native archive and compares all completion and manual generator bytes with the matching checksum-locked canonical release archive. This keeps the published release check independent from later source-tree command additions. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later verification evidence. No release asset is replaced.
 
 ## Direct installation
 
