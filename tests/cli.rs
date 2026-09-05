@@ -6,6 +6,9 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, Instant};
+
+use serde_json::{Value, json};
 
 static CASE_ID: AtomicU64 = AtomicU64::new(0);
 
@@ -78,6 +81,48 @@ fn stack_with_input(
     stdin.write_all(input)?;
     drop(stdin);
     Ok(child.wait_with_output()?)
+}
+
+fn lsp_frame(message: &Value) -> Result<Vec<u8>, Box<dyn Error>> {
+    let payload = serde_json::to_vec(message)?;
+    let mut frame = format!("Content-Length: {}\r\n\r\n", payload.len()).into_bytes();
+    frame.extend_from_slice(&payload);
+    Ok(frame)
+}
+
+fn lsp_transcript(messages: &[Value]) -> Result<Vec<u8>, Box<dyn Error>> {
+    let mut transcript = Vec::new();
+    for message in messages {
+        transcript.extend_from_slice(&lsp_frame(message)?);
+    }
+    Ok(transcript)
+}
+
+fn lsp_messages(bytes: &[u8]) -> Result<Vec<Value>, Box<dyn Error>> {
+    let mut remaining = bytes;
+    let mut messages = Vec::new();
+    while !remaining.is_empty() {
+        let header_offset = remaining
+            .windows(4)
+            .position(|window| window == b"\r\n\r\n")
+            .ok_or("missing LSP header terminator")?;
+        let header = std::str::from_utf8(&remaining[..header_offset])?;
+        let content_length = header
+            .lines()
+            .find_map(|line| line.strip_prefix("Content-Length: "))
+            .ok_or("missing Content-Length")?
+            .parse::<usize>()?;
+        let body_start = header_offset + 4;
+        let body_end = body_start
+            .checked_add(content_length)
+            .ok_or("LSP body length overflow")?;
+        let body = remaining
+            .get(body_start..body_end)
+            .ok_or("truncated LSP body")?;
+        messages.push(serde_json::from_slice(body)?);
+        remaining = remaining.get(body_end..).ok_or("invalid LSP body end")?;
+    }
+    Ok(messages)
 }
 
 fn assert_unchanged(path: &Path, expected: &[u8]) -> Result<(), Box<dyn Error>> {
@@ -192,6 +237,8 @@ fn help_snapshots_and_aliases_are_stdout_only() -> Result<(), Box<dyn Error>> {
             &["help", "render"],
             include_bytes!("snapshots/render-help.txt"),
         ),
+        (&["lsp", "--help"], include_bytes!("snapshots/lsp-help.txt")),
+        (&["help", "lsp"], include_bytes!("snapshots/lsp-help.txt")),
         (
             &["icons", "--help"],
             include_bytes!("snapshots/icons-help.txt"),
@@ -274,6 +321,10 @@ fn command_typos_are_actionable_and_stderr_only() -> Result<(), Box<dyn Error>> 
             "error: unknown command for 'stack help': 'rennder'\n\nDid you mean 'render'?\n\nFor more information, try 'stack help'.\n",
         ),
         (
+            &["lspp"],
+            "error: unknown command 'lspp'\n\nDid you mean 'lsp'?\n\nFor more information, try 'stack help'.\n",
+        ),
+        (
             &["definitely-unknown"],
             "error: unknown command 'definitely-unknown'\n\nFor more information, try 'stack help'.\n",
         ),
@@ -289,6 +340,193 @@ fn command_typos_are_actionable_and_stderr_only() -> Result<(), Box<dyn Error>> 
             "arguments: {arguments:?}"
         );
     }
+    Ok(())
+}
+
+#[test]
+fn lsp_binary_serves_core_features_and_recovers_from_invalid_json() -> Result<(), Box<dyn Error>> {
+    let source = concat!(
+        "stack 1.0\n\n",
+        "diagram \"😀 Checkout\" {\n",
+        "  node api \"API\" {\n",
+        "    kind service\n",
+        "    icon \"ser\"\n",
+        "  }\n",
+        "  node db \"Database\" { kind database }\n",
+        "  edge api -> db\n",
+        "}\n",
+    );
+    let messages = [
+        json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "capabilities": { "general": { "positionEncodings": ["utf-16"] } }
+            }
+        }),
+        json!({
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "file:///workspace/diagram.stack",
+                    "languageId": "stack",
+                    "version": 1,
+                    "text": source
+                }
+            }
+        }),
+        json!({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "textDocument/completion",
+            "params": {
+                "textDocument": { "uri": "file:///workspace/diagram.stack" },
+                "position": { "line": 5, "character": 13 }
+            }
+        }),
+        json!({
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "textDocument/hover",
+            "params": {
+                "textDocument": { "uri": "file:///workspace/diagram.stack" },
+                "position": { "line": 8, "character": 8 }
+            }
+        }),
+        json!({
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "textDocument/documentSymbol",
+            "params": {
+                "textDocument": { "uri": "file:///workspace/diagram.stack" }
+            }
+        }),
+        json!({
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "textDocument/formatting",
+            "params": {
+                "textDocument": { "uri": "file:///workspace/diagram.stack" },
+                "options": { "tabSize": 2, "insertSpaces": true }
+            }
+        }),
+        json!({ "jsonrpc": "2.0", "id": 6, "method": "shutdown" }),
+        json!({ "jsonrpc": "2.0", "method": "exit" }),
+    ];
+    let mut transcript = b"Content-Length: 1\r\n\r\n{".to_vec();
+    transcript.extend_from_slice(&lsp_transcript(&messages)?);
+
+    let output = stack_with_input(["lsp"], &transcript)?;
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty());
+    let responses = lsp_messages(&output.stdout)?;
+    assert_eq!(responses.len(), 8);
+    assert_eq!(responses[0]["error"]["code"], -32_700);
+    assert_eq!(
+        responses[1]["result"]["capabilities"]["positionEncoding"],
+        "utf-16"
+    );
+    assert_eq!(responses[2]["method"], "textDocument/publishDiagnostics");
+
+    let completion = responses
+        .iter()
+        .find(|message| message["id"] == 2)
+        .ok_or("missing completion response")?;
+    assert!(
+        completion["result"]["items"]
+            .as_array()
+            .is_some_and(|items| items.iter().any(|item| item["filterText"] == "server"))
+    );
+    let hover = responses
+        .iter()
+        .find(|message| message["id"] == 3)
+        .ok_or("missing hover response")?;
+    assert!(
+        hover["result"]["contents"]["value"]
+            .as_str()
+            .is_some_and(|value| value.contains("node api"))
+    );
+    let symbols = responses
+        .iter()
+        .find(|message| message["id"] == 4)
+        .ok_or("missing symbols response")?;
+    assert_eq!(symbols["result"][0]["name"], "😀 Checkout");
+    let formatting = responses
+        .iter()
+        .find(|message| message["id"] == 5)
+        .ok_or("missing formatting response")?;
+    assert!(
+        formatting["result"]
+            .as_array()
+            .is_some_and(|edits| !edits.is_empty())
+    );
+    assert_eq!(
+        responses.last().and_then(|message| message.get("id")),
+        Some(&json!(6))
+    );
+    Ok(())
+}
+
+#[test]
+fn lsp_large_invalid_document_has_bounded_latency_and_no_crash() -> Result<(), Box<dyn Error>> {
+    let padding = "x".repeat(1024 * 1024);
+    let source = format!("// {padding}\nstack 1.0 diagram \"Incomplete\" {{ node api");
+    let messages = [
+        json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": { "capabilities": {} }
+        }),
+        json!({
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "file:///workspace/large.stack",
+                    "languageId": "stack",
+                    "version": 1,
+                    "text": source
+                }
+            }
+        }),
+        json!({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "textDocument/documentSymbol",
+            "params": { "textDocument": { "uri": "file:///workspace/large.stack" } }
+        }),
+        json!({ "jsonrpc": "2.0", "id": 3, "method": "shutdown" }),
+        json!({ "jsonrpc": "2.0", "method": "exit" }),
+    ];
+    let transcript = lsp_transcript(&messages)?;
+    let started = Instant::now();
+    let output = stack_with_input(["lsp"], &transcript)?;
+    let elapsed = started.elapsed();
+
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty());
+    assert!(
+        elapsed < Duration::from_secs(5),
+        "large document took {elapsed:?}"
+    );
+    let responses = lsp_messages(&output.stdout)?;
+    let diagnostics = responses
+        .iter()
+        .find(|message| message["method"] == "textDocument/publishDiagnostics")
+        .ok_or("missing diagnostics")?;
+    assert!(
+        diagnostics["params"]["diagnostics"]
+            .as_array()
+            .is_some_and(|items| !items.is_empty())
+    );
+    let symbols = responses
+        .iter()
+        .find(|message| message["id"] == 2)
+        .ok_or("missing symbols response")?;
+    assert_eq!(symbols["result"], json!([]));
     Ok(())
 }
 

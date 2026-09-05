@@ -124,6 +124,7 @@ jobs:
           ./target/release/stack check --help
           ./target/release/stack fmt --help
           ./target/release/stack render --help
+          ./target/release/stack lsp --help
           ./target/release/stack icons --help
           ./target/release/stack icons list
           ./target/release/stack icons list aws s3
@@ -137,6 +138,7 @@ jobs:
           test -s THIRD_PARTY_LICENSES.md
           test -s CONTRIBUTING.md
           test -s SECURITY.md
+          test -s docs/language-server.md
           test -s docs/publication-audit.md
           test -s docs/provider-icon-import.md
           test -s docs/distribution.md
