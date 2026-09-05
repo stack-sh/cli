@@ -59,9 +59,16 @@ test("package-manager ownership cannot be delegated to self-update", () => {
   assert.throws(() => validateDistributionContract(candidate, cargoToml), /must own upgrades/);
 });
 
-test("a distribution cannot be marked available before release verification", () => {
+test("the GitHub release cannot be activated with a planned target", () => {
   const candidate = changed((value) => {
-    value.availability.state = "available";
+    value.targets[0].state = "planned";
   });
-  assert.throws(() => validateDistributionContract(candidate, cargoToml), /must remain planned/);
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /must be available after release verification/);
+});
+
+test("package-manager channels remain planned after direct release activation", () => {
+  const candidate = changed((value) => {
+    value.channels.find(({ id }) => id === "homebrew").state = "available";
+  });
+  assert.throws(() => validateDistributionContract(candidate, cargoToml), /homebrew state must be planned/);
 });

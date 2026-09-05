@@ -10,8 +10,8 @@
     "minimumRustVersion": "1.85"
   },
   "availability": {
-    "state": "planned",
-    "message": "No supported binary or package-manager release is currently published. A channel becomes available only after its required verification passes for a stable release."
+    "state": "available",
+    "message": "Stack CLI 0.3.0 is available from GitHub Releases. Homebrew, Cargo, Aqua, and self-update remain planned."
   },
   "versioning": {
     "scheme": "Semantic Versioning",
@@ -55,7 +55,7 @@
       "libc": "system",
       "minimumRuntime": "macOS 13",
       "supportTier": "tier-1",
-      "state": "planned"
+      "state": "available"
     },
     {
       "target": "x86_64-apple-darwin",
@@ -64,7 +64,7 @@
       "libc": "system",
       "minimumRuntime": "macOS 13",
       "supportTier": "tier-1",
-      "state": "planned"
+      "state": "available"
     },
     {
       "target": "aarch64-unknown-linux-gnu",
@@ -73,7 +73,7 @@
       "libc": "glibc",
       "minimumRuntime": "glibc 2.31",
       "supportTier": "tier-1",
-      "state": "planned"
+      "state": "available"
     },
     {
       "target": "x86_64-unknown-linux-gnu",
@@ -82,7 +82,7 @@
       "libc": "glibc",
       "minimumRuntime": "glibc 2.31",
       "supportTier": "tier-1",
-      "state": "planned"
+      "state": "available"
     }
   ],
   "unsupported": [
@@ -106,7 +106,7 @@
   "channels": [
     {
       "id": "github-release",
-      "state": "planned",
+      "state": "available",
       "targets": [
         "aarch64-apple-darwin",
         "x86_64-apple-darwin",

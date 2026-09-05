@@ -52,7 +52,12 @@ export function validateDistributionContract(contract, cargoToml) {
     "sourceCargoPackage must match Cargo.toml",
   );
   invariant(contract.product?.publishedCargoPackage === null, "published Cargo package must remain unset before registry ownership is verified");
-  invariant(contract.availability?.state === "planned", "distribution must remain planned until a verified stable release exists");
+  invariant(contract.availability?.state === "available", "distribution must be available after the verified stable release");
+  invariant(
+    contract.availability?.message?.includes("Stack CLI 0.3.0") &&
+      contract.availability.message.includes("GitHub Releases"),
+    "availability message must identify the verified stable GitHub release",
+  );
   invariant(
     contract.product.currentSourceVersion === cargoValue(cargoToml, "version"),
     "currentSourceVersion must match Cargo.toml",
@@ -75,7 +80,7 @@ export function validateDistributionContract(contract, cargoToml) {
       `${target.target} has inconsistent OS, architecture, or libc metadata`,
     );
     invariant(target.supportTier === "tier-1", `${target.target} must be tier-1`);
-    invariant(target.state === "planned", `${target.target} must remain planned before release`);
+    invariant(target.state === "available", `${target.target} must be available after release verification`);
     invariant(target.minimumRuntime, `${target.target} must declare a runtime floor`);
     if (target.os === "linux") invariant(target.libc === "glibc", `${target.target} must use glibc`);
     if (target.os === "macos") invariant(target.libc === "system", `${target.target} must use the system libc`);
@@ -89,7 +94,8 @@ export function validateDistributionContract(contract, cargoToml) {
   );
   const targetIds = new Set(expectedTargets);
   for (const channel of contract.channels) {
-    invariant(channel.state === "planned", `${channel.id} must remain planned before release`);
+    const expectedState = channel.id === "github-release" ? "available" : "planned";
+    invariant(channel.state === expectedState, `${channel.id} state must be ${expectedState}`);
     uniqueSorted(channel.targets, `${channel.id} targets`);
     for (const target of channel.targets) {
       invariant(targetIds.has(target), `${channel.id} references unknown target ${target}`);

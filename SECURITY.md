@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Stack CLI is pre-release. Security fixes are applied to the latest revision on `main`; no released binary version is currently supported.
+Stack CLI 0.3.0 is the supported stable binary release. Before 1.0, only the latest stable release receives release support; `main` is an unreleased development revision. Download supported binaries and their verification material from the [v0.3.0 GitHub Release](https://github.com/stack-sh/cli/releases/tag/v0.3.0).
 
 ## Reporting a vulnerability
 
