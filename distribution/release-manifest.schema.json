@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/stack-sh/cli/main/distribution/release-manifest.schema.json",
+  "title": "Stack CLI release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "version",
+    "tag",
+    "source",
+    "minimumSupportedCliVersion",
+    "sourceDateEpoch",
+    "builderWorkflow",
+    "verifiedChannels",
+    "targets"
+  ],
+  "properties": {
+    "$schema": { "const": "./release-manifest.schema.json" },
+    "schemaVersion": { "const": 1 },
+    "version": { "$ref": "#/$defs/version" },
+    "tag": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc\\.[1-9][0-9]*)?$" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": { "const": "stack-sh/cli" },
+        "commit": { "$ref": "#/$defs/commit" }
+      }
+    },
+    "minimumSupportedCliVersion": { "$ref": "#/$defs/version" },
+    "sourceDateEpoch": { "type": "integer", "minimum": 0 },
+    "builderWorkflow": {
+      "type": "string",
+      "pattern": "^stack-sh/cli/\\.github/workflows/[a-z0-9-]+\\.yaml$"
+    },
+    "verifiedChannels": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["github-release", "homebrew", "cargo", "aqua", "self-update"] }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/target" },
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "required": ["target"],
+            "properties": { "target": { "const": "aarch64-apple-darwin" } }
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["target"],
+            "properties": { "target": { "const": "x86_64-apple-darwin" } }
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["target"],
+            "properties": { "target": { "const": "aarch64-unknown-linux-gnu" } }
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["target"],
+            "properties": { "target": { "const": "x86_64-unknown-linux-gnu" } }
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc\\.[1-9][0-9]*)?$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "sha256"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "archive", "sbom", "provenance", "sbomAttestation"],
+      "properties": {
+        "target": {
+          "enum": [
+            "aarch64-apple-darwin",
+            "x86_64-apple-darwin",
+            "aarch64-unknown-linux-gnu",
+            "x86_64-unknown-linux-gnu"
+          ]
+        },
+        "archive": { "$ref": "#/$defs/file" },
+        "sbom": { "$ref": "#/$defs/file" },
+        "provenance": { "$ref": "#/$defs/file" },
+        "sbomAttestation": { "$ref": "#/$defs/file" }
+      }
+    }
+  }
+}

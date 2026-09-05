@@ -131,14 +131,27 @@ export function validateDistributionContract(contract, cargoToml) {
     if (!name.endsWith("Template")) continue;
     invariant(template.includes("{version}"), `${name} must contain {version}`);
   }
-  for (const name of ["archiveNameTemplate", "archiveRootTemplate", "sbomNameTemplate", "provenanceNameTemplate"]) {
+  for (const name of [
+    "archiveNameTemplate",
+    "archiveRootTemplate",
+    "sbomNameTemplate",
+    "provenanceNameTemplate",
+    "sbomAttestationNameTemplate",
+  ]) {
     invariant(contract.artifacts?.[name]?.includes("{target}"), `${name} must contain {target}`);
   }
   sameValues(contract.artifacts?.requiredEntries ?? [], requiredArchiveEntries, "archive entries");
   invariant(contract.artifacts?.checksumAlgorithm === "sha256", "checksum algorithm must be sha256");
   invariant(contract.artifacts?.signatureBundleNameTemplate?.endsWith(".sigstore.json"), "signature bundle must use .sigstore.json");
   invariant(contract.artifacts?.sbomNameTemplate?.endsWith(".spdx.json"), "SBOM must use .spdx.json");
-  invariant(contract.artifacts?.provenanceNameTemplate?.endsWith(".intoto.jsonl"), "provenance must use .intoto.jsonl");
+  invariant(
+    contract.artifacts?.provenanceNameTemplate?.endsWith(".provenance.sigstore.json"),
+    "provenance must use a Sigstore bundle",
+  );
+  invariant(
+    contract.artifacts?.sbomAttestationNameTemplate?.endsWith(".sbom.sigstore.json"),
+    "SBOM attestation must use a Sigstore bundle",
+  );
   invariant(contract.artifacts?.reproducibility?.uid === 0, "archive uid must be zero");
   invariant(contract.artifacts?.reproducibility?.gid === 0, "archive gid must be zero");
   invariant(contract.artifacts?.reproducibility?.mtime === "SOURCE_DATE_EPOCH", "archive mtime must use SOURCE_DATE_EPOCH");

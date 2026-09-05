@@ -1,0 +1,117 @@
+# Release supply-chain security
+
+This guide defines how Stack CLI release artifacts are inventoried, signed, attested, and verified. It complements the [distribution contract](./distribution.md); it does not make a release channel available by itself.
+
+## Trust and threat model
+
+The release boundary contains four independently built target archives, their SPDX SBOMs, GitHub artifact attestations, a release manifest, a complete checksum inventory, and a keyless signature over that inventory. A release must fail closed when a material is missing, unexpected, malformed, associated with another artifact, or modified after signing.
+
+The trusted identities are GitHub-hosted runners and the exact workflow in `stack-sh/cli`. Release jobs use GitHub OIDC and short-lived certificates. They do not store a Cosign private key, personal access token, registry credential, or other long-lived signing secret. Every third-party action in a signing workflow must be pinned to a full commit SHA.
+
+The local metadata validator establishes completeness, exact filenames, SHA-256 relationships, and agreement between the published SPDX document and the signed SBOM predicate. Cryptographic trust is established separately with Cosign and GitHub CLI, including the repository, workflow, source ref, certificate issuer, and GitHub-hosted runner policy.
+
+## Required materials
+
+Each of the four supported targets has exactly these files:
+
+```text
+stack-v{version}-{target}.tar.gz
+stack-v{version}-{target}.spdx.json
+stack-v{version}-{target}.provenance.sigstore.json
+stack-v{version}-{target}.sbom.sigstore.json
+```
+
+The shared release metadata is:
+
+```text
+stack-v{version}-release-manifest.json
+stack-v{version}-checksums.txt
+stack-v{version}-checksums.txt.sigstore.json
+```
+
+The checksum inventory covers all 16 target materials and the release manifest. The signature bundle itself is intentionally not self-referential. The manifest format is constrained by [`distribution/release-manifest.schema.json`](../distribution/release-manifest.schema.json).
+
+## Release-side generation
+
+Build and smoke-test all target archives first. Generate each SPDX 2.3 document with the pinned Syft version, then create provenance and SBOM attestations for each archive with `actions/attest`. Run the generator from the matching tagged source checkout; it rejects a version that differs from `Cargo.toml` and the distribution contract. Place only the 16 target materials in the staging directory before running:
+
+```sh
+node scripts/release-security.mjs generate \
+  --directory dist/release \
+  --version 1.2.3 \
+  --commit 0123456789abcdef0123456789abcdef01234567 \
+  --minimum-supported-version 1.2.3 \
+  --source-date-epoch 1788566400 \
+  --builder-workflow stack-sh/cli/.github/workflows/release.yaml \
+  --verified-channels github-release
+
+cosign sign-blob \
+  --yes \
+  --bundle dist/release/stack-v1.2.3-checksums.txt.sigstore.json \
+  dist/release/stack-v1.2.3-checksums.txt
+
+node scripts/release-security.mjs verify --directory dist/release
+```
+
+Generation refuses to replace existing metadata. Verification rejects missing or extra files, digest drift, malformed SPDX or Sigstore structures, attestations for another subject, and a checksum signature bundle for another checksum file. The release workflow must additionally run the cryptographic checks below before publishing.
+
+## User verification
+
+Download the complete release asset set into one directory and check out the same source tag for the repository validator. Set `asset_dir` to the asset directory, then set the version and tag ref and verify the checksum signature against the exact release workflow identity:
+
+```sh
+version=1.2.3
+tag_ref=refs/tags/v1.2.3
+asset_dir=/path/to/downloaded-assets
+identity="https://github.com/stack-sh/cli/.github/workflows/release.yaml@${tag_ref}"
+
+cosign verify-blob \
+  --bundle "$asset_dir/stack-v${version}-checksums.txt.sigstore.json" \
+  --certificate-identity "$identity" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  "$asset_dir/stack-v${version}-checksums.txt"
+
+(
+  cd "$asset_dir"
+  sha256sum --check "stack-v${version}-checksums.txt"
+)
+node scripts/release-security.mjs verify --directory "$asset_dir"
+```
+
+On macOS, use `shasum -a 256 -c` instead of `sha256sum --check`. Verify each archive's provenance bundle with the exact tag and signer workflow:
+
+```sh
+target=aarch64-apple-darwin
+archive="stack-v${version}-${target}.tar.gz"
+
+gh attestation verify "$asset_dir/$archive" \
+  --repo stack-sh/cli \
+  --bundle "$asset_dir/stack-v${version}-${target}.provenance.sigstore.json" \
+  --signer-workflow stack-sh/cli/.github/workflows/release.yaml \
+  --source-ref "$tag_ref" \
+  --deny-self-hosted-runners
+
+gh attestation verify "$asset_dir/$archive" \
+  --repo stack-sh/cli \
+  --bundle "$asset_dir/stack-v${version}-${target}.sbom.sigstore.json" \
+  --predicate-type https://spdx.dev/Document/v2.3 \
+  --signer-workflow stack-sh/cli/.github/workflows/release.yaml \
+  --source-ref "$tag_ref" \
+  --deny-self-hosted-runners
+```
+
+Repeat both attestation checks for every downloaded target. Do not install an archive when any identity, source ref, digest, predicate, or runner check fails.
+
+## Workflow permissions and secrets
+
+| Workflow | Permissions | Long-lived secrets | Publication authority |
+| --- | --- | --- | --- |
+| Pull request and main CI | `contents: read` | None | None |
+| Main-branch supply-chain smoke | `contents: read`, `id-token: write`, `attestations: write` | None | Attestation records and a short-retention workflow artifact only |
+| Future tag release | The same signing permissions; add a write permission only to the isolated publication job that demonstrably needs it | None for signing | Immutable GitHub Release assets after every gate passes |
+
+`.github/workflows/supply-chain.yaml` is a manually dispatched default-branch smoke test. It creates a non-release fixture, exercises real GitHub OIDC provenance and SBOM attestations, signs the checksum inventory with keyless Cosign, verifies the exact identities, and proves that modified bytes are rejected. It cannot publish or mutate a GitHub Release.
+
+## Failure and rollback
+
+Any generation, schema, checksum, signature, attestation, SBOM, target smoke, or channel smoke failure blocks publication. Do not upload a partial stable matrix and do not replace a tag or published asset. If a defect is found after publication, withdraw that version from default resolution and publish a new patch version after the complete pipeline passes.
