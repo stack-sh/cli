@@ -17,7 +17,10 @@
     "targets"
   ],
   "properties": {
-    "$schema": { "const": "./release-manifest.schema.json" },
+    "$schema": {
+      "type": "string",
+      "pattern": "^https://raw\\.githubusercontent\\.com/stack-sh/cli/[0-9a-f]{40}/distribution/release-manifest\\.schema\\.json$"
+    },
     "schemaVersion": { "const": 1 },
     "version": { "$ref": "#/$defs/version" },
     "tag": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc\\.[1-9][0-9]*)?$" },

@@ -25,7 +25,9 @@ Windows, musl-based Linux distributions such as Alpine, BSD, and 32-bit architec
 - Stable versions use `MAJOR.MINOR.PATCH`. Release candidates use `MAJOR.MINOR.PATCH-rc.N`, are GitHub prereleases, and are never selected by default by package managers or self-update.
 - Before 1.0, only the latest stable release is supported. Starting at 1.0, the latest two minor lines are supported.
 - Each stable release manifest records `minimumSupportedCliVersion`. This is the only input used by update clients and documentation to describe the minimum supported version.
-- Existing 0.3.0 source is not a supported distribution. The first published version is selected by its release change; this contract does not reserve or silently publish one.
+- A Cargo source version alone is not a supported distribution. Support starts only when a stable GitHub Release built from that exact source passes every activation check; changing a version does not reserve or silently publish it.
+
+`.github/workflows/release.yaml` accepts a version-checked manual run from `main` without publication and an annotated `v{version}` tag for publication. A tag run is allowed only for a commit contained in `main`. The manual path must pass first for the same commit and version before a release tag is created.
 
 ## Release artifacts
 
@@ -40,6 +42,10 @@ stack-v{version}-{target}.sbom.sigstore.json
 
 Each archive contains one directory named `stack-v{version}-{target}` with `stack`, `LICENSE`, `NOTICE`, and `THIRD_PARTY_LICENSES.md`. Archives use bytewise path order, numeric uid/gid 0, `SOURCE_DATE_EPOCH` for entry times, and a gzip header without a source filename or wall-clock timestamp.
 
+Release binaries use Rust 1.85.0 exactly. GNU/Linux builds run natively in the digest-pinned `rust:1.85.0-slim-bullseye` multi-architecture image and install their remaining release tools from the image's dated Debian snapshot, so their maximum glibc requirement is 2.31. macOS builds set `MACOSX_DEPLOYMENT_TARGET=13.0`, replace the path-dependent linker UUID with one derived from unsigned executable content, and apply a timestamp-free ad-hoc signature with a fixed identifier. Every target is built twice into isolated Cargo target directories on one GitHub-hosted native runner; the normalized binary bytes and independently packaged archive bytes must match before upload.
+
+The embedded macOS ad-hoc signature makes the normalized Mach-O executable valid and reproducible; it is not an Apple Developer ID or proof of publisher identity. The release is not notarized. Verify publisher identity and artifact integrity with the keyless Sigstore and GitHub attestation procedure below before installation.
+
 Every release also publishes:
 
 ```text
@@ -51,6 +57,19 @@ stack-v{version}-checksums.txt.sigstore.json
 The sorted checksum file uses SHA-256 and covers the release manifest, all archives, all SPDX SBOMs, and the per-target provenance and SBOM attestation bundles. A keyless Sigstore bundle signs the checksum file; GitHub's [artifact attestation model](https://docs.github.com/actions/concepts/security/artifact-attestations) is the trust baseline. The immutable GitHub Release asset is the canonical binary byte sequence; Homebrew and Aqua must reference its URL and digest instead of rebuilding or repacking it. Aqua uses its [`github_release` package mapping](https://aquaproj.github.io/docs/reference/registry-config/github-release-package) rather than a separate binary build.
 
 The release manifest records the tag, commit, source version, `minimumSupportedCliVersion`, each target's artifact names and SHA-256 values, the build identity, and each channel whose own install smoke test passed. Its schema is [`distribution/release-manifest.schema.json`](../distribution/release-manifest.schema.json). Supply-chain generation and user verification are documented in the [supply-chain guide](./supply-chain.md).
+
+## Direct installation
+
+After a GitHub Release is marked available, select the archive whose target matches the supported platform table and download it together with all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. For example, replace `{version}` and `{target}` with the exact release values:
+
+```sh
+tar -xzf "stack-v{version}-{target}.tar.gz"
+mkdir -p "$HOME/.local/bin"
+install -m 0755 "stack-v{version}-{target}/stack" "$HOME/.local/bin/stack"
+"$HOME/.local/bin/stack" --version
+```
+
+Add `$HOME/.local/bin` to `PATH` if it is not already present. This manual installation has no self-update receipt, and `stack` self-update remains unavailable until that channel is separately activated.
 
 ## Channel ownership
 

@@ -29,7 +29,7 @@ stack-v{version}-checksums.txt
 stack-v{version}-checksums.txt.sigstore.json
 ```
 
-The checksum inventory covers all 16 target materials and the release manifest. The signature bundle itself is intentionally not self-referential. The manifest format is constrained by [`distribution/release-manifest.schema.json`](../distribution/release-manifest.schema.json).
+The checksum inventory covers all 16 target materials and the release manifest. The signature bundle itself is intentionally not self-referential. The manifest format is constrained by [`distribution/release-manifest.schema.json`](../distribution/release-manifest.schema.json). Each generated manifest links to that schema at the exact source commit rather than a mutable branch or a release-local path.
 
 ## Release-side generation
 

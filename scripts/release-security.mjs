@@ -256,7 +256,7 @@ export function generateReleaseMetadata({
   });
 
   const manifest = {
-    $schema: "./release-manifest.schema.json",
+    $schema: `https://raw.githubusercontent.com/stack-sh/cli/${commit}/distribution/release-manifest.schema.json`,
     schemaVersion: 1,
     version,
     tag: `v${version}`,
@@ -326,7 +326,10 @@ export function verifyReleaseMetadata(directory) {
     compareVersions(manifest.minimumSupportedCliVersion, manifest.version) <= 0,
     "minimumSupportedCliVersion must not be newer than version",
   );
-  invariant(manifest.$schema === "./release-manifest.schema.json", "release manifest has the wrong schema reference");
+  invariant(
+    manifest.$schema === `https://raw.githubusercontent.com/stack-sh/cli/${manifest.source.commit}/distribution/release-manifest.schema.json`,
+    "release manifest has the wrong schema reference",
+  );
   invariant(manifest.schemaVersion === 1, "release manifest schemaVersion must be 1");
   invariant(manifest.tag === `v${manifest.version}`, "release manifest tag must match version");
   exactKeys(manifest.source, ["repository", "commit"], "release manifest source");

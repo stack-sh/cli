@@ -139,6 +139,11 @@ test("complete metadata for the four-target release verifies", (t) => {
     targets: 4,
     checksums: 17,
   });
+  const manifest = JSON.parse(fs.readFileSync(path.join(directory, generated.manifestName), "utf8"));
+  assert.equal(
+    manifest.$schema,
+    `https://raw.githubusercontent.com/stack-sh/cli/${commit}/distribution/release-manifest.schema.json`,
+  );
 });
 
 test("an archive modified after metadata generation is rejected", (t) => {

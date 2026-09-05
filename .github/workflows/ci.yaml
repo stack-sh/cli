@@ -40,8 +40,12 @@ jobs:
         run: |
           node --check scripts/create-supply-chain-smoke-fixture.mjs
           node --check scripts/release-security.mjs
+          node --check scripts/resolve-release-context.mjs
+          node --check scripts/validate-release-workflow.mjs
           node scripts/validate-supply-chain-workflow.mjs
-          node --test scripts/release-security.test.mjs scripts/supply-chain-workflow.test.mjs
+          node scripts/validate-release-workflow.mjs
+          node --test scripts/release-security.test.mjs scripts/supply-chain-workflow.test.mjs scripts/resolve-release-context.test.mjs scripts/release-workflow.test.mjs
+          python3 -m unittest scripts/test_normalize_macos_binary.py scripts/test_package_release.py
       - name: Validate pinned example templates
         env:
           STACK_SPECIFICATION_DIR: ${{ github.workspace }}/.stack-specification
@@ -133,8 +137,18 @@ jobs:
           test -s scripts/create-supply-chain-smoke-fixture.mjs
           test -s scripts/release-security.mjs
           test -s scripts/release-security.test.mjs
+          test -s scripts/package_release.py
+          test -s scripts/normalize_macos_binary.py
+          test -s scripts/test_normalize_macos_binary.py
+          test -s scripts/test_package_release.py
+          test -s scripts/verify_release_binary.py
+          test -s scripts/resolve-release-context.mjs
+          test -s scripts/resolve-release-context.test.mjs
+          test -s scripts/validate-release-workflow.mjs
+          test -s scripts/release-workflow.test.mjs
           test -s scripts/validate-supply-chain-workflow.mjs
           test -s scripts/supply-chain-workflow.test.mjs
+          test -s .github/workflows/release.yaml
           test -s .github/workflows/supply-chain.yaml
           test -s templates/catalog.json
           test -s templates/sources/01-minimal.stack
