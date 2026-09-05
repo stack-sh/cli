@@ -1,0 +1,323 @@
+.TH STACK 1 "" "Stack CLI 0.4.0" "Stack CLI Manual"
+.SH NAME
+stack \- Stack diagram toolchain
+.SH SYNOPSIS
+.B stack
+.RI "<COMMAND> [OPTIONS]"
+.SH DESCRIPTION
+Stack validates, formats, renders, and develops Stack architecture diagrams.
+.SH COMMAND REFERENCE
+.SS "stack"
+.nf
+Stack diagram toolchain
+
+Usage:
+  stack <COMMAND> [OPTIONS]
+  stack help [COMMAND]
+
+Commands:
+  init       Create a Stack file from a versioned starter template
+  check      Validate a Stack source file without modifying it
+  fmt        Format a file in place or read from standard input
+  render     Render standalone SVG to standard output or a file
+  update     Check for or install a verified direct\-install update
+  lsp        Run the Stack language server over standard input and output
+  icons      List catalogs and import audited provider icon archives
+  completions  Generate bash, zsh, or fish completion source
+  manpage    Print the offline Stack CLI manual page
+  help       Print this message or the help of a subcommand
+  version    Print version information
+
+Options:
+  \-h, \-\-help          Print help
+  \-v, \-V, \-\-version   Print version
+
+Examples:
+  stack init
+  stack init \-\-template application\-and\-data \-o architecture.stack
+  stack check arch.stack
+  stack fmt \-\-check arch.stack
+  stack render arch.stack \-o arch.svg
+  stack update \-\-check
+  stack lsp
+  stack icons list aws s3
+  stack completions zsh > _stack
+  stack manpage > stack.1
+.fi
+.SS "stack init"
+.nf
+Create a Stack file from a versioned starter template
+
+Usage:
+  stack init [\-\-template <TEMPLATE>] [\-o <FILE>] [\-\-force]
+
+Options:
+  \-\-template <TEMPLATE>  Select a curated template; defaults to hello\-stack
+  \-o, \-\-output <FILE>    Write to this path; defaults to diagram.stack
+  \-\-force                Replace an existing output file atomically
+  \-h, \-\-help             Print help
+
+Templates:
+  hello\-stack                Smallest directed diagram using built\-in icons
+  application\-and\-data       Application, database, details, and edge labels
+  groups\-and\-layout          Groups, ordering, rank, and layout direction
+  commerce\-platform         Production\-like built\-in architecture
+  aws\-serverless\-checkout    AWS serverless architecture
+  gcp\-data\-service           Google Cloud data service
+  azure\-event\-platform       Azure event\-driven platform
+  github\-delivery\-workflow   GitHub delivery workflow
+  mixed\-provider\-platform    AWS, GCP, Azure, and SaaS architecture
+
+Provider templates remain valid without imported icon packs and render with
+deterministic fallback icons. Use 'stack icons import <PROVIDER> \-\-accept\-terms'
+before rendering when branded icons are required.
+
+Examples:
+  stack init
+  stack init \-\-template groups\-and\-layout
+  stack init \-\-template aws\-serverless\-checkout \-o checkout.stack
+  stack init \-\-force
+.fi
+.SS "stack check"
+.nf
+Validate a Stack source file without modifying it
+
+Usage:
+  stack check <FILE>
+
+Arguments:
+  <FILE>  Read Stack source bytes from this file
+
+Options:
+  \-h, \-\-help  Print help
+
+Examples:
+  stack check arch.stack
+.fi
+.SS "stack fmt"
+.nf
+Format Stack source canonically
+
+Usage:
+  stack fmt <FILE>
+  stack fmt \-\-check <FILE>
+  stack fmt \-
+
+Arguments:
+  <FILE>  Format the file atomically in place
+  \-       Read from standard input and write to standard output
+
+Options:
+  \-\-check     Report whether formatting is required without writing output
+  \-h, \-\-help  Print help
+
+Examples:
+  stack fmt arch.stack
+  stack fmt \-\-check arch.stack
+  stack fmt \- < input.stack > output.stack
+.fi
+.SS "stack render"
+.nf
+Render Stack source as standalone SVG
+
+Usage:
+  stack render <FILE> [\-\-provider\-pack <DIRECTORY>] [\-o <OUTPUT>] [\-\-notice <NOTICE>]
+
+Arguments:
+  <FILE>                      Read Stack source bytes from this file
+
+Options:
+  \-\-provider\-pack <DIRECTORY> Read known provider packs from this icon\-store root
+  \-o <OUTPUT>                 Write SVG atomically instead of using standard output
+  \-\-notice <NOTICE>           Write exact used\-provider notices atomically
+  \-h, \-\-help                  Print help
+
+Default icon store:
+  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons
+
+Examples:
+  stack render arch.stack
+  stack render arch.stack \-o arch.svg
+  stack render arch.stack \-\-notice arch.NOTICE.md \-o arch.svg
+.fi
+.SS "stack update"
+.nf
+Check for or install a verified direct\-install update
+
+Usage:
+  stack update
+  stack update \-\-check
+  stack update \-\-version <VERSION>
+
+Options:
+  \-\-check              Resolve an update without downloading or changing files
+  \-\-version <VERSION>  Select an exact stable or MAJOR.MINOR.PATCH\-rc.N release
+  \-h, \-\-help           Print help
+
+Safety:
+  Replacement requires a matching direct\-install receipt and a GitHub CLI
+  artifact\-attestation check for the exact repository, workflow, tag, commit,
+  and GitHub\-hosted runner. Homebrew, Aqua, Cargo, and unknown installs are
+  never replaced.
+
+Examples:
+  stack update \-\-check
+  stack update
+  stack update \-\-version 0.4.0
+  stack update \-\-version 0.4.0\-rc.1
+.fi
+.SS "stack lsp"
+.nf
+Run the Stack language server over standard input and output
+
+Usage:
+  stack lsp
+
+Options:
+  \-h, \-\-help  Print help
+
+Protocol:
+  LSP 3.18 JSON\-RPC messages use Content\-Length framing over standard input
+  and output. Standard output is reserved for protocol messages.
+
+Examples:
+  stack lsp
+.fi
+.SS "stack icons"
+.nf
+Manage local provider icon packs
+
+Usage:
+  stack icons <COMMAND>
+
+Commands:
+  list    List searchable asset\-free provider catalog metadata
+  import  Download and import an audited provider icon archive
+  help    Print this message or the help of an icons subcommand
+
+Options:
+  \-h, \-\-help  Print help
+
+Providers:
+  aws            305 AWS Architecture Icons
+  gcp             45 Google Cloud product and category icons
+  azure          639 Azure Public Service Icons
+  simple\-icons    62 curated developer and collaboration tools
+
+Examples:
+  stack icons list
+  stack icons list aws s3
+  stack icons import gcp \-\-accept\-terms
+.fi
+.SS "stack icons list"
+.nf
+List searchable asset\-free provider catalog metadata
+
+Usage:
+  stack icons list
+  stack icons list <PROVIDER> [QUERY]
+
+Arguments:
+  <PROVIDER>  aws, gcp, azure, or simple\-icons
+  [QUERY]     Case\-insensitive ID, product, or category substring
+
+Options:
+  \-h, \-\-help  Print help
+
+Examples:
+  stack icons list
+  stack icons list aws s3
+.fi
+.SS "stack icons import"
+.nf
+Download and import audited provider icon archives
+
+Usage:
+  stack icons import <PROVIDER> \-\-accept\-terms [\-o <DIRECTORY>]
+
+Arguments:
+  <PROVIDER>  aws, gcp, azure, or simple\-icons
+
+Options:
+  \-\-accept\-terms  Confirm that you reviewed all provider and brand terms
+  \-o <DIRECTORY>  Store packs below this icon\-store root
+  \-h, \-\-help       Print help
+
+Default icon store:
+  $XDG_CONFIG_HOME/stack/icons or $HOME/.config/stack/icons
+
+Examples:
+  stack icons import gcp \-\-accept\-terms
+  stack icons import simple\-icons \-\-accept\-terms \-o .stack\-icons
+.fi
+.SS "stack completions"
+.nf
+Generate shell completion source
+
+Usage:
+  stack completions <SHELL>
+
+Arguments:
+  <SHELL>  bash, zsh, or fish
+
+Options:
+  \-h, \-\-help  Print help
+
+Examples:
+  stack completions bash > stack.bash
+  stack completions zsh > _stack
+  stack completions fish > stack.fish
+.fi
+.SS "stack manpage"
+.nf
+Print the offline Stack CLI manual page
+
+Usage:
+  stack manpage
+
+Options:
+  \-h, \-\-help  Print help
+
+Examples:
+  stack manpage > stack.1
+  man ./stack.1
+.fi
+.SS "stack help"
+.nf
+Print top\-level or subcommand help
+
+Usage:
+  stack help
+  stack help <COMMAND>
+  stack help icons <COMMAND>
+
+Arguments:
+  <COMMAND>  init, check, fmt, render, update, lsp, icons, completions,
+             manpage, help, or version
+
+Options:
+  \-h, \-\-help  Print help
+
+Examples:
+  stack help
+  stack help render
+  stack help icons import
+.fi
+.SS "stack version"
+.nf
+Print Stack CLI version information
+
+Usage:
+  stack version
+
+Options:
+  \-h, \-\-help  Print help
+
+Examples:
+  stack version
+.fi
+.SH FILES
+Configuration uses $XDG_CONFIG_HOME/stack or $HOME/.config/stack.
+.SH SEE ALSO
+.BR man (1),
+https://stack-diagram.com/docs/

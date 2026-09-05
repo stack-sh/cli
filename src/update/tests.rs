@@ -174,6 +174,19 @@ fn release_archive(version: &Version, candidate: &[u8]) -> TestResult<Vec<u8>> {
         ("LICENSE", b"license".as_slice()),
         ("NOTICE", b"notice".as_slice()),
         ("THIRD_PARTY_LICENSES.md", b"third party".as_slice()),
+        (
+            "share/bash-completion/completions/stack",
+            b"bash completion".as_slice(),
+        ),
+        (
+            "share/fish/vendor_completions.d/stack.fish",
+            b"fish completion".as_slice(),
+        ),
+        ("share/man/man1/stack.1", b"manual page".as_slice()),
+        (
+            "share/zsh/site-functions/_stack",
+            b"zsh completion".as_slice(),
+        ),
     ] {
         add_archive_entry(
             &mut builder,

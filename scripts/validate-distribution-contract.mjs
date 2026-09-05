@@ -13,7 +13,21 @@ const expectedTargets = [
 ];
 const expectedChannels = ["aqua", "cargo", "github-release", "homebrew", "self-update"];
 const availableChannels = new Set(["aqua", "github-release", "homebrew"]);
-const requiredArchiveEntries = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "stack"];
+const requiredArchiveEntries = [
+  "LICENSE",
+  "NOTICE",
+  "THIRD_PARTY_LICENSES.md",
+  "share/bash-completion/completions/stack",
+  "share/fish/vendor_completions.d/stack.fish",
+  "share/man/man1/stack.1",
+  "share/zsh/site-functions/_stack",
+  "stack",
+];
+const completionPaths = {
+  bash: "share/bash-completion/completions/stack",
+  zsh: "share/zsh/site-functions/_stack",
+  fish: "share/fish/vendor_completions.d/stack.fish",
+};
 const requiredUnsupportedTerms = ["32-bit", "BSD", "Windows", "musl"];
 const requiredActivationTerms = ["Cargo package version", "SBOMs", "provenance", "stack --version"];
 const targetDefinitions = new Map([
@@ -160,6 +174,14 @@ export function validateDistributionContract(contract, cargoToml) {
     invariant(contract.artifacts?.[name]?.includes("{target}"), `${name} must contain {target}`);
   }
   sameValues(contract.artifacts?.requiredEntries ?? [], requiredArchiveEntries, "archive entries");
+  invariant(
+    JSON.stringify(contract.artifacts?.completionPaths) === JSON.stringify(completionPaths),
+    "completion paths must use the canonical archive locations",
+  );
+  invariant(
+    contract.artifacts?.manpagePath === "share/man/man1/stack.1",
+    "manual page must use the canonical archive location",
+  );
   invariant(contract.artifacts?.checksumAlgorithm === "sha256", "checksum algorithm must be sha256");
   invariant(
     contract.artifacts?.installReceiptSchema === "distribution/install-receipt.schema.json",
@@ -187,7 +209,7 @@ export function validateDistributionContract(contract, cargoToml) {
     invariant(unsupported.includes(term), `unsupported platforms must mention ${term}`);
   }
   const activation = (contract.verification?.releaseActivation ?? []).join(" ");
-  for (const term of requiredActivationTerms) {
+  for (const term of [...requiredActivationTerms, "shell completion", "manual page"]) {
     invariant(activation.includes(term), `release activation must mention ${term}`);
   }
   const selfUpdateActivation = (contract.verification?.selfUpdateActivation ?? []).join(" ");

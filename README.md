@@ -45,6 +45,8 @@ stack icons list aws s3
 stack icons import gcp --accept-terms
 stack icons import simple-icons --accept-terms
 stack render arch.stack -o arch.svg --notice arch.NOTICE.md
+stack completions zsh
+stack manpage
 ```
 
 `stack help`, `stack -h`, and `stack --help` print top-level help. Use `stack help <COMMAND>` or `<COMMAND> -h` / `<COMMAND> --help` for command-specific usage and examples; nested icon help is available through `stack help icons <COMMAND>`. `stack version`, `stack -v`, `stack -V`, and `stack --version` print the same Cargo package version. Help and version output use standard output and exit with status `0`. Invalid arguments and unknown commands use standard error and status `2`; close command typos include a suggested command and the relevant help invocation.
@@ -60,6 +62,8 @@ stack render arch.stack -o arch.svg --notice arch.NOTICE.md
 `stack lsp` runs a native [Language Server Protocol 3.18 adapter](./docs/language-server.md) over standard input and output. It provides incremental document synchronization, versioned diagnostics, completion, hover, hierarchical document symbols, and whole-document formatting for `.stack` files. The adapter negotiates UTF-8, UTF-16, or UTF-32 positions and delegates language semantics and formatting to the pinned compiler and engine rather than reimplementing them. Standard output is reserved for framed JSON-RPC messages.
 
 `stack update` is implemented for future receipted direct installations, with `--check`, exact-version selection, authenticated release-manifest and archive verification, and rollback-aware atomic replacement. It refuses Homebrew, Aqua, Cargo, and unknown ownership. The published 0.3.0 binary does not contain this command and its manual installation has no receipt, so the self-update channel remains planned. See the [self-update contract](./docs/self-update.md).
+
+`stack completions <bash|zsh|fish>` and `stack manpage` generate deterministic shell integration and an offline roff manual from the CLI command metadata. Future release archives carry the exact generated files; Homebrew installs them into its managed completion and manual paths, while direct, Aqua, and future Cargo users can generate them into user-owned locations without modifying shell startup files. See the [completion and manual guide](./docs/completions.md).
 
 `stack icons list [PROVIDER] [QUERY]` searches the asset-free catalog by ID, product name, or category. The catalog currently contains 1,051 IDs: 305 AWS, 45 Google Cloud, 639 Azure, and 62 curated developer and collaboration tool icons. This command reads only metadata embedded in the CLI.
 
@@ -83,9 +87,10 @@ The CLI requires Rust 1.85 or newer.
 cargo run -- check arch.stack
 cargo test --locked
 cargo clippy --all-targets --all-features --locked -- -D warnings
+python3 scripts/generate_cli_assets.py --binary target/debug/stack --check
 ```
 
-CI validates formatting, unit and process-level integration tests, release metadata and workflow security policies, at least 90% line/region coverage and 95% function coverage, Clippy, documentation, a release build, `--help`, and `--version` on stable Rust. Tests and Clippy also run on Rust 1.85.
+CI validates formatting, unit and process-level integration tests, generated completion and manual drift, release metadata and workflow security policies, at least 90% line/region coverage and 95% function coverage, Clippy, documentation, a release build, `--help`, and `--version` on stable Rust. Tests and Clippy also run on Rust 1.85.
 
 Canonical formatter behavior is checked against the pinned `stack-sh/specification` fixture revision recorded in `tests/specification-revision`.
 

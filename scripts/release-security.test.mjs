@@ -12,7 +12,7 @@ import {
   verifyReleaseMetadata,
 } from "./release-security.mjs";
 
-const version = "0.3.0";
+const version = "0.4.0";
 const commit = "0123456789abcdef0123456789abcdef01234567";
 const provenancePredicate = "https://slsa.dev/provenance/v1";
 const sbomPredicate = "https://spdx.dev/Document/v2.3";
@@ -251,7 +251,7 @@ test("the minimum supported version cannot be newer than the release", (t) => {
       directory,
       version,
       commit,
-      minimumSupportedCliVersion: "0.4.0",
+      minimumSupportedCliVersion: "0.5.0",
       sourceDateEpoch: 1_788_566_400,
       builderWorkflow: "stack-sh/cli/.github/workflows/release.yaml",
     }),

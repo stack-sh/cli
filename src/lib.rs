@@ -14,6 +14,7 @@ use stack_engine::{
     ProviderPack, RenderOutput, Severity,
 };
 
+mod command_docs;
 mod config;
 mod lsp;
 mod provider;
@@ -43,6 +44,8 @@ Commands:
   update     Check for or install a verified direct-install update
   lsp        Run the Stack language server over standard input and output
   icons      List catalogs and import audited provider icon archives
+  completions  Generate bash, zsh, or fish completion source
+  manpage    Print the offline Stack CLI manual page
   help       Print this message or the help of a subcommand
   version    Print version information
 
@@ -59,6 +62,8 @@ Examples:
   stack update --check
   stack lsp
   stack icons list aws s3
+  stack completions zsh > _stack
+  stack manpage > stack.1
 ";
 const INIT_HELP: &str = "\
 Create a Stack file from a versioned starter template
@@ -257,6 +262,36 @@ Examples:
   stack icons import gcp --accept-terms
   stack icons import simple-icons --accept-terms -o .stack-icons
 ";
+const COMPLETIONS_HELP: &str = "\
+Generate shell completion source
+
+Usage:
+  stack completions <SHELL>
+
+Arguments:
+  <SHELL>  bash, zsh, or fish
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack completions bash > stack.bash
+  stack completions zsh > _stack
+  stack completions fish > stack.fish
+";
+const MANPAGE_HELP: &str = "\
+Print the offline Stack CLI manual page
+
+Usage:
+  stack manpage
+
+Options:
+  -h, --help  Print help
+
+Examples:
+  stack manpage > stack.1
+  man ./stack.1
+";
 const HELP_HELP: &str = "\
 Print top-level or subcommand help
 
@@ -266,7 +301,11 @@ Usage:
   stack help icons <COMMAND>
 
 Arguments:
-  <COMMAND>  init, check, fmt, render, update, lsp, icons, help, or version
+  <COMMAND>  init, check, fmt, render, update, lsp, icons, completions,
+             manpage, help, or version
+
+Options:
+  -h, --help  Print help
 
 Examples:
   stack help
@@ -359,13 +398,17 @@ pub fn run(
     if command == OsStr::new("icons") {
         return run_icons(&mut arguments, stdout, stderr);
     }
+    if command == OsStr::new("completions") {
+        return run_completions(arguments, stdout, stderr);
+    }
+    if command == OsStr::new("manpage") {
+        return run_manpage(arguments, stdout, stderr);
+    }
 
     unknown_command_error(
         "stack",
         &command,
-        &[
-            "init", "check", "fmt", "render", "update", "lsp", "icons", "help", "version",
-        ],
+        command_docs::TOP_LEVEL_NAMES,
         "stack help",
         stderr,
     )
@@ -404,6 +447,10 @@ fn run_help(
         UPDATE_HELP
     } else if command == OsStr::new("lsp") {
         LSP_HELP
+    } else if command == OsStr::new("completions") {
+        COMPLETIONS_HELP
+    } else if command == OsStr::new("manpage") {
+        MANPAGE_HELP
     } else if command == OsStr::new("help") {
         HELP_HELP
     } else if command == OsStr::new("version") {
@@ -412,9 +459,7 @@ fn run_help(
         return unknown_command_error(
             "stack help",
             &command,
-            &[
-                "init", "check", "fmt", "render", "update", "lsp", "icons", "help", "version",
-            ],
+            command_docs::TOP_LEVEL_NAMES,
             "stack help",
             stderr,
         );
@@ -585,6 +630,62 @@ fn run_version(
         &format!("unexpected argument '{}'", argument.to_string_lossy()),
         stderr,
     )
+}
+
+fn run_completions(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    let Some(shell) = arguments.next() else {
+        return argument_error("missing shell; supported shells: bash, zsh, fish", stderr);
+    };
+    if is_help_flag(&shell) {
+        if let Some(extra) = arguments.next() {
+            return argument_error(
+                &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                stderr,
+            );
+        }
+        return write_stdout(COMPLETIONS_HELP, stdout, stderr);
+    }
+    if let Some(extra) = arguments.next() {
+        return argument_error(
+            &format!("unexpected argument '{}'", extra.to_string_lossy()),
+            stderr,
+        );
+    }
+    let shell = match shell.to_str() {
+        Some(shell) => shell,
+        None => return argument_error("shell must be valid UTF-8", stderr),
+    };
+    match command_docs::completion(shell) {
+        Ok(source) => write_stdout(&source, stdout, stderr),
+        Err(error) => argument_error(&error, stderr),
+    }
+}
+
+fn run_manpage(
+    mut arguments: impl Iterator<Item = OsString>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> u8 {
+    if let Some(argument) = arguments.next() {
+        if is_help_flag(&argument) {
+            if let Some(extra) = arguments.next() {
+                return argument_error(
+                    &format!("unexpected argument '{}'", extra.to_string_lossy()),
+                    stderr,
+                );
+            }
+            return write_stdout(MANPAGE_HELP, stdout, stderr);
+        }
+        return argument_error(
+            &format!("unexpected argument '{}'", argument.to_string_lossy()),
+            stderr,
+        );
+    }
+    write_stdout(&command_docs::manpage(), stdout, stderr)
 }
 
 fn run_update(
@@ -1818,7 +1919,8 @@ mod tests {
             run_without_input([OsString::from("--version")], &mut stdout, &mut stderr),
             EXIT_SUCCESS
         );
-        assert_eq!(stdout, b"stack 0.3.0\n");
+        let expected_version = format!("stack {}\n", env!("CARGO_PKG_VERSION"));
+        assert_eq!(stdout, expected_version.as_bytes());
         assert!(stderr.is_empty());
 
         stdout.clear();

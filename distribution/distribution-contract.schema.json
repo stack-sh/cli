@@ -71,6 +71,8 @@
         "archiveNameTemplate",
         "archiveRootTemplate",
         "requiredEntries",
+        "completionPaths",
+        "manpagePath",
         "releaseManifestNameTemplate",
         "installReceiptSchema",
         "checksumNameTemplate",
@@ -86,10 +88,21 @@
         "archiveRootTemplate": { "$ref": "#/$defs/template" },
         "requiredEntries": {
           "type": "array",
-          "minItems": 4,
+          "minItems": 8,
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1 }
         },
+        "completionPaths": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bash", "zsh", "fish"],
+          "properties": {
+            "bash": { "const": "share/bash-completion/completions/stack" },
+            "zsh": { "const": "share/zsh/site-functions/_stack" },
+            "fish": { "const": "share/fish/vendor_completions.d/stack.fish" }
+          }
+        },
+        "manpagePath": { "const": "share/man/man1/stack.1" },
         "releaseManifestNameTemplate": { "$ref": "#/$defs/template" },
         "installReceiptSchema": { "const": "distribution/install-receipt.schema.json" },
         "checksumNameTemplate": { "$ref": "#/$defs/template" },

@@ -12,6 +12,8 @@ Commands:
   update     Check for or install a verified direct-install update
   lsp        Run the Stack language server over standard input and output
   icons      List catalogs and import audited provider icon archives
+  completions  Generate bash, zsh, or fish completion source
+  manpage    Print the offline Stack CLI manual page
   help       Print this message or the help of a subcommand
   version    Print version information
 
@@ -28,3 +30,5 @@ Examples:
   stack update --check
   stack lsp
   stack icons list aws s3
+  stack completions zsh > _stack
+  stack manpage > stack.1
