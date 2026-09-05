@@ -57,19 +57,26 @@ const COMMANDS: &[CommandSpec] = &[
     CommandSpec {
         context: "check",
         description: "Validate a Stack source file without modifying it",
-        options: &["-h", "--help"],
+        options: &["--json", "-h", "--help"],
         values: &[],
     },
     CommandSpec {
         context: "fmt",
         description: "Format a file in place or read from standard input",
-        options: &["--check", "-h", "--help"],
+        options: &["--check", "--json", "-h", "--help"],
         values: &["-"],
     },
     CommandSpec {
         context: "render",
         description: "Render standalone SVG to standard output or a file",
-        options: &["--provider-pack", "-o", "--notice", "-h", "--help"],
+        options: &[
+            "--provider-pack",
+            "-o",
+            "--notice",
+            "--json",
+            "-h",
+            "--help",
+        ],
         values: &[],
     },
     CommandSpec {

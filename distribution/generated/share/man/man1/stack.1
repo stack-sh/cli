@@ -87,25 +87,27 @@ Examples:
 Validate a Stack source file without modifying it
 
 Usage:
-  stack check <FILE>
+  stack check <FILE> [\-\-json]
 
 Arguments:
   <FILE>  Read Stack source bytes from this file
 
 Options:
+  \-\-json      Write one versioned JSON envelope to standard output
   \-h, \-\-help  Print help
 
 Examples:
   stack check arch.stack
+  stack check arch.stack \-\-json
 .fi
 .SS "stack fmt"
 .nf
 Format Stack source canonically
 
 Usage:
-  stack fmt <FILE>
-  stack fmt \-\-check <FILE>
-  stack fmt \-
+  stack fmt <FILE> [\-\-json]
+  stack fmt \-\-check <FILE> [\-\-json]
+  stack fmt \- [\-\-json]
 
 Arguments:
   <FILE>  Format the file atomically in place
@@ -113,19 +115,21 @@ Arguments:
 
 Options:
   \-\-check     Report whether formatting is required without writing output
+  \-\-json      Write one versioned JSON envelope to standard output
   \-h, \-\-help  Print help
 
 Examples:
   stack fmt arch.stack
   stack fmt \-\-check arch.stack
   stack fmt \- < input.stack > output.stack
+  stack fmt \-\-json \- < input.stack
 .fi
 .SS "stack render"
 .nf
 Render Stack source as standalone SVG
 
 Usage:
-  stack render <FILE> [\-\-provider\-pack <DIRECTORY>] [\-o <OUTPUT>] [\-\-notice <NOTICE>]
+  stack render <FILE> [\-\-provider\-pack <DIRECTORY>] [\-o <OUTPUT>] [\-\-notice <NOTICE>] [\-\-json]
 
 Arguments:
   <FILE>                      Read Stack source bytes from this file
@@ -134,6 +138,7 @@ Options:
   \-\-provider\-pack <DIRECTORY> Read known provider packs from this icon\-store root
   \-o <OUTPUT>                 Write SVG atomically instead of using standard output
   \-\-notice <NOTICE>           Write exact used\-provider notices atomically
+  \-\-json                      Write one versioned JSON envelope to standard output
   \-h, \-\-help                  Print help
 
 Default icon store:
@@ -143,6 +148,7 @@ Examples:
   stack render arch.stack
   stack render arch.stack \-o arch.svg
   stack render arch.stack \-\-notice arch.NOTICE.md \-o arch.svg
+  stack render arch.stack \-\-json
 .fi
 .SS "stack update"
 .nf

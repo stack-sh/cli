@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stack-sh/cli/main/schemas/cli-output-v1.schema.json",
+  "schemaVersion": 1,
+  "command": "render",
+  "outcome": "success",
+  "exitStatus": 0,
+  "diagnostics": [],
+  "artifacts": [
+    {
+      "kind": "rendered-svg",
+      "path": "<ARTIFACT>",
+      "mediaType": "image/svg+xml",
+      "content": null
+    }
+  ],
+  "error": null
+}

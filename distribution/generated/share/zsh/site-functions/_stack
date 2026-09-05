@@ -33,9 +33,9 @@ fi
 local -a candidates
 case "$context" in
     "init") candidates=('--template' '-o' '--output' '--force' '-h' '--help') ;;
-    "check") candidates=('-h' '--help') ;;
-    "fmt") candidates=('-' '--check' '-h' '--help') ;;
-    "render") candidates=('--provider-pack' '-o' '--notice' '-h' '--help') ;;
+    "check") candidates=('--json' '-h' '--help') ;;
+    "fmt") candidates=('-' '--check' '--json' '-h' '--help') ;;
+    "render") candidates=('--provider-pack' '-o' '--notice' '--json' '-h' '--help') ;;
     "update") candidates=('--check' '--version' '-h' '--help') ;;
     "lsp") candidates=('-h' '--help') ;;
     "doctor") candidates=('--provider-pack' '-h' '--help') ;;
