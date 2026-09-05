@@ -17,3 +17,20 @@ After initial publication, configure each crate's Settings → Trusted Publishin
 Dispatch `cargo-publish.yaml` from `main` with the full successful main CI commit and the exact package version. The default `publish: false` validates identity, registry state, and packaging, then checks the OIDC exchange **without uploading a crate**. This proves workflow authentication, not a new version's publication or every crate's owner configuration. The pinned authentication action revokes its short-lived token when the job ends; no long-lived repository secret or credentials file is used.
 
 For an actual new release, merge the version change and all checks first, publish dependencies before consumers, then dispatch with `publish: true`. Existing versions, missing crates, non-main refs, version/SHA drift, and unsuccessful CI fail closed. Verify the downloaded archive checksum and source SHA after publication; a failed post-upload check does not undo an upload. Never rerun an upload without checking registry state. Keep the native release version/source identical and verify each package-manager channel separately.
+
+After an actual upload, `cargo-install` invokes the shared distribution smoke in
+Cargo-only mode for the exact version and `expected_sha`: all four supported
+native targets, each with Rust 1.85.0 and stable. Each fresh registry install
+checks its packaged source SHA, commands, generated shell assets, and a real
+audited provider import/render. `cargo publication completion` always runs and
+rejects failed, cancelled, skipped, or missing installation results. The default
+`publish: false` intentionally skips new-version installation: it proves
+packaging/OIDC only and cannot claim that an unpublished crate was installed.
+
+A failed post-upload smoke makes the workflow fail but cannot undo a crates.io
+upload. Use GitHub Actions failure notifications and the named matrix cell to
+diagnose it. Re-run only failed verification jobs once the cause is resolved;
+do not rerun a successful publication job. Run the complete 19-cell Distribution
+smoke for the same stable version after the GitHub Release and Homebrew tap are
+available before declaring all-channel activation. Never edit immutable release
+assets to record later channel evidence.

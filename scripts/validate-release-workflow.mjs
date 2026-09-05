@@ -21,6 +21,8 @@ const expectedPermissions = new Map([
   ["attest", ["attestations: write", "contents: read", "id-token: write"]],
   ["assemble", ["attestations: write", "contents: read", "id-token: write"]],
   ["publish", ["attestations: read", "contents: write"]],
+  ["native-install", ["attestations: read", "contents: read"]],
+  ["completion", ["contents: read"]],
 ]);
 
 function invariant(condition, message) {
@@ -73,7 +75,7 @@ export function validateReleaseWorkflow(source) {
   const jobs = extractJobs(workflow);
   invariant(
     JSON.stringify([...jobs.keys()].sort()) === JSON.stringify([...expectedPermissions.keys()].sort()),
-    "release workflow must contain only the six reviewed jobs",
+    "release workflow must contain only the eight reviewed jobs",
   );
   let permissionCount = 0;
   for (const [name, expected] of expectedPermissions) {
@@ -103,6 +105,7 @@ export function validateReleaseWorkflow(source) {
     ["attest", "20"],
     ["assemble", "15"],
     ["publish", "15"],
+    ["completion", "5"],
   ]);
   for (const [name, minutes] of expectedTimeouts) {
     invariant(jobs.get(name).includes(`timeout-minutes: ${minutes}`), `${name} timeout is missing or changed`);
@@ -111,7 +114,7 @@ export function validateReleaseWorkflow(source) {
   const runsOn = [...workflow.matchAll(/^    runs-on: (.+)$/gm)].map((match) => match[1]);
   invariant(
     JSON.stringify(runsOn.sort()) ===
-      JSON.stringify(["${{ matrix.runner }}", "${{ matrix.runner }}", "ubuntu-24.04", "ubuntu-24.04", "ubuntu-24.04", "ubuntu-24.04"].sort()),
+      JSON.stringify(["${{ matrix.runner }}", "${{ matrix.runner }}", "ubuntu-24.04", "ubuntu-24.04", "ubuntu-24.04", "ubuntu-24.04", "ubuntu-24.04"].sort()),
     "release jobs must use only reviewed GitHub-hosted runners",
   );
   const targetRunners = [
@@ -145,6 +148,7 @@ export function validateReleaseWorkflow(source) {
     invariant(occurrences(job, "python3 scripts/package_release.py create") === 2, `${name} must package twice`);
     invariant(job.includes('cmp "$first_archive" "$second_archive"'), `${name} must compare rebuilt archives`);
     invariant(job.includes("python3 scripts/verify_release_binary.py"), `${name} must run native binary smoke tests`);
+    invariant(job.includes('python3 -m scripts.smoke_installed_cli --binary "$first_binary" --target "$target" --version "$VERSION" --source-root "$GITHUB_WORKSPACE"'), `${name} must import and render a real provider before publication`);
     invariant(job.includes("--remap-path-prefix=$GITHUB_WORKSPACE=/workspace"), `${name} must remap source paths`);
   }
   for (const requirement of [
@@ -160,8 +164,11 @@ export function validateReleaseWorkflow(source) {
   invariant(!macos.includes("-no_uuid"), "macOS binaries must retain a valid UUID");
   invariant(linux.includes('test "$(rustc --version)" = "rustc 1.85.0 (4d91de4e4 2025-02-17)"'), "GNU/Linux Rust version must be exact");
 
-  const uses = [...workflow.matchAll(/^\s+uses: ([^\s#]+)(?:\s+#.*)?$/gm)].map((match) => match[1]);
-  invariant(uses.length === 19, "release workflow action count changed and requires review");
+  const allUses = [...workflow.matchAll(/^\s+(?:- )?uses: ([^\s#]+)(?:\s+#.*)?$/gm)].map((match) => match[1]);
+  const localUses = allUses.filter(action => action.startsWith('./'));
+  invariant(JSON.stringify(localUses) === JSON.stringify(['./.github/workflows/distribution-smoke.yaml']), "only the reviewed local installation workflow may be reused");
+  const uses = allUses.filter(action => !action.startsWith('./'));
+  invariant(uses.length === 20, "release workflow action count changed and requires review");
   for (const action of uses) {
     const match = action.match(/^([^@]+)@([0-9a-f]{40})$/);
     invariant(match, `action must be pinned to a full commit: ${action}`);
@@ -222,6 +229,17 @@ export function validateReleaseWorkflow(source) {
   );
   invariant(publish.includes("python3 scripts/verify_release_binary.py"), "a downloaded native binary must pass install smoke tests");
   invariant(publish.includes('gh release edit "$TAG" --draft=false'), "only a fully verified draft may be published");
+
+  const install = jobs.get("native-install");
+  for (const requirement of [
+    "if: needs.context.outputs.publish == 'true' && !contains(needs.context.outputs.version, '-rc.')",
+    "needs: [context, publish]", "scope: native", "version: ${{ needs.context.outputs.version }}", "source_commit: ${{ github.sha }}",
+  ]) invariant(install.includes(requirement), `post-publication installation requirement is missing: ${requirement}`);
+  const completion = jobs.get("completion");
+  for (const requirement of [
+    "if: always()", "needs: [context, build-macos, build-linux, attest, assemble, publish, native-install]",
+    "PUBLICATION_NEEDS: ${{ toJSON(needs) }}", "node scripts/publication-completion.mjs release",
+  ]) invariant(completion.includes(requirement), `release completion requirement is missing: ${requirement}`);
 
   return { actions: uses.length, jobs: jobs.size, permissions: permissionCount, targets: targetRunners.length };
 }

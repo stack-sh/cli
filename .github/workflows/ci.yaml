@@ -19,7 +19,7 @@ jobs:
         run: node --test scripts/initial-publish-context.test.mjs scripts/cargo-publish-context.test.mjs
       - name: Validate continuous distribution smoke guards
         run: |
-          node --test scripts/distribution-smoke-context.test.mjs scripts/distribution-smoke-workflow.test.mjs
+          node --test scripts/distribution-smoke-context.test.mjs scripts/distribution-smoke-workflow.test.mjs scripts/publication-completion.test.mjs
           python3 -m unittest scripts/test_smoke_installed_cli.py
 
       - name: Read supported specification revision
