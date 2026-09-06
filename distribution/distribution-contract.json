@@ -8,11 +8,11 @@
     "sourceVersionFile": "Cargo.toml",
     "currentSourceVersion": "0.5.2",
     "minimumRustVersion": "1.85",
-    "currentReleaseVersion": "0.5.1"
+    "currentReleaseVersion": "0.5.2"
   },
   "availability": {
     "state": "available",
-    "message": "Stack CLI 0.5.1 is available through GitHub Releases, Homebrew, Aqua, and Cargo. Cargo installs the stack-diagram-cli source package using Rust 1.85 or newer and registry-only dependencies."
+    "message": "Stack CLI 0.5.2 is available through GitHub Releases, Homebrew, Aqua, and Cargo. Cargo installs the stack-diagram-cli source package using Rust 1.85 or newer and registry-only dependencies."
   },
   "versioning": {
     "scheme": "Semantic Versioning",
