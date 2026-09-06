@@ -12,7 +12,7 @@ In the project containing your Aqua configuration, run `aqua update`, review the
 
 ## Cargo
 
-Cargo owns updates for the published `stack-diagram-cli` package. Run `cargo install stack-diagram-cli --locked` for the latest release, or add `--version 0.5.1` to select that exact version. The binary remains `stack`; the unrelated `stack-cli` crate is not this project. See the [Cargo installation guide](./distribution.md#cargo-installation).
+Cargo owns updates for the published `stack-diagram-cli` package. Run `cargo install stack-diagram-cli --locked` for the latest release, or add `--version 0.5.3` to select that exact version. The binary remains `stack`; the unrelated `stack-cli` crate is not this project. See the [Cargo installation guide](./distribution.md#cargo-installation).
 
 ## Direct GitHub download
 
