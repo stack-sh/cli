@@ -6,9 +6,9 @@ Audit date: 2026-09-05
 
 | Component | Version or revision | License | Source | Distribution note |
 | --- | --- | --- | --- | --- |
-| `stack-engine` / `stack-formatter` | `0.8.0` / `0.1.0` (crates.io) | Apache-2.0 | <https://github.com/stack-sh/engine> | Linked into the native binary; validates and renders caller-owned provider packs without bundling vendor assets. |
+| `stack-engine` / `stack-formatter` | `0.9.0` / `0.1.0` (crates.io) | Apache-2.0 | <https://github.com/stack-sh/engine> | Linked into the native binary; validates and renders caller-owned provider packs without bundling vendor assets. |
 | `stack-compiler` | `0.1.0 (crates.io)` | Apache-2.0 | <https://github.com/stack-sh/compiler> | Linked directly for protocol-neutral language intelligence and transitively through `stack-engine`; performs no runtime I/O. |
-| `stack-theme` | `0.6.0 (crates.io)` | Apache-2.0 | <https://github.com/stack-sh/theme> | Linked directly and through `stack-engine`; its fallback icons and 30 explicit core SVGs are Stack-authored Apache-2.0 assets. It also provides the asset-free provider-pack contract and types. |
+| `stack-theme` | `0.7.0 (crates.io)` | Apache-2.0 | <https://github.com/stack-sh/theme> | Linked directly and through `stack-engine`; its fallback icons and 30 explicit core SVGs are Stack-authored Apache-2.0 assets. It also provides the asset-free provider-pack contract and types. |
 | `roxmltree` | `0.21.1` | MIT OR Apache-2.0 | <https://github.com/RazrFalcon/roxmltree> | Parses untrusted local SVG into a read-only tree before allowlisted serialization. |
 | `sha2`, `digest`, `block-buffer`, `crypto-common`, `hybrid-array`, `const-oid`, `typenum` | `0.11.0`, `0.11.3`, `0.12.1`, `0.2.2`, `0.4.14`, `0.10.2`, `1.20.1` | MIT OR Apache-2.0 | <https://github.com/RustCrypto> | Computes complete archive and per-asset SHA-256 identities. |
 | `zip` | `6.0.0` | MIT | <https://github.com/zip-rs/zip2> | Reads audited, allowlisted entries from verified official ZIP archives. |
