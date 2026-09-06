@@ -44,7 +44,7 @@ test("source version drift is rejected", () => {
 test("a stale stable release in the availability message is rejected", () => {
   const candidate = changed((value) => {
     value.availability.message = value.availability.message.replace(
-      `Stack CLI ${value.product.currentSourceVersion}`,
+      `Stack CLI ${value.product.currentReleaseVersion}`,
       "Stack CLI 0.0.0",
     );
   });
@@ -52,6 +52,13 @@ test("a stale stable release in the availability message is rejected", () => {
     () => validateDistributionContract(candidate, cargoToml),
     /must identify the verified stable GitHub release/,
   );
+});
+
+test("release preparation preserves the last verified distribution version", () => {
+  const candidate = changed(value => { value.product.currentSourceVersion = "0.99.0"; });
+  const futureSource = cargoToml.replace(/^version = "[^"]+"/m, 'version = "0.99.0"');
+  assert.notEqual(candidate.product.currentSourceVersion, candidate.product.currentReleaseVersion);
+  assert.deepEqual(validateDistributionContract(candidate, futureSource), { targets: 4, channels: 4 });
 });
 
 test("an unverified crates.io package name is rejected", () => {

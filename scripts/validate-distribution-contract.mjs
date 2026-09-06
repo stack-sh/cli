@@ -70,7 +70,7 @@ export function validateDistributionContract(contract, cargoToml) {
   invariant(contract.product?.publishedCargoPackage === "stack-diagram-cli", "published Cargo package must be stack-diagram-cli");
   invariant(contract.availability?.state === "available", "distribution must be available after the verified stable release");
   invariant(
-    contract.availability?.message?.includes(`Stack CLI ${cargoVersion}`) &&
+    contract.availability?.message?.includes(`Stack CLI ${contract.product.currentReleaseVersion}`) &&
       contract.availability.message.includes("GitHub Releases") &&
       contract.availability.message.includes("Homebrew") &&
       contract.availability.message.includes("Aqua"),
