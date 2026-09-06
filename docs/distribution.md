@@ -2,7 +2,7 @@
 
 This document defines the shared release contract for the Stack CLI. It is normative for GitHub Releases, Homebrew, Cargo, and Aqua implementations. The machine-readable source is [`distribution/distribution-contract.json`](../distribution/distribution-contract.json).
 
-[Stack CLI 0.5.1](https://github.com/stack-sh/cli/releases/tag/v0.5.1) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. The registry-only Cargo source package is also available. Version 0.5.0 removes self-update; see the [upgrade guide](./self-update.md).
+[Stack CLI 0.5.2](https://github.com/stack-sh/cli/releases/tag/v0.5.2) is available as a supported GitHub Release for every target below, through the owner-maintained Homebrew tap for the hosts marked below, and through the checksum-locked owner Aqua registry. The registry-only Cargo source package is also available. Version 0.5.0 removes self-update; see the [upgrade guide](./self-update.md).
 
 ## Supported platform matrix
 
@@ -72,7 +72,7 @@ The release manifest records the tag, commit, source version, `minimumSupportedC
 Install the official source package with Rust 1.85 or newer and a working native linker:
 
 ```sh
-cargo install stack-diagram-cli --version 0.5.1 --locked
+cargo install stack-diagram-cli --version 0.5.2 --locked
 stack --version
 ```
 
@@ -98,7 +98,7 @@ brew uninstall stack-sh/tap/stack
 
 For releases carrying the generated assets, the formula installs bash, zsh, and fish completions plus `stack.1` through Homebrew's standard path helpers. It does not edit shell startup files. The formula does not remove or replace Stack configuration and icon stores during an upgrade or uninstall. Formula updates verify release checksums, provenance, and SBOM attestations before changing the archive mapping. The fail-closed update and recovery procedure is maintained in the tap's [maintainer guide](https://github.com/stack-sh/homebrew-tap/blob/main/docs/maintaining.md).
 
-The Homebrew v0.5.1 formula was activated after the immutable release assets were published. Its macOS ARM64, Linux ARM64, and Linux x86_64 lifecycle tests verify the archived completion and manual bytes during install, upgrade, and uninstall. The release manifest remains the publication-time record with only `github-release` in `verifiedChannels`; this contract and the tap CI record the later channel verification without replacing any release asset.
+The Homebrew v0.5.2 formula was activated after the immutable release assets were published. Its macOS ARM64, Linux ARM64, and Linux x86_64 lifecycle tests verify the archived completion and manual bytes during install, upgrade, and uninstall. The release manifest remains the publication-time record with only `github-release` in `verifiedChannels`; this contract and the tap CI record the later channel verification without replacing any release asset.
 
 ## Aqua installation
 
@@ -118,7 +118,7 @@ registries:
     ref: 42702cda91a4156901b9a601bd143c43dcf05766
     path: aqua/registry.yaml
 packages:
-  - name: stack-sh/cli@v0.5.1
+  - name: stack-sh/cli@v0.5.2
     registry: stack-sh
 ```
 
@@ -149,24 +149,24 @@ stack --version
 
 Commit `aqua-checksums.json` with the configuration. To upgrade after a new stable Stack release, run `aqua update`, review the version change, then run `aqua update-checksum` and `aqua install`. Aqua owns the replacement; Stack never replaces its own executable. The registry maintainer procedure and four-target test command are in [`aqua/README.md`](../aqua/README.md).
 
-Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. Stack CLI 0.5.1 includes the generators; use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
+Aqua installs the executable declared by its registry mapping and does not own shell startup files or a global manual database. Stack CLI 0.5.2 includes the generators; use `stack completions` and `stack manpage` to write the desired user-owned files as documented in the [completion guide](./completions.md).
 
-The Aqua v0.5.1 pin was activated after the immutable release assets were published. CI verifies all four target mappings without executing foreign binaries, then installs the native archive and compares all completion and manual generator bytes with the matching checksum-locked canonical release archive. This keeps the published release check independent from later source-tree command additions. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later verification evidence. No release asset is replaced.
+The Aqua v0.5.2 pin was activated after the immutable release assets were published. CI verifies all four target mappings without executing foreign binaries, then installs the native archive and compares all completion and manual generator bytes with the matching checksum-locked canonical release archive. This keeps the published release check independent from later source-tree command additions. The release manifest remains the publication-time record; the pinned registry commit, generated checksum lock, contract, and CI runs are the later verification evidence. No release asset is replaced.
 
 ## Direct installation
 
-Download [Stack CLI 0.5.1](https://github.com/stack-sh/cli/releases/tag/v0.5.1), select the archive whose target matches the supported platform table, and obtain all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. Replace `{target}` with the exact release target:
+Download [Stack CLI 0.5.2](https://github.com/stack-sh/cli/releases/tag/v0.5.2), select the archive whose target matches the supported platform table, and obtain all matching verification material. Complete the [supply-chain verification](./supply-chain.md), then extract and install the verified binary. Replace `{target}` with the exact release target:
 
 ```sh
-tar -xzf "stack-v0.5.1-{target}.tar.gz"
+tar -xzf "stack-v0.5.2-{target}.tar.gz"
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "stack-v0.5.1-{target}/stack" "$HOME/.local/bin/stack"
+install -m 0755 "stack-v0.5.2-{target}/stack" "$HOME/.local/bin/stack"
 "$HOME/.local/bin/stack" --version
 ```
 
 Add `$HOME/.local/bin` to `PATH` if it is not already present. Repeat the verified manual installation to update a directly downloaded binary; never overwrite a package-manager-owned binary. No receipt is created or required. See the [upgrade guide](./self-update.md).
 
-The 0.5.1 archive carries completion and manual assets. Either copy its verified `share/` files into the matching system prefix or use the installed binary to generate user-owned files following the [completion guide](./completions.md). Do not copy these files from a different Stack version; CI and release verification require them to match the binary's command definition.
+The 0.5.2 archive carries completion and manual assets. Either copy its verified `share/` files into the matching system prefix or use the installed binary to generate user-owned files following the [completion guide](./completions.md). Do not copy these files from a different Stack version; CI and release verification require them to match the binary's command definition.
 
 ## Channel ownership
 
