@@ -20,17 +20,17 @@ test("main dispatch resolves a non-publishing verification run", () => {
       ref: "refs/heads/main",
       refName: "main",
       sha,
-      requestedVersion: "0.5.1",
+      requestedVersion: "0.5.2",
       cargoToml,
       contract,
     }),
     {
-      version: "0.5.1",
-      tag: "v0.5.1",
+      version: "0.5.2",
+      tag: "v0.5.2",
       sourceRef: "refs/heads/main",
       publish: false,
       verifiedChannels: "",
-      minimumSupportedCliVersion: "0.5.1",
+      minimumSupportedCliVersion: "0.5.2",
     },
   );
 });
@@ -39,20 +39,20 @@ test("an exact version tag resolves a publishing run", () => {
   assert.deepEqual(
     resolveReleaseContext({
       eventName: "push",
-      ref: "refs/tags/v0.5.1",
-      refName: "v0.5.1",
+      ref: "refs/tags/v0.5.2",
+      refName: "v0.5.2",
       sha,
       requestedVersion: "",
       cargoToml,
       contract,
     }),
     {
-      version: "0.5.1",
-      tag: "v0.5.1",
-      sourceRef: "refs/tags/v0.5.1",
+      version: "0.5.2",
+      tag: "v0.5.2",
+      sourceRef: "refs/tags/v0.5.2",
       publish: true,
       verifiedChannels: "github-release",
-      minimumSupportedCliVersion: "0.5.1",
+      minimumSupportedCliVersion: "0.5.2",
     },
   );
 });
@@ -60,7 +60,7 @@ test("an exact version tag resolves a publishing run", () => {
 test("removed self-update cannot be activated", () => {
   const activated = structuredClone(contract);
   activated.channels.push({ id: "self-update", state: "available" });
-  assert.throws(() => resolveReleaseContext({eventName: "push", ref: "refs/tags/v0.5.1", refName: "v0.5.1", sha, cargoToml, contract: activated}), /self-update has been removed/);
+  assert.throws(() => resolveReleaseContext({eventName: "push", ref: "refs/tags/v0.5.2", refName: "v0.5.2", sha, cargoToml, contract: activated}), /self-update has been removed/);
 });
 
 test("manual runs from another ref or version are rejected", () => {
@@ -72,7 +72,7 @@ test("manual runs from another ref or version are rejected", () => {
     contract,
   };
   assert.throws(
-    () => resolveReleaseContext({ ...common, ref: "refs/heads/topic", requestedVersion: "0.5.1" }),
+    () => resolveReleaseContext({ ...common, ref: "refs/heads/topic", requestedVersion: "0.5.2" }),
     /must run from main/,
   );
   assert.throws(
@@ -107,7 +107,7 @@ test("source and contract version drift is rejected", () => {
       ref: "refs/heads/main",
       refName: "main",
       sha,
-      requestedVersion: "0.5.1",
+      requestedVersion: "0.5.2",
       cargoToml,
       contract: drifted,
     }),
