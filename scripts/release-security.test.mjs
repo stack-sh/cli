@@ -12,7 +12,7 @@ import {
   verifyReleaseMetadata,
 } from "./release-security.mjs";
 
-const version = "0.5.2";
+const version = "0.5.3";
 const commit = "0123456789abcdef0123456789abcdef01234567";
 const provenancePredicate = "https://slsa.dev/provenance/v1";
 const sbomPredicate = "https://spdx.dev/Document/v2.3";
