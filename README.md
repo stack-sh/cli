@@ -2,7 +2,7 @@
 
 `stack-sh/cli` is the open-source native Rust `stack` command for Stack architecture diagrams.
 
-The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.5.3](https://github.com/stack-sh/cli/releases/tag/v0.5.3) is the supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. GitHub Releases, Homebrew, the owner-maintained Aqua registry, and Cargo are available. Self-update was removed in 0.5.0; use the installation owner to upgrade. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
+The repository contains native validation, formatting, and rendering commands. [Stack CLI 0.5.4](https://github.com/stack-sh/cli/releases/tag/v0.5.4) is the supported native binary release for macOS 13 or newer and glibc-based Linux 2.31 or newer, on arm64 and x86_64. GitHub Releases, Homebrew, the owner-maintained Aqua registry, and Cargo are available. Self-update was removed in 0.5.0; use the installation owner to upgrade. The target matrix, artifact names, verification material, channel ownership, and rollback rules are defined by the [distribution contract](./docs/distribution.md), with signing and verification procedures in the [supply-chain guide](./docs/supply-chain.md).
 
 ## Install
 
@@ -15,7 +15,7 @@ brew install stack-sh/tap/stack
 With Rust 1.85 or newer and a native linker, install from crates.io:
 
 ```sh
-cargo install stack-diagram-cli --version 0.5.3 --locked
+cargo install stack-diagram-cli --version 0.5.4 --locked
 stack --version
 ```
 
@@ -30,7 +30,7 @@ aqua install
 stack --version
 ```
 
-For a direct installation, download the archive for your target and its verification material from [GitHub Releases](https://github.com/stack-sh/cli/releases/tag/v0.5.3). Verify the checksum signature and both attestations by following the [supply-chain guide](./docs/supply-chain.md), then follow the [direct installation steps](./docs/distribution.md#direct-installation). The macOS artifacts are reproducibly ad-hoc signed, not Apple-notarized; Sigstore and GitHub attestations provide the publisher-identity check.
+For a direct installation, download the archive for your target and its verification material from [GitHub Releases](https://github.com/stack-sh/cli/releases/tag/v0.5.4). Verify the checksum signature and both attestations by following the [supply-chain guide](./docs/supply-chain.md), then follow the [direct installation steps](./docs/distribution.md#direct-installation). The macOS artifacts are reproducibly ad-hoc signed, not Apple-notarized; Sigstore and GitHub attestations provide the publisher-identity check.
 
 ## Create your first SVG
 
@@ -43,13 +43,13 @@ stack check diagram.stack
 stack render diagram.stack -o diagram.svg
 ```
 
-Expect `stack 0.5.3`, a new `diagram.stack`, no check errors, and a non-empty `diagram.svg`. Open the SVG in a browser or include it in your README. Edit the source and repeat check/render; `stack init` refuses to overwrite existing work.
+Expect `stack 0.5.4`, a new `diagram.stack`, no check errors, and a non-empty `diagram.svg`. Open the SVG in a browser or include it in your README. Edit the source and repeat check/render; `stack init` refuses to overwrite existing work.
 
 The [four-language getting-started guide](https://stack-diagram.com/docs/guide/getting-started) keeps every installer, this walkthrough, and upgrade/uninstall guidance together. It is maintained in `stack-sh/docs` and verified against the published binary.
 
 ## Commands
 
-The command inventory below is available in the published 0.5.3 binaries, including `stack doctor`, `stack config`, and structured JSON output for automation.
+The command inventory below is available in the published 0.5.4 binaries, including `stack doctor`, `stack config`, and structured JSON output for automation.
 
 ```text
 stack help
@@ -98,7 +98,7 @@ stack manpage
 
 `stack update` is removed in 0.5.0. Homebrew, Aqua, and Cargo installations are updated through their package manager; direct downloads are updated manually after verification. See the [upgrade and migration guide](./docs/self-update.md).
 
-`stack completions <bash|zsh|fish>` and `stack manpage` generate deterministic shell integration and an offline roff manual from the CLI command metadata. The 0.5.3 release archives carry the exact generated files; Homebrew installs them into its managed completion and manual paths, while direct, Aqua, and Cargo users can generate them into user-owned locations without modifying shell startup files. See the [completion and manual guide](./docs/completions.md).
+`stack completions <bash|zsh|fish>` and `stack manpage` generate deterministic shell integration and an offline roff manual from the CLI command metadata. The 0.5.4 release archives carry the exact generated files; Homebrew installs them into its managed completion and manual paths, while direct, Aqua, and Cargo users can generate them into user-owned locations without modifying shell startup files. See the [completion and manual guide](./docs/completions.md).
 
 `stack icons list [PROVIDER] [QUERY]` searches the asset-free catalog by ID, product name, or category. The catalog currently contains 1,051 IDs: 305 AWS, 45 Google Cloud, 639 Azure, and 62 curated developer and collaboration tool icons. This command reads only metadata embedded in the CLI.
 
