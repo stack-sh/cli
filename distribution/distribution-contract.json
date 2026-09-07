@@ -6,7 +6,7 @@
     "sourceCargoPackage": "stack-diagram-cli",
     "publishedCargoPackage": "stack-diagram-cli",
     "sourceVersionFile": "Cargo.toml",
-    "currentSourceVersion": "0.5.3",
+    "currentSourceVersion": "0.5.4",
     "minimumRustVersion": "1.85",
     "currentReleaseVersion": "0.5.3"
   },

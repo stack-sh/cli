@@ -375,7 +375,7 @@ checksum = "bdba45c0f7a85ef0ec0bfb766b387dbd90fc6141237ac74b559d08a424750bc6"
 
 [[package]]
 name = "stack-diagram-cli"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "roxmltree",
  "serde",
@@ -391,9 +391,9 @@ dependencies = [
 
 [[package]]
 name = "stack-engine"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ef84a4cea61415aa3b8a032758dbbfcc4e5ac45507cbccaa2401c6df9cc83da"
+checksum = "e9316fd964d419b2207182101be9b1da50106da540070efc0d0d7803e4835750"
 dependencies = [
  "roxmltree",
  "serde_json",
